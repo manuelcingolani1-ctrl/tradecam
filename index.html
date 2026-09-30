@@ -222,6 +222,7 @@
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
   .chip{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);
     border-radius:999px;padding:6px 8px 6px 14px;font-size:13px;font-weight:600}
+  .chip .pill-dot{flex:none}
   .chip button{background:none;border:none;color:var(--text-2);cursor:pointer;font-size:14px;line-height:1;
     width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center}
   .chip button:hover{background:var(--danger-soft);color:var(--danger)}
@@ -263,7 +264,8 @@
   .account-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
   .account-card-top .name{font-weight:800;font-size:14.5px}
   .account-card-summary{font-size:12px;color:var(--text-2);margin-bottom:12px;min-height:15px}
-  .account-card-summary .pill-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .pill-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
+  .account-card-summary .pill-dot{width:6px;height:6px;margin-right:6px;vertical-align:middle}
   .account-card label{margin-bottom:4px}
   .account-card .remove-account{background:none;border:none;color:var(--text-2);cursor:pointer;font-size:12px;
     font-family:var(--font-ui);padding:2px 0;margin-top:8px;text-decoration:underline;text-decoration-color:transparent;transition:text-decoration-color .15s}
@@ -389,8 +391,29 @@
   .sched-row .off-toggle{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--text-2);white-space:nowrap;margin-top:6px}
   .sched-edit-cell{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:2px 0 12px;border-top:1px dashed var(--border);margin-top:2px}
   .sched-edit-cell .field{display:flex;flex-direction:column;gap:4px;min-width:130px;flex:1}
-  .sched-edit-cell .field.time{min-width:90px;flex:0 0 90px}
+  .sched-edit-cell .field.time{min-width:112px;flex:0 0 112px}
   .sched-edit-cell label{margin-bottom:0}
+
+  /* ---------- Selector de hora a medida (reemplaza el time picker nativo del
+     sistema, que aparece en blanco/plateado y desentona con el tema oscuro) ---------- */
+  .timepicker{position:relative}
+  .timepicker-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:10px;color:var(--text);
+    font-family:var(--font-mono);font-size:13px;font-weight:600;padding:9px 10px;cursor:pointer;text-align:left}
+  .timepicker-trigger:hover{border-color:var(--teal)}
+  .timepicker-trigger.open{border-color:var(--teal)}
+  .timepicker-trigger svg{flex:0 0 14px;color:var(--text-2)}
+  .timepicker-pop{position:absolute;z-index:80;top:calc(100% + 6px);left:0;width:132px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:10px;
+    box-shadow:0 16px 40px rgba(0,0,0,0.5);display:none}
+  .timepicker-pop.show{display:block}
+  .tp-cols{display:flex;gap:4px}
+  .tp-col{flex:1;max-height:168px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin}
+  .tp-col-sep{display:flex;align-items:flex-start;padding-top:6px;font-weight:800;color:var(--text-2)}
+  .tp-opt{background:none;border:none;color:var(--text);font-family:var(--font-mono);font-size:12.5px;
+    padding:6px 0;border-radius:7px;cursor:pointer;text-align:center}
+  .tp-opt:hover{background:var(--surface-3)}
+  .tp-opt.selected{background:var(--teal);color:#04201C;font-weight:700}
 
   @media (max-width:760px){
     .sched-head{display:none}
@@ -639,6 +662,89 @@
   .stat-label{font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;
     letter-spacing:0.04em;margin-top:8px}
   @media (max-width:640px){ .stats-grid{grid-template-columns:repeat(2,1fr)} }
+
+  /* ---------- Mini calendario mensual de journaling (vista Journal) ---------- */
+  .jcal-card{margin-top:20px}
+  .jcal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .jcal-month-label{font-family:var(--font-display);font-weight:700;font-size:14px;text-transform:capitalize}
+  .jcal-legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2)}
+  .jcal-legend .pill-dot{width:6px;height:6px}
+  .jcal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+  .jcal-weekdays span{text-align:center;font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase}
+  .jcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .jcal-day{aspect-ratio:1;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;cursor:default}
+  .jcal-day .n{font-family:var(--font-mono);font-size:11.5px;color:var(--text-2)}
+  .jcal-day.muted{background:none;border-color:transparent;visibility:hidden}
+  .jcal-day.today{border-color:rgba(45,212,191,.5)}
+  .jcal-day.today .n{color:var(--teal);font-weight:700}
+  .jcal-day.has-entry{background:var(--teal-soft);border-color:rgba(45,212,191,.35);cursor:pointer}
+  .jcal-day.has-entry .n{color:var(--text);font-weight:700}
+  .jcal-day.has-entry:hover{border-color:var(--teal)}
+  .jcal-day .dots{display:flex;gap:3px}
+  .jcal-day .dots .pill-dot{width:5px;height:5px}
+
+  /* ---------- Vista Calendario (día / semana / mes / año) ---------- */
+  .cal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  .cal-modes{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:4px}
+  .cal-modes button{background:none;border:none;color:var(--text-2);font-family:var(--font-ui);font-size:12.5px;
+    font-weight:700;padding:8px 14px;border-radius:8px;cursor:pointer;transition:background-color .15s,color .15s}
+  .cal-modes button:hover{color:var(--text)}
+  .cal-modes button.active{background:var(--teal);color:#04201C}
+
+  .cal-year-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:900px){ .cal-year-grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:560px){ .cal-year-grid{grid-template-columns:1fr} }
+  .cal-mini-month{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:border-color .15s}
+  .cal-mini-month:hover{border-color:var(--teal)}
+  .cal-mini-head{font-family:var(--font-display);font-weight:700;font-size:13px;text-transform:capitalize;margin-bottom:8px;text-align:center}
+  .cal-mini-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:3px}
+  .cal-mini-weekdays span{text-align:center;font-size:8.5px;font-weight:700;color:var(--text-2)}
+  .cal-mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .cal-mini-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:9.5px;
+    font-family:var(--font-mono);color:var(--text-2);border-radius:4px;position:relative}
+  .cal-mini-day.muted{visibility:hidden}
+  .cal-mini-day.today{color:var(--teal);font-weight:700}
+  .cal-mini-day.has-entry::after{content:'';position:absolute;bottom:1px;width:3px;height:3px;border-radius:50%;background:var(--asset-color,var(--teal))}
+
+  .cal-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .cal-month-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px}
+  .cal-month-weekdays span{text-align:center;font-size:10.5px;font-weight:700;color:var(--text-2);text-transform:uppercase}
+  .cal-month-day{min-height:92px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;
+    padding:8px;display:flex;flex-direction:column;gap:6px;cursor:default;transition:border-color .15s}
+  .cal-month-day.muted{background:none;border-color:transparent;visibility:hidden}
+  .cal-month-day.today{border-color:rgba(45,212,191,.5)}
+  .cal-month-day.has-entry{cursor:pointer}
+  .cal-month-day.has-entry:hover{border-color:var(--teal)}
+  .cal-month-day .n{font-family:var(--font-mono);font-size:12px;color:var(--text-2)}
+  .cal-month-day.today .n{color:var(--teal);font-weight:700}
+  .cal-month-day .asset-tag{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;
+    padding:3px 6px;border-radius:6px;background:var(--surface-3);color:var(--text);width:fit-content;max-width:100%;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cal-month-day .pnl-tag{font-size:10.5px;font-family:var(--font-mono);font-weight:700}
+  .cal-month-day .pnl-tag.win{color:var(--accent)}
+  .cal-month-day .pnl-tag.loss{color:var(--danger)}
+  @media (max-width:760px){
+    .cal-month-grid,.cal-month-weekdays{grid-template-columns:repeat(7,minmax(34px,1fr))}
+    .cal-month-day{min-height:58px;padding:5px}
+    .cal-month-day .asset-tag span.label{display:none}
+  }
+
+  .cal-week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+  @media (max-width:900px){ .cal-week-grid{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))} }
+  .cal-week-day{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:14px;
+    display:flex;flex-direction:column;gap:8px;min-height:150px;cursor:default;transition:border-color .15s}
+  .cal-week-day.today{border-color:rgba(45,212,191,.5)}
+  .cal-week-day.has-entry{cursor:pointer}
+  .cal-week-day.has-entry:hover{border-color:var(--teal)}
+  .cal-week-day .dow{font-size:10.5px;font-weight:700;color:var(--text-2);text-transform:uppercase}
+  .cal-week-day .n{font-family:var(--font-display);font-size:18px;font-weight:700}
+  .cal-week-day .empty-note{font-size:11.5px;color:var(--text-2);margin-top:auto}
+
+  .cal-day-panel{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:22px}
+  .cal-day-panel .cal-day-date{font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:14px}
+  .cal-day-panel .cal-day-empty{color:var(--text-2);font-size:13.5px}
+
   .viewer-modal{position:fixed;inset:0;background:rgba(5,7,10,0.85);display:none;align-items:center;
     justify-content:center;z-index:40;padding:24px}
   .viewer-modal.show{display:flex}
@@ -734,13 +840,17 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5C4 3.7 4.7 3 5.5 3H18a2 2 0 0 1 2 2v16l-4-2-4 2-4-2-4 2z"/><path d="M8 8h8M8 12h6"/></svg>
         Journal
       </button>
-      <button class="navlink" id="navResumen" type="button">
+      <button class="navlink" id="navCalendario" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>
+        Calendario
+      </button>
+      <button class="navlink" id="navResumen" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
         Resumen semanal
       </button>
       <button class="navlink" id="navConfig" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-        Configuración
+        Cuentas y ajustes
       </button>
     </div>
     <div class="userchip" id="userchip">
@@ -876,7 +986,7 @@
   <div id="view-config" class="wrap" style="display:none">
     <div class="config-head-actions">
       <div>
-        <h1>Configuración</h1>
+        <h1>Cuentas y ajustes</h1>
         <p class="sub">Cuentas, activos, esquema semanal y grabación.</p>
       </div>
       <button class="btn" id="saveBtn" type="button">
@@ -964,10 +1074,17 @@
           <h2>Preferencias</h2>
           <div class="pref-row">
             <div>
-              <div class="pref-label">Recordatorio antes de sesión</div>
-              <div class="pref-sub">Un aviso 10 min antes de tu horario de hoy</div>
+              <div class="pref-label">Recordatorio de journal pendiente</div>
+              <div class="pref-sub">Avisa si terminó tu sesión de hoy y todavía no cargaste el journal</div>
             </div>
-            <label class="switch"><input type="checkbox" id="prefReminder"><span class="slider"></span></label>
+            <label class="switch"><input type="checkbox" id="prefJournalReminder"><span class="slider"></span></label>
+          </div>
+          <div class="pref-row">
+            <div>
+              <div class="pref-label">Aviso de racha en riesgo</div>
+              <div class="pref-sub">Un aviso a la noche si tu racha de journaling está por cortarse</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="prefStreakAlert"><span class="slider"></span></label>
           </div>
           <div class="pref-row">
             <div>
@@ -1006,6 +1123,19 @@
           <div class="stat-value" id="statWinrate">—</div>
           <div class="stat-label">Winrate</div>
         </div>
+      </div>
+
+      <div class="jcal-card">
+        <div class="jcal-head">
+          <div class="jcal-month-label" id="jcalMonthLabel">—</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="jcal-legend"><span class="pill-dot" style="background:var(--teal)"></span>Día con journal</div>
+            <button class="dp-nav" id="jcalPrevBtn" type="button" title="Mes anterior">‹</button>
+            <button class="dp-nav" id="jcalNextBtn" type="button" title="Mes siguiente">›</button>
+          </div>
+        </div>
+        <div class="jcal-weekdays"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+        <div class="jcal-grid" id="jcalGrid"></div>
       </div>
     </section>
 
@@ -1264,6 +1394,29 @@
       No grabaste ninguna sesión esta semana.
     </div>
     <div id="resumenList"></div>
+  </div>
+
+  <!-- ============ VIEW: CALENDARIO ============ -->
+  <div id="view-calendario" class="wrap" style="display:none">
+    <h1>Calendario</h1>
+    <p class="sub">Tus sesiones en el tiempo, por día, semana, mes o año.</p>
+
+    <div class="cal-toolbar">
+      <div class="cal-modes" id="calModePicker">
+        <button type="button" data-mode="day">Día</button>
+        <button type="button" data-mode="week">Semana</button>
+        <button type="button" data-mode="month">Mes</button>
+        <button type="button" data-mode="year">Año</button>
+      </div>
+      <div class="week-nav" style="gap:10px;flex:none">
+        <button class="dp-nav" id="calPrevBtn" type="button" title="Anterior">‹</button>
+        <div class="week-nav-label" id="calLabel" style="min-width:180px">—</div>
+        <button class="dp-nav" id="calNextBtn" type="button" title="Siguiente">›</button>
+      </div>
+      <button class="navlink" id="calTodayBtn" type="button" style="text-decoration:underline">Hoy</button>
+    </div>
+
+    <div id="calBody"></div>
   </div>
 
   <!-- ============ VIEW: DETALLE DE SESIÓN ============ -->
@@ -1564,7 +1717,7 @@
   </div><!-- /main -->
   </div><!-- /shell -->
 
-  <div class="toast" id="toast">Configuración guardada</div>
+  <div class="toast" id="toast">Cambios guardados</div>
 
 <!-- fix-webm-duration (MIT, https://github.com/yusitnikov/fix-webm-duration) -->
 <!-- Corrige la duracion del webm grabado en vivo para que se pueda adelantar/atrasar -->
@@ -2121,7 +2274,8 @@
     durationHours: 2,
     cameraDeviceId: '',
     micDeviceId: '',
-    reminderEnabled: true,
+    journalReminderEnabled: true,
+    streakAlertEnabled: true,
     autosaveEnabled: true
   });
 
@@ -2560,6 +2714,7 @@
     inicio: document.getElementById('view-inicio'),
     config: document.getElementById('view-config'),
     historial: document.getElementById('view-historial'),
+    calendario: document.getElementById('view-calendario'),
     resumen: document.getElementById('view-resumen'),
     detalle: document.getElementById('view-detalle'),
     sesion: document.getElementById('view-sesion'),
@@ -2569,6 +2724,7 @@
   const navInicio = document.getElementById('navInicio');
   const navConfig = document.getElementById('navConfig');
   const navHistorial = document.getElementById('navHistorial');
+  const navCalendario = document.getElementById('navCalendario');
   const navResumen = document.getElementById('navResumen');
   const navGrabacionEl = document.getElementById('navGrabacion');
 
@@ -2577,13 +2733,14 @@
   // que no sobreviven a un F5. "sesion" (Grabación) sí se guarda, pero
   // bootApp() la maneja distinto (ver más abajo): no puede retomar la
   // grabación en sí, solo dejar esa pantalla lista para arrancar de nuevo.
-  const RESTORABLE_VIEWS = ['inicio', 'config', 'historial', 'resumen', 'sesion'];
+  const RESTORABLE_VIEWS = ['inicio', 'config', 'historial', 'calendario', 'resumen', 'sesion'];
 
   function showView(name){
     Object.keys(views).forEach(k => { views[k].style.display = (k === name) ? (k === 'sesion' ? 'flex' : 'block') : 'none'; });
     navInicio.classList.toggle('active', name === 'inicio');
     navConfig.classList.toggle('active', name === 'config');
     navHistorial.classList.toggle('active', name === 'historial');
+    navCalendario.classList.toggle('active', name === 'calendario');
     navResumen.classList.toggle('active', name === 'resumen');
     navGrabacionEl.classList.toggle('active', name === 'sesion');
     if (RESTORABLE_VIEWS.includes(name)){
@@ -2591,11 +2748,13 @@
     }
     if (name === 'inicio') renderInicio();
     if (name === 'historial') renderHistorial();
+    if (name === 'calendario') renderCalendar();
     if (name === 'resumen') renderResumen();
   }
   navInicio.addEventListener('click', () => showView('inicio'));
   navConfig.addEventListener('click', () => { showView('config'); refreshDeviceOptions(); });
   navHistorial.addEventListener('click', () => showView('historial'));
+  navCalendario.addEventListener('click', () => showView('calendario'));
   navResumen.addEventListener('click', () => showView('resumen'));
 
   // =======================================================================
@@ -2608,25 +2767,46 @@
   const cameraSelect = document.getElementById('cameraSelect');
   const micSelect = document.getElementById('micSelect');
   const deviceUnsupported = document.getElementById('deviceUnsupported');
-  const prefReminder = document.getElementById('prefReminder');
+  const prefJournalReminder = document.getElementById('prefJournalReminder');
+  const prefStreakAlert = document.getElementById('prefStreakAlert');
   const prefAutosave = document.getElementById('prefAutosave');
 
   // Colores estables por nombre (activo o cuenta): el mismo nombre siempre
   // cae en el mismo color, así "Bitcoin" o "Nasdaq" se reconocen de un
-  // vistazo en las cuentas y en el esquema semanal.
-  const PILL_COLORS = ['#F5A623', '#2DD4BF', '#60A5FA', '#A78BFA', '#F472B6', '#34D399', '#FB923C'];
-  function colorFor(name){
+  // vistazo en las cuentas, el esquema semanal, el journal y el calendario.
+  // Se asignan por posición dentro de "Mis activos" (o de "Cuentas"), no por
+  // hash del texto: así dos activos nunca terminan compartiendo color por
+  // casualidad, que es justamente lo que pasaba antes con "Bitcoin" y
+  // "Nasdaq" (ambos caían en el mismo color del hash).
+  const PILL_COLORS = ['#F5A623', '#60A5FA', '#34D399', '#F472B6', '#A78BFA', '#FB923C', '#2DD4BF', '#E879F9', '#4ADE80', '#F87171'];
+  function hashColor(name){
     let hash = 0;
     const s = name || '';
     for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
     return PILL_COLORS[hash % PILL_COLORS.length];
   }
+  function colorFor(name){
+    const assetIdx = (config.assets || []).indexOf(name);
+    if (assetIdx !== -1) return PILL_COLORS[assetIdx % PILL_COLORS.length];
+    const acctIdx = (config.accounts || []).indexOf(name);
+    if (acctIdx !== -1) return PILL_COLORS[acctIdx % PILL_COLORS.length];
+    // Nombre que ya no está en "Mis activos"/"Cuentas" (por ej. un activo
+    // borrado pero que sigue apareciendo en sesiones viejas del journal):
+    // le cae un color estable igual, aunque ya no se pueda garantizar que
+    // sea distinto al de los activos actuales.
+    return hashColor(name);
+  }
 
-  function renderChips(container, list, onRemove){
+  function renderChips(container, list, onRemove, withColorDot){
     container.innerHTML = '';
     list.forEach((item, idx) => {
       const chip = document.createElement('div');
       chip.className = 'chip';
+      if (withColorDot){
+        const dot = document.createElement('span');
+        dot.className = 'pill-dot'; dot.style.background = colorFor(item);
+        chip.appendChild(dot);
+      }
       const span = document.createElement('span');
       span.textContent = item;
       const btn = document.createElement('button');
@@ -2803,15 +2983,17 @@
 
         const startField = document.createElement('div'); startField.className = 'field time';
         const startLabel = document.createElement('label'); startLabel.textContent = 'Inicio';
-        const startInput = document.createElement('input'); startInput.type = 'time'; startInput.value = entry.start;
-        startInput.addEventListener('change', () => { entry.start = startInput.value || entry.start; timeText.textContent = formatDayTime(entry); });
+        const startInput = document.createElement('input'); startInput.type = 'text'; startInput.value = entry.start;
         startField.appendChild(startLabel); startField.appendChild(startInput);
+        startInput.addEventListener('change', () => { entry.start = startInput.value || entry.start; timeText.textContent = formatDayTime(entry); });
+        createTimePicker(startInput);
 
         const endField = document.createElement('div'); endField.className = 'field time';
         const endLabel = document.createElement('label'); endLabel.textContent = 'Fin';
-        const endInput = document.createElement('input'); endInput.type = 'time'; endInput.value = entry.end;
-        endInput.addEventListener('change', () => { entry.end = endInput.value || entry.end; timeText.textContent = formatDayTime(entry); });
+        const endInput = document.createElement('input'); endInput.type = 'text'; endInput.value = entry.end;
         endField.appendChild(endLabel); endField.appendChild(endInput);
+        endInput.addEventListener('change', () => { entry.end = endInput.value || entry.end; timeText.textContent = formatDayTime(entry); });
+        createTimePicker(endInput);
 
         const offField = document.createElement('label'); offField.className = 'off-toggle';
         const offCheckbox = document.createElement('input');
@@ -2872,11 +3054,12 @@
       config.assets.splice(idx, 1);
       DAYS.forEach(d => { if (config.schedule[d.key].asset === removed) config.schedule[d.key].asset = config.assets[0] || ''; });
       renderConfigView();
-    });
+    }, true);
     renderDayGrid();
     if (cameraSelect) cameraSelect.value = config.cameraDeviceId || '';
     if (micSelect) micSelect.value = config.micDeviceId || '';
-    if (prefReminder) prefReminder.checked = config.reminderEnabled !== false;
+    if (prefJournalReminder) prefJournalReminder.checked = config.journalReminderEnabled !== false;
+    if (prefStreakAlert) prefStreakAlert.checked = config.streakAlertEnabled !== false;
     if (prefAutosave) prefAutosave.checked = config.autosaveEnabled !== false;
     renderQualityPicker();
   }
@@ -2895,7 +3078,8 @@
     if (!val || config.assets.includes(val)) return;
     config.assets.push(val); input.value = ''; renderConfigView();
   });
-  if (prefReminder) prefReminder.addEventListener('change', () => { config.reminderEnabled = prefReminder.checked; });
+  if (prefJournalReminder) prefJournalReminder.addEventListener('change', () => { config.journalReminderEnabled = prefJournalReminder.checked; });
+  if (prefStreakAlert) prefStreakAlert.addEventListener('change', () => { config.streakAlertEnabled = prefStreakAlert.checked; });
   if (prefAutosave) prefAutosave.addEventListener('change', () => { config.autosaveEnabled = prefAutosave.checked; });
 
   const folderStatusText = document.getElementById('folderStatusText');
@@ -2964,8 +3148,8 @@
   }
   document.getElementById('saveBtn').addEventListener('click', () => {
     saveConfigToStorage();
-    showToast('Configuración guardada');
-    if (config.reminderEnabled && 'Notification' in window && Notification.permission === 'default'){
+    showToast('Cambios guardados');
+    if ((config.journalReminderEnabled || config.streakAlertEnabled) && 'Notification' in window && Notification.permission === 'default'){
       Notification.requestPermission();
     }
   });
@@ -3051,30 +3235,64 @@
     return {now, dowKey, dayDef, entry};
   }
 
-  // ---- "Recordatorio antes de sesión" (Preferencias en Configuración) ----
-  // Cada 30s se fija si faltan 10 minutos o menos para el horario de hoy y,
-  // si todavía no se avisó hoy, manda una notificación del sistema. No
+  // ---- Preferencias de avisos (Configuración > Preferencias) ----
+  // Dos chequeos independientes, cada uno con su propio toggle y su propia
+  // marca de "ya avisé hoy" para no repetir la notificación. Ninguno
   // depende de tener la pestaña de Grabación abierta.
-  const REMINDER_SHOWN_KEY = 'tradecam_reminder_shown_v1';
-  function maybeShowReminder(){
-    if (!currentUser || !config.reminderEnabled) return;
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    const {now, entry} = todayInfo();
-    if (!entry || entry.off || !entry.start || sessionInProgress) return;
-    const [sh, sm] = entry.start.split(':').map(Number);
-    const startMinutes = sh * 60 + (sm || 0);
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
-    const diff = startMinutes - nowMinutes;
-    if (diff < 0 || diff > 10) return;
-    const todayStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
-    const shownKey = REMINDER_SHOWN_KEY + '::' + currentUser.id;
+  const JOURNAL_REMINDER_SHOWN_KEY = 'tradecam_journal_reminder_shown_v1';
+  const STREAK_ALERT_SHOWN_KEY = 'tradecam_streak_alert_shown_v1';
+
+  function todayDateStr(now){ return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()); }
+  function alreadyJournaledToday(todayStr){
+    try {
+      const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+      return journal.some(e => e.date === todayStr);
+    } catch (e) { return false; }
+  }
+  function notifyOnce(shownKeyBase, todayStr, title, body){
+    if (!currentUser) return;
+    const shownKey = shownKeyBase + '::' + currentUser.id;
     if (localStorage.getItem(shownKey) === todayStr) return;
     localStorage.setItem(shownKey, todayStr);
-    try {
-      new Notification('TradeCam', {body: 'Tu sesión de ' + (entry.asset || 'hoy') + ' empieza a las ' + entry.start + '.'});
-    } catch (e) { /* si el sistema operativo bloquea notificaciones, no hacemos nada más */ }
+    try { new Notification(title, {body}); } catch (e) { /* el sistema operativo puede bloquear notificaciones */ }
   }
-  setInterval(maybeShowReminder, 30000);
+
+  // "Recordatorio de journal pendiente": si hoy tenías sesión en el esquema
+  // semanal, ya pasó el horario de fin y todavía no cargaste el journal de
+  // hoy, avisa una vez para que no se te pase completarlo.
+  function maybeShowJournalReminder(){
+    if (!currentUser || !config.journalReminderEnabled) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const {now, entry} = todayInfo();
+    if (!entry || entry.off || !entry.end || sessionInProgress) return;
+    const [eh, em] = entry.end.split(':').map(Number);
+    const endMinutes = eh * 60 + (em || 0);
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    if (nowMinutes < endMinutes + 20) return; // le da 20 min de margen después del cierre
+    const todayStr = todayDateStr(now);
+    if (alreadyJournaledToday(todayStr)) return;
+    notifyOnce(JOURNAL_REMINDER_SHOWN_KEY, todayStr, 'TradeCam', 'Todavía no cargaste el journal de tu sesión de ' + (entry.asset || 'hoy') + '.');
+  }
+
+  // "Aviso de racha en riesgo": si tenés una racha de journaling activa y se
+  // hace tarde sin que hoy quede registrado, avisa para que no se corte.
+  function maybeShowStreakAlert(){
+    if (!currentUser || !config.streakAlertEnabled) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const now = new Date();
+    if (now.getHours() < 20) return; // recién a partir de las 20:00
+    const todayStr = todayDateStr(now);
+    if (alreadyJournaledToday(todayStr)) return;
+    let journal = [];
+    try { journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]'); } catch (e) {}
+    const stats = computeStats(journal);
+    if (stats.streak < 1) return;
+    notifyOnce(STREAK_ALERT_SHOWN_KEY, todayStr,
+      'TradeCam',
+      'Tu racha de ' + stats.streak + (stats.streak === 1 ? ' día' : ' días') + ' está en riesgo: todavía no registraste nada hoy.');
+  }
+
+  setInterval(() => { maybeShowJournalReminder(); maybeShowStreakAlert(); }, 30000);
 
   // Saludo + frase motivadora del Dashboard: cambian según la hora del día
   // y se eligen al azar cada vez que se entra, para que la pantalla de
@@ -3139,7 +3357,7 @@
       const handle = await idbGet(HANDLE_KEY);
       if (!handle){
         inicioWarning.style.display = 'block';
-        inicioWarning.textContent = 'Todavía no elegiste una carpeta de guardado. Andá a Configuración.';
+        inicioWarning.textContent = 'Todavía no elegiste una carpeta de guardado. Andá a Cuentas y ajustes.';
         canStart = false;
       }
     }
@@ -3704,6 +3922,89 @@
     return {sync};
   }
 
+  // ---- Selector de hora a medida: reemplaza visualmente el <input type="time">
+  // nativo (el desplegable blanco/plateado del sistema, sin poder cambiarle el
+  // estilo) por un botón + dos columnas desplegables (hora / minuto) con la
+  // estética de la app. El <input> original sigue existiendo (oculto) y sigue
+  // siendo la fuente de verdad: dispara "change" como antes, así el resto del
+  // código no necesita enterarse de este cambio.
+  function createTimePicker(input){
+    input.style.display = 'none';
+    const wrap = document.createElement('div');
+    wrap.className = 'timepicker';
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'timepicker-trigger';
+    trigger.innerHTML = '<span class="tp-trigger-text"></span>' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>';
+    const pop = document.createElement('div');
+    pop.className = 'timepicker-pop';
+    wrap.appendChild(trigger); wrap.appendChild(pop);
+    input.insertAdjacentElement('afterend', wrap);
+
+    const triggerText = trigger.querySelector('.tp-trigger-text');
+    function sync(){ triggerText.textContent = input.value || '--:--'; }
+
+    function setValue(val){
+      input.value = val;
+      sync();
+      input.dispatchEvent(new Event('change', {bubbles: true}));
+    }
+
+    function render(){
+      const parts = (input.value || '00:00').split(':');
+      const hh = pad(parseInt(parts[0], 10) || 0), mm = pad(parseInt(parts[1], 10) || 0);
+      let hourCells = '';
+      for (let h = 0; h < 24; h++){
+        const hs = pad(h);
+        hourCells += '<button type="button" class="tp-opt' + (hs === hh ? ' selected' : '') + '" data-hour="' + hs + '">' + hs + '</button>';
+      }
+      let minCells = '';
+      for (let m = 0; m < 60; m++){
+        const ms = pad(m);
+        minCells += '<button type="button" class="tp-opt' + (ms === mm ? ' selected' : '') + '" data-min="' + ms + '">' + ms + '</button>';
+      }
+      pop.innerHTML =
+        '<div class="tp-cols">' +
+          '<div class="tp-col" data-col="hour">' + hourCells + '</div>' +
+          '<div class="tp-col-sep">:</div>' +
+          '<div class="tp-col" data-col="min">' + minCells + '</div>' +
+        '</div>' +
+        '<div class="dp-footer"><span></span><button type="button" class="dp-link" data-action="done">Listo</button></div>';
+
+      pop.querySelectorAll('[data-hour]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          setValue(btn.dataset.hour + ':' + (input.value || '00:00').split(':')[1]);
+          render();
+        });
+      });
+      pop.querySelectorAll('[data-min]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          setValue((input.value || '00:00').split(':')[0] + ':' + btn.dataset.min);
+          render();
+        });
+      });
+      pop.querySelector('[data-action="done"]').addEventListener('click', () => close());
+      const selHour = pop.querySelector('.tp-col[data-col="hour"] .selected');
+      if (selHour) selHour.scrollIntoView({block: 'center'});
+      const selMin = pop.querySelector('.tp-col[data-col="min"] .selected');
+      if (selMin) selMin.scrollIntoView({block: 'center'});
+    }
+
+    function open(){ pop.classList.add('show'); trigger.classList.add('open'); render(); }
+    function close(){ pop.classList.remove('show'); trigger.classList.remove('open'); }
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (pop.classList.contains('show')) close(); else open();
+    });
+    document.addEventListener('click', (e) => {
+      if (!wrap.contains(e.target)) close();
+    });
+
+    sync();
+    return {sync};
+  }
+
   function parseIntOrNull(str){
     if (str === '' || str === null || str === undefined) return null;
     const n = parseInt(str, 10);
@@ -3929,7 +4230,7 @@
 
     folderHandle = await idbGet(HANDLE_KEY);
     if (!folderHandle){
-      startupMsg.textContent = 'No hay carpeta de guardado configurada. Andá a Configuración.';
+      startupMsg.textContent = 'No hay carpeta de guardado configurada. Andá a Cuentas y ajustes.';
       startupBackBtn.style.display = 'inline-block';
       if (screenStream) screenStream.getTracks().forEach(t => t.stop());
       camStream.getTracks().forEach(t => t.stop());
@@ -3941,7 +4242,7 @@
       if (perm !== 'granted') throw new Error('permission-denied');
       document.getElementById('sesionFolderPath').textContent = folderHandle.name;
     } catch (e) {
-      startupMsg.textContent = 'Falta confirmar el acceso a la carpeta de guardado. Andá a Configuración y tocá "Confirmar acceso a la carpeta", después volvé a intentar.';
+      startupMsg.textContent = 'Falta confirmar el acceso a la carpeta de guardado. Andá a Cuentas y ajustes y tocá "Confirmar acceso a la carpeta", después volvé a intentar.';
       startupBackBtn.style.display = 'inline-block';
       if (screenStream) screenStream.getTracks().forEach(t => t.stop());
       camStream.getTracks().forEach(t => t.stop());
@@ -4523,6 +4824,68 @@
     statWinrate.textContent = (s.winrate === null) ? '—' : (s.winrate + '%');
   }
 
+  // ---- Calendario mensual de journaling (debajo de las estadísticas del
+  // Journal): marca automáticamente los días que tienen al menos una entrada
+  // en el journal, ya sea porque esa sesión se grabó (video) o porque se
+  // cargó una foto de operaciones y se completó el journal a mano. Cada día
+  // muestra un punto por cada activo distinto operado ese día, con el mismo
+  // color que se usa en el resto de la app.
+  const jcalMonthLabel = document.getElementById('jcalMonthLabel');
+  const jcalGrid = document.getElementById('jcalGrid');
+  const jcalPrevBtn = document.getElementById('jcalPrevBtn');
+  const jcalNextBtn = document.getElementById('jcalNextBtn');
+  let jcalYear = new Date().getFullYear();
+  let jcalMonth = new Date().getMonth();
+
+  if (jcalPrevBtn) jcalPrevBtn.addEventListener('click', () => {
+    jcalMonth--; if (jcalMonth < 0){ jcalMonth = 11; jcalYear--; }
+    renderHistorial();
+  });
+  if (jcalNextBtn) jcalNextBtn.addEventListener('click', () => {
+    jcalMonth++; if (jcalMonth > 11){ jcalMonth = 0; jcalYear++; }
+    renderHistorial();
+  });
+
+  function renderJournalCalendar(journal){
+    if (!jcalGrid) return;
+    jcalMonthLabel.textContent = MONTH_NAMES_ES[jcalMonth] + ' ' + jcalYear;
+
+    const byDate = {};
+    journal.forEach(e => {
+      if (!e.date) return;
+      if (!byDate[e.date]) byDate[e.date] = [];
+      if (e.asset && !byDate[e.date].includes(e.asset)) byDate[e.date].push(e.asset);
+    });
+
+    const todayKey = dateToKey(new Date());
+    const first = new Date(jcalYear, jcalMonth, 1);
+    const startDow = (first.getDay() + 6) % 7; // lunes = 0
+    const daysInMonth = new Date(jcalYear, jcalMonth + 1, 0).getDate();
+
+    let cells = '';
+    for (let i = 0; i < startDow; i++) cells += '<div class="jcal-day muted"></div>';
+    for (let d = 1; d <= daysInMonth; d++){
+      const key = jcalYear + '-' + pad(jcalMonth + 1) + '-' + pad(d);
+      const assets = byDate[key];
+      let cls = 'jcal-day';
+      if (key === todayKey) cls += ' today';
+      if (assets && assets.length) cls += ' has-entry';
+      let dotsHtml = '';
+      if (assets && assets.length){
+        dotsHtml = '<div class="dots">' + assets.slice(0, 3).map(a =>
+          '<span class="pill-dot" style="background:' + colorFor(a) + '"></span>').join('') + '</div>';
+      }
+      cells += '<div class="' + cls + '" data-date="' + key + '"><span class="n">' + d + '</span>' + dotsHtml + '</div>';
+    }
+    jcalGrid.innerHTML = cells;
+    jcalGrid.querySelectorAll('.jcal-day.has-entry').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const entry = journal.slice().reverse().find(e => e.date === cell.dataset.date);
+        if (entry) openDetalle(entry, 'historial');
+      });
+    });
+  }
+
   // El modal de editar/borrar una sesión se abre tanto desde el Dashboard
   // (tabla "sesiones recientes") como desde el Historial, así que después de
   // guardar hay que refrescar TODAS las vistas que dependen del journal,
@@ -4542,6 +4905,7 @@
   function renderHistorial(){
     const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
     renderStats(journal);
+    renderJournalCalendar(journal);
 
     const assetValues = Array.from(new Set(journal.map(e => e.asset).filter(Boolean))).sort();
     const accountValues = Array.from(new Set(journal.map(e => e.account).filter(Boolean))).sort();
@@ -4771,17 +5135,232 @@
     return div.innerHTML;
   }
 
+  // =======================================================================
+  // VISTA CALENDARIO (día / semana / mes / año)
+  // =======================================================================
+  const calBody = document.getElementById('calBody');
+  const calLabel = document.getElementById('calLabel');
+  const calModePicker = document.getElementById('calModePicker');
+  const calPrevBtn = document.getElementById('calPrevBtn');
+  const calNextBtn = document.getElementById('calNextBtn');
+  const calTodayBtn = document.getElementById('calTodayBtn');
+  const DOW_LONG_ES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+  let calMode = 'month';
+  let calDate = new Date();
+
+  function syncCalModeButtons(){
+    if (!calModePicker) return;
+    calModePicker.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mode === calMode));
+  }
+  if (calModePicker){
+    calModePicker.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => { calMode = btn.dataset.mode; syncCalModeButtons(); renderCalendar(); });
+    });
+  }
+  function calNavigate(dir){
+    if (calMode === 'day') calDate.setDate(calDate.getDate() + dir);
+    else if (calMode === 'week') calDate.setDate(calDate.getDate() + dir * 7);
+    else if (calMode === 'month') calDate.setMonth(calDate.getMonth() + dir);
+    else calDate.setFullYear(calDate.getFullYear() + dir);
+  }
+  if (calPrevBtn) calPrevBtn.addEventListener('click', () => { calNavigate(-1); renderCalendar(); });
+  if (calNextBtn) calNextBtn.addEventListener('click', () => { calNavigate(1); renderCalendar(); });
+  if (calTodayBtn) calTodayBtn.addEventListener('click', () => { calDate = new Date(); renderCalendar(); });
+
+  // Agrupa el journal por fecha, para que cada vista solo tenga que buscar
+  // en un objeto en vez de recorrer todo el array una y otra vez.
+  function groupJournalByDate(journal){
+    const map = {};
+    journal.forEach(e => {
+      if (!e.date) return;
+      if (!map[e.date]) map[e.date] = [];
+      map[e.date].push(e);
+    });
+    return map;
+  }
+
+  function goToDay(dateStr){
+    calDate = parseDateStrLocal(dateStr);
+    calMode = 'day';
+    syncCalModeButtons();
+    renderCalendar();
+  }
+
+  // Al tocar un día con una sola sesión va directo al detalle; con más de
+  // una, abre la vista Día de ese fecha para elegir cuál ver.
+  function openDayOrEntry(entries, dateStr){
+    if (entries.length === 1){ openDetalle(entries[0], 'calendario'); }
+    else { goToDay(dateStr); }
+  }
+
+  function renderCalYear(container, journal){
+    const year = calDate.getFullYear();
+    const byDate = groupJournalByDate(journal);
+    const todayKey = dateToKey(new Date());
+    let html = '<div class="cal-year-grid">';
+    for (let m = 0; m < 12; m++){
+      const first = new Date(year, m, 1);
+      const startDow = (first.getDay() + 6) % 7;
+      const daysInMonth = new Date(year, m + 1, 0).getDate();
+      let cells = '';
+      for (let i = 0; i < startDow; i++) cells += '<div class="cal-mini-day muted">·</div>';
+      for (let d = 1; d <= daysInMonth; d++){
+        const key = year + '-' + pad(m + 1) + '-' + pad(d);
+        const entries = byDate[key];
+        let cls = 'cal-mini-day' + (key === todayKey ? ' today' : '') + (entries && entries.length ? ' has-entry' : '');
+        let style = '';
+        if (entries && entries.length && entries[0].asset) style = ' style="--asset-color:' + colorFor(entries[0].asset) + '"';
+        cells += '<div class="' + cls + '"' + style + '>' + d + '</div>';
+      }
+      html += '<div class="cal-mini-month" data-month="' + m + '">' +
+        '<div class="cal-mini-head">' + MONTH_NAMES_ES[m] + '</div>' +
+        '<div class="cal-mini-weekdays"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>' +
+        '<div class="cal-mini-grid">' + cells + '</div>' +
+      '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+    container.querySelectorAll('.cal-mini-month').forEach(el => {
+      el.addEventListener('click', () => {
+        calDate = new Date(year, parseInt(el.dataset.month, 10), 1);
+        calMode = 'month';
+        syncCalModeButtons();
+        renderCalendar();
+      });
+    });
+  }
+
+  function renderCalMonth(container, journal){
+    const year = calDate.getFullYear(), month = calDate.getMonth();
+    const byDate = groupJournalByDate(journal);
+    const todayKey = dateToKey(new Date());
+    const first = new Date(year, month, 1);
+    const startDow = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let cells = '';
+    for (let i = 0; i < startDow; i++) cells += '<div class="cal-month-day muted"></div>';
+    for (let d = 1; d <= daysInMonth; d++){
+      const key = year + '-' + pad(month + 1) + '-' + pad(d);
+      const entries = byDate[key] || [];
+      let cls = 'cal-month-day' + (key === todayKey ? ' today' : '') + (entries.length ? ' has-entry' : '');
+      let inner = '<span class="n">' + d + '</span>';
+      if (entries.length){
+        const e0 = entries[0];
+        if (e0.asset){
+          inner += '<span class="asset-tag"><span class="pill-dot" style="background:' + colorFor(e0.asset) + '"></span>' +
+            '<span class="label">' + escapeHtml(e0.asset) + '</span></span>';
+        }
+        if (entries.length > 1){
+          inner += '<span class="pnl-tag">+' + (entries.length - 1) + ' más</span>';
+        } else if (typeof e0.pnl === 'number' && !isNaN(e0.pnl)){
+          const sign = e0.pnl > 0 ? '+' : '';
+          const cls2 = e0.pnl > 0 ? 'win' : (e0.pnl < 0 ? 'loss' : '');
+          inner += '<span class="pnl-tag ' + cls2 + '">' + sign + e0.pnl.toLocaleString('es-AR') + '</span>';
+        }
+      }
+      cells += '<div class="' + cls + '" data-date="' + key + '">' + inner + '</div>';
+    }
+    container.innerHTML =
+      '<div class="cal-month-weekdays"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>' +
+      '<div class="cal-month-grid">' + cells + '</div>';
+    container.querySelectorAll('.cal-month-day.has-entry').forEach(cell => {
+      cell.addEventListener('click', () => openDayOrEntry(byDate[cell.dataset.date], cell.dataset.date));
+    });
+  }
+
+  function renderCalWeek(container, journal){
+    const byDate = groupJournalByDate(journal);
+    const weekStart = getWeekStart(dateToKey(calDate));
+    const todayKey = dateToKey(new Date());
+    let html = '<div class="cal-week-grid">';
+    for (let i = 0; i < 7; i++){
+      const d = new Date(weekStart); d.setDate(d.getDate() + i);
+      const key = dateToKey(d);
+      const entries = byDate[key] || [];
+      const schedEntry = config.schedule[DOW_KEY[d.getDay()]];
+      let cls = 'cal-week-day' + (key === todayKey ? ' today' : '') + (entries.length ? ' has-entry' : '');
+      let body = '<div class="dow">' + DOW_LONG_ES[i] + '</div><div class="n">' + d.getDate() + '</div>';
+      if (entries.length){
+        entries.slice(0, 3).forEach(e => {
+          body += '<span class="asset-tag" style="display:flex;align-items:center;gap:5px;font-size:11px;' +
+            'font-weight:700;padding:3px 6px;border-radius:6px;background:var(--surface-3);width:fit-content">' +
+            '<span class="pill-dot" style="background:' + colorFor(e.asset || '') + '"></span>' +
+            escapeHtml(e.asset || 'Sesión') + '</span>';
+        });
+      } else if (schedEntry && !schedEntry.off){
+        body += '<div class="empty-note">Programado: ' + escapeHtml(schedEntry.asset || '—') + '</div>';
+      } else {
+        body += '<div class="empty-note">Sin sesión</div>';
+      }
+      html += '<div class="' + cls + '" data-date="' + key + '">' + body + '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+    container.querySelectorAll('.cal-week-day.has-entry').forEach(cell => {
+      cell.addEventListener('click', () => openDayOrEntry(byDate[cell.dataset.date], cell.dataset.date));
+    });
+  }
+
+  function renderCalDay(container, journal){
+    const key = dateToKey(calDate);
+    const entries = journal.filter(e => e.date === key).slice().reverse();
+    const schedEntry = config.schedule[DOW_KEY[calDate.getDay()]];
+    let html = '<div class="cal-day-panel">';
+    html += '<div class="cal-day-date">' + DOW_LONG_ES[(calDate.getDay() + 6) % 7] + ' ' + formatDayMonth(calDate) + ' de ' + calDate.getFullYear() + '</div>';
+    if (schedEntry && !schedEntry.off){
+      html += '<div class="kv-row"><span>Esquema del día</span><span class="num">' +
+        escapeHtml(schedEntry.asset || '—') + ' · ' + escapeHtml(schedEntry.account || '—') + ' · ' +
+        schedEntry.start + '–' + schedEntry.end + '</span></div><div class="divider"></div>';
+    }
+    if (!entries.length){
+      html += '<div class="cal-day-empty">No hay sesiones registradas este día.</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+    if (entries.length){
+      const list = document.createElement('div');
+      list.style.marginTop = '14px';
+      list.style.display = 'flex';
+      list.style.flexDirection = 'column';
+      list.style.gap = '10px';
+      entries.forEach(entry => list.appendChild(buildHistCard(entry)));
+      container.appendChild(list);
+    }
+  }
+
+  function renderCalendar(){
+    if (!calBody) return;
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    if (calMode === 'year'){
+      calLabel.textContent = String(calDate.getFullYear());
+      renderCalYear(calBody, journal);
+    } else if (calMode === 'week'){
+      const weekStart = getWeekStart(dateToKey(calDate));
+      const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
+      calLabel.textContent = 'Semana del ' + formatDayMonth(weekStart) + ' al ' + formatDayMonth(weekEnd);
+      renderCalWeek(calBody, journal);
+    } else if (calMode === 'day'){
+      calLabel.textContent = formatDayMonth(calDate);
+      renderCalDay(calBody, journal);
+    } else {
+      calLabel.textContent = MONTH_NAMES_ES[calDate.getMonth()] + ' ' + calDate.getFullYear();
+      renderCalMonth(calBody, journal);
+    }
+  }
+  syncCalModeButtons();
+
   async function openHistorialFile(filename, kind){
     try {
       const folderHandle = await idbGet(HANDLE_KEY);
       if (!folderHandle){
-        alert('No hay ninguna carpeta de guardado configurada todavía. Andá a Configuración y elegí una.');
+        alert('No hay ninguna carpeta de guardado configurada todavía. Andá a Cuentas y ajustes y elegí una.');
         return;
       }
       let perm = await folderHandle.queryPermission({mode:'readwrite'});
       if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'readwrite'});
       if (perm !== 'granted'){
-        alert('Falta confirmar el acceso a la carpeta "' + folderHandle.name + '". Andá a Configuración y tocá "Confirmar acceso a la carpeta", después volvé a intentar.');
+        alert('Falta confirmar el acceso a la carpeta "' + folderHandle.name + '". Andá a Cuentas y ajustes y tocá "Confirmar acceso a la carpeta", después volvé a intentar.');
         return;
       }
       let fh;
@@ -5034,14 +5613,14 @@
     try {
       const folderHandle = await idbGet(HANDLE_KEY);
       if (!folderHandle){
-        detallePlayerEmpty.textContent = 'No hay ninguna carpeta de guardado configurada. Andá a Configuración y elegí una.';
+        detallePlayerEmpty.textContent = 'No hay ninguna carpeta de guardado configurada. Andá a Cuentas y ajustes y elegí una.';
         detallePlayerEmpty.style.display = 'flex';
         return;
       }
       let perm = await folderHandle.queryPermission({mode:'readwrite'});
       if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'readwrite'});
       if (perm !== 'granted'){
-        detallePlayerEmpty.textContent = 'Falta confirmar el acceso a la carpeta "' + folderHandle.name + '" desde Configuración.';
+        detallePlayerEmpty.textContent = 'Falta confirmar el acceso a la carpeta "' + folderHandle.name + '" desde Cuentas y ajustes.';
         detallePlayerEmpty.style.display = 'flex';
         return;
       }
@@ -5257,14 +5836,14 @@
       try {
         const folderHandle = await idbGet(HANDLE_KEY);
         if (!folderHandle){
-          alert('No hay ninguna carpeta de guardado configurada todavía. Andá a Configuración y elegí una, después volvé a intentar.');
+          alert('No hay ninguna carpeta de guardado configurada todavía. Andá a Cuentas y ajustes y elegí una, después volvé a intentar.');
           editSaveBtn.disabled = false; editSaveBtn.textContent = 'Guardar cambios';
           return;
         }
         let perm = await folderHandle.queryPermission({mode:'readwrite'});
         if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'readwrite'});
         if (perm !== 'granted'){
-          alert('Falta confirmar el acceso a la carpeta "' + folderHandle.name + '". Andá a Configuración y tocá "Confirmar acceso a la carpeta", después volvé a intentar.');
+          alert('Falta confirmar el acceso a la carpeta "' + folderHandle.name + '". Andá a Cuentas y ajustes y tocá "Confirmar acceso a la carpeta", después volvé a intentar.');
           editSaveBtn.disabled = false; editSaveBtn.textContent = 'Guardar cambios';
           return;
         }
@@ -5401,7 +5980,7 @@
     try {
       const folderHandle = await idbGet(HANDLE_KEY);
       if (!folderHandle){
-        throw new Error('Todavía no elegiste una carpeta de guardado en Configuración.');
+        throw new Error('Todavía no elegiste una carpeta de guardado en Cuentas y ajustes.');
       }
       let perm = await folderHandle.queryPermission({mode:'read'});
       if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'read'});
