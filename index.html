@@ -153,14 +153,17 @@
   .startbtn:disabled{opacity:0.4;cursor:not-allowed}
 
   /* ---------- Sesión en vivo (full screen) ---------- */
-  #view-sesion{position:fixed;inset:0;background:#000;display:none;flex-direction:column;z-index:20}
-  .sesion-topbar{height:56px;flex:none;display:flex;align-items:center;padding:0 24px;gap:20px;
-    background:rgba(11,15,20,0.94);border-bottom:1px solid var(--border)}
-  .sesion-topbar .info{font-weight:700;font-size:14px}
+  #view-sesion{position:fixed;top:0;right:0;bottom:0;left:236px;background:#000;display:none;flex-direction:column;z-index:20}
+  .sesion-topbar{flex:none;display:flex;align-items:center;padding:16px 28px;gap:20px;
+    background:linear-gradient(180deg,var(--surface),rgba(11,15,20,0.94));border-bottom:1px solid var(--border)}
+  .sesion-title{font-family:var(--font-display);font-weight:700;font-size:16px}
+  .sesion-topbar .info{font-weight:600;font-size:13px;color:var(--text-2);margin-top:2px}
   .sesion-topbar .info .acct{color:var(--text-2);font-weight:600}
+  .rec-pill{display:inline-flex;align-items:center;gap:8px;background:var(--danger-soft);color:var(--danger);
+    padding:7px 14px;border-radius:999px;font-family:var(--font-mono);font-size:12px;font-weight:700}
   .rec-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
   .rec-dot.paused{background:var(--text-2);box-shadow:none}
-  .timer{font-size:15px;font-weight:600;letter-spacing:0.02em}
+  .timer{font-size:12px;font-weight:700;letter-spacing:0.02em;color:inherit}
   #stageOuter{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
   #stage{position:relative;background:#000;overflow:hidden}
   #stage video{width:100%;height:100%;object-fit:fill;display:block}
@@ -191,9 +194,12 @@
   .quality-btn .qdesc{font-size:11px;font-weight:600;color:var(--text-2);line-height:1.3}
   .quality-btn.active{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
   .quality-btn.active .qdesc{color:var(--teal)}
-  .zoom-bar{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;align-items:center;gap:2px;
-    padding:10px 20px;background:rgba(13,17,23,0.97);border-top:1px solid var(--border);backdrop-filter:blur(8px)}
+  .zoom-bar{position:absolute;left:20px;right:20px;bottom:20px;z-index:6;display:flex;align-items:center;gap:2px;
+    padding:8px 14px;background:rgba(18,22,29,0.97);border:1px solid var(--border);border-radius:16px;
+    backdrop-filter:blur(8px);box-shadow:0 16px 40px rgba(0,0,0,0.45)}
   .zoom-bar-spacer{flex:1}
+  .folder-path-tag{font-size:11px;color:var(--text-2);margin-right:14px;white-space:nowrap;display:flex;align-items:center;gap:6px}
+  .folder-path-tag:empty{display:none}
   .zoom-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
     background:none;border:none;color:var(--text);cursor:pointer;padding:8px 14px;border-radius:8px;
     font-family:var(--font-ui);flex:none}
@@ -806,8 +812,11 @@
   <!-- ============ VIEW: SESIÓN EN VIVO (full screen) ============ -->
   <div id="view-sesion">
     <div class="sesion-topbar">
-      <div class="info" id="sesionInfo">—</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+      <div>
+        <div class="sesion-title">Grabando sesión</div>
+        <div class="info" id="sesionInfo">—</div>
+      </div>
+      <div class="rec-pill" style="margin-left:auto">
         <span class="rec-dot" id="recDot"></span>
         <span class="timer num" id="sesionTimer">00:00:00</span>
       </div>
@@ -822,7 +831,7 @@
         <div class="draggable notes-panel" id="notesBox" style="width:280px;height:260px">
           <div class="notes-header" id="notesDragHandle">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2"><circle cx="8" cy="6" r="1"></circle><circle cx="16" cy="6" r="1"></circle><circle cx="8" cy="12" r="1"></circle><circle cx="16" cy="12" r="1"></circle><circle cx="8" cy="18" r="1"></circle><circle cx="16" cy="18" r="1"></circle></svg>
-            <span>Notas de hoy</span>
+            <span>Notas de la sesión</span>
           </div>
           <div class="notes-body" id="notesBody" contenteditable="true" data-placeholder="Escribí tu plan y lo que vayas viendo..."></div>
         </div>
@@ -865,6 +874,7 @@
           </div>
         </div>
         <div class="zoom-bar-spacer"></div>
+        <span class="folder-path-tag mono" id="sesionFolderPath"></span>
         <button class="zoom-btn" id="pauseSessionBtn" type="button" title="Pausar grabación">
           <span class="zicon" id="pauseIcon">⏸</span>
           <span class="zlabel" id="pauseLabel">Pausar</span>
@@ -1757,6 +1767,7 @@
   const navConfig = document.getElementById('navConfig');
   const navHistorial = document.getElementById('navHistorial');
   const navResumen = document.getElementById('navResumen');
+  const navGrabacionEl = document.getElementById('navGrabacion');
 
   function showView(name){
     Object.keys(views).forEach(k => { views[k].style.display = (k === name) ? (k === 'sesion' ? 'flex' : 'block') : 'none'; });
@@ -1764,6 +1775,7 @@
     navConfig.classList.toggle('active', name === 'config');
     navHistorial.classList.toggle('active', name === 'historial');
     navResumen.classList.toggle('active', name === 'resumen');
+    navGrabacionEl.classList.toggle('active', name === 'sesion');
     if (name === 'inicio') renderInicio();
     if (name === 'historial') renderHistorial();
     if (name === 'resumen') renderResumen();
@@ -2133,7 +2145,7 @@
     startSession(entry);
   });
 
-  document.getElementById('navGrabacion').addEventListener('click', () => {
+  navGrabacionEl.addEventListener('click', () => {
     if (startSessionBtn.disabled){
       showView('inicio');
     } else {
@@ -2410,6 +2422,7 @@
     sesionInfo.innerHTML = (entry && entry.asset ? entry.asset : 'Sesión') +
       ' <span class="acct">· ' + (entry && entry.account ? entry.account : '—') + '</span>';
     notesBody.textContent = '';
+    document.getElementById('sesionFolderPath').textContent = '';
 
     // reiniciar los controles tipo Zoom para esta nueva sesión
     activeCamStream = null;
@@ -2476,6 +2489,7 @@
       let perm = await folderHandle.queryPermission({mode:'readwrite'});
       if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'readwrite'});
       if (perm !== 'granted') throw new Error('permission-denied');
+      document.getElementById('sesionFolderPath').textContent = folderHandle.name;
     } catch (e) {
       startupMsg.textContent = 'Falta confirmar el acceso a la carpeta de guardado. Andá a Configuración y tocá "Confirmar acceso a la carpeta", después volvé a intentar.';
       startupBackBtn.style.display = 'inline-block';
@@ -2538,20 +2552,20 @@
         ctx.fillStyle = 'rgba(17,22,29,0.94)';
         drawRoundedClip(ctx, nx, ny, nw, nh, nr);
         ctx.fill();
-        ctx.strokeStyle = '#232b36';
+        ctx.strokeStyle = '#242C3B';
         ctx.lineWidth = 1 * (w / stage.clientWidth);
         ctx.stroke();
         const pad14 = 14 * (w / stage.clientWidth);
-        ctx.fillStyle = '#8a94a3';
+        ctx.fillStyle = '#8B93A7';
         const headerSize = 12 * (w / stage.clientWidth);
         ctx.font = '700 ' + headerSize + 'px Manrope, sans-serif';
-        ctx.fillText('Notas de hoy', nx + pad14, ny + pad14 + headerSize);
-        ctx.strokeStyle = '#232b36';
+        ctx.fillText('Notas de la sesión', nx + pad14, ny + pad14 + headerSize);
+        ctx.strokeStyle = '#242C3B';
         ctx.beginPath();
         ctx.moveTo(nx, ny + pad14*2 + headerSize);
         ctx.lineTo(nx + nw, ny + pad14*2 + headerSize);
         ctx.stroke();
-        ctx.fillStyle = '#e9edf1';
+        ctx.fillStyle = '#F2F4F7';
         const bodySize = 13 * (w / stage.clientWidth);
         ctx.font = '500 ' + bodySize + 'px Manrope, sans-serif';
         const text = notesBody.innerText || '';
