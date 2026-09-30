@@ -1648,6 +1648,7 @@
   // configuración, journal y carpeta de videos, aunque usen la misma instalación.
   let STORAGE_KEY = 'tradecam_config_v1';
   let JOURNAL_KEY = 'tradecam_journal_v1';
+  let LAST_VIEW_KEY = 'tradecam_last_view_v1';
   const DB_NAME = 'tradecam'; const STORE_NAME = 'handles'; let HANDLE_KEY = 'saveFolder';
 
   const defaultConfig = () => ({
@@ -1738,6 +1739,7 @@
     STORAGE_KEY = 'tradecam_config_v1::' + user.id;
     JOURNAL_KEY = 'tradecam_journal_v1::' + user.id;
     HANDLE_KEY = 'saveFolder::' + user.id;
+    LAST_VIEW_KEY = 'tradecam_last_view_v1::' + user.id;
     config = loadConfig();
   }
 
@@ -1751,7 +1753,17 @@
     renderConfigView();
     checkExistingFolder();
     const hasBasics = config.accounts.length > 0 && config.assets.length > 0;
-    showView(hasBasics ? 'inicio' : 'config');
+    // Si tiene lo básico configurado, volvemos a la última vista en la que
+    // estaba antes de recargar (Dashboard, Config, Journal o Resumen). La
+    // vista "Grabación" no se restaura: al recargar el navegador pierde el
+    // acceso a la cámara/pantalla y la grabación en curso, así que no tiene
+    // sentido dejarlo ahí mostrando una sesión que ya no existe.
+    let target = 'config';
+    if (hasBasics){
+      const savedView = localStorage.getItem(LAST_VIEW_KEY);
+      target = RESTORABLE_VIEWS.includes(savedView) ? savedView : 'inicio';
+    }
+    showView(target);
   }
 
   function showAuthOverlay(){
@@ -1914,6 +1926,11 @@
   const navResumen = document.getElementById('navResumen');
   const navGrabacionEl = document.getElementById('navGrabacion');
 
+  // Vistas que se restauran al recargar la página. "sesion" (grabación en
+  // vivo), "post" y "done" quedan afuera a propósito: dependen de streams de
+  // cámara/pantalla y datos en memoria que no sobreviven a un F5.
+  const RESTORABLE_VIEWS = ['inicio', 'config', 'historial', 'resumen'];
+
   function showView(name){
     Object.keys(views).forEach(k => { views[k].style.display = (k === name) ? (k === 'sesion' ? 'flex' : 'block') : 'none'; });
     navInicio.classList.toggle('active', name === 'inicio');
@@ -1921,6 +1938,9 @@
     navHistorial.classList.toggle('active', name === 'historial');
     navResumen.classList.toggle('active', name === 'resumen');
     navGrabacionEl.classList.toggle('active', name === 'sesion');
+    if (RESTORABLE_VIEWS.includes(name)){
+      try { localStorage.setItem(LAST_VIEW_KEY, name); } catch (e) {}
+    }
     if (name === 'inicio') renderInicio();
     if (name === 'historial') renderHistorial();
     if (name === 'resumen') renderResumen();
