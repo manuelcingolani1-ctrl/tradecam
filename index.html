@@ -3158,6 +3158,17 @@
     statWinrate.textContent = (s.winrate === null) ? '—' : (s.winrate + '%');
   }
 
+  // El modal de editar/borrar una sesión se abre tanto desde el Dashboard
+  // (tabla "sesiones recientes") como desde el Historial, así que después de
+  // guardar hay que refrescar TODAS las vistas que dependen del journal,
+  // no solo la que abrió el modal — si no, la otra queda desactualizada
+  // hasta que el usuario recarga la página a mano.
+  function refreshJournalViews(){
+    renderDashboardWidgets();
+    renderHistorial();
+    renderResumen();
+  }
+
   function renderHistorial(){
     const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
     renderStats(journal);
@@ -3554,7 +3565,7 @@
 
     localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
     closeEditModal();
-    renderHistorial();
+    refreshJournalViews();
   });
 
   editDeleteBtn.addEventListener('click', () => {
@@ -3567,7 +3578,7 @@
     const filtered = journal.filter(e => e.createdAt !== editingEntryId);
     localStorage.setItem(JOURNAL_KEY, JSON.stringify(filtered));
     closeEditModal();
-    renderHistorial();
+    refreshJournalViews();
   });
 
   // =======================================================================
@@ -3727,7 +3738,7 @@
     localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
 
     closeManualAddModal();
-    renderHistorial();
+    refreshJournalViews();
   });
 
   // =======================================================================
