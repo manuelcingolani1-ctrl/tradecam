@@ -200,6 +200,89 @@
   .dot.ok{background:var(--accent)}
   .dot.warn{background:#F5A623}
   .dot.off{background:var(--text-2)}
+
+  /* ---------- Configuración (rediseño): grilla de dos columnas ---------- */
+  #view-config.wrap{max-width:1180px}
+  .config-grid{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+  .config-col-main{flex:1 1 600px;min-width:0}
+  .config-col-side{flex:0 0 320px;min-width:280px}
+  .config-col-main section, .config-col-side section{margin-bottom:16px}
+  .config-head-actions{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+  .config-head-actions h1{margin-bottom:6px}
+  .config-head-actions .sub{margin-bottom:0}
+
+  .account-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:14px}
+  .account-card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;transition:opacity .15s}
+  .account-card.inactive{opacity:0.55}
+  .account-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .account-card-top .name{font-weight:800;font-size:14.5px}
+  .account-card-summary{font-size:12px;color:var(--text-2);margin-bottom:12px;min-height:15px}
+  .account-card-summary .pill-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .account-card label{margin-bottom:4px}
+  .account-card .remove-account{background:none;border:none;color:var(--text-2);cursor:pointer;font-size:12px;
+    font-family:var(--font-ui);padding:2px 0;margin-top:8px;text-decoration:underline;text-decoration-color:transparent;transition:text-decoration-color .15s}
+  .account-card .remove-account:hover{color:var(--danger);text-decoration-color:var(--danger)}
+
+  /* switch on/off estilo iOS, usado en cuentas y preferencias */
+  .switch{position:relative;display:inline-block;width:40px;height:23px;flex:none}
+  .switch input{opacity:0;width:0;height:0;position:absolute}
+  .switch .slider{position:absolute;inset:0;background:var(--surface-3);border:1px solid var(--border);
+    border-radius:999px;cursor:pointer;transition:background-color .15s,border-color .15s}
+  .switch .slider::before{content:"";position:absolute;width:17px;height:17px;left:2px;top:2px;
+    background:var(--text-2);border-radius:50%;transition:transform .15s,background-color .15s}
+  .switch input:checked + .slider{background:var(--teal);border-color:var(--teal)}
+  .switch input:checked + .slider::before{transform:translateX(17px);background:#04201C}
+  .switch input:focus-visible + .slider{box-shadow:0 0 0 2px var(--teal-soft)}
+
+  .folder-row{display:flex;gap:10px}
+  .folder-row input{flex:1;cursor:default}
+
+  .device-field{margin-bottom:14px}
+  .device-field:last-child{margin-bottom:0}
+  .quality-picker-mini{display:flex;gap:8px}
+  .quality-pill{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
+    padding:9px 4px;text-align:center;font-size:12.5px;font-weight:700;color:var(--text-2);cursor:pointer;
+    font-family:var(--font-ui);transition:border-color .15s,color .15s,background-color .15s}
+  .quality-pill:hover{color:var(--text)}
+  .quality-pill.active{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+
+  .pref-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--border)}
+  .pref-row:first-of-type{border-top:none;padding-top:2px}
+  .pref-row .pref-label{font-size:13.5px;font-weight:600}
+  .pref-row .pref-sub{font-size:11.5px;color:var(--text-2);margin-top:2px;font-weight:500}
+
+  .sched-table{display:flex;flex-direction:column}
+  .sched-head{display:grid;grid-template-columns:78px 1fr 1fr 150px 34px;gap:10px;padding:0 0 10px;
+    font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)}
+  .sched-row{display:grid;grid-template-columns:78px 1fr 1fr 150px 34px;gap:10px;align-items:center;
+    padding:13px 0;border-top:1px solid var(--border)}
+  .sched-row .day-name{font-weight:800;font-size:13.5px}
+  .sched-row .sched-view{font-size:13px;display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sched-row .sched-view.muted{color:var(--text-2)}
+  .sched-row .pill-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
+  .sched-row .sched-time{font-size:12.5px;color:var(--text-2);font-family:var(--font-mono)}
+  .sched-row .time-edit{display:flex;align-items:center;gap:4px}
+  .sched-row .time-edit input{padding:6px 6px;font-size:12px}
+  .sched-edit-btn{width:30px;height:30px;border-radius:8px;background:none;border:1px solid var(--border);
+    color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;transition:color .15s,background-color .15s}
+  .sched-edit-btn:hover{color:var(--teal);background:var(--surface-2)}
+  .sched-edit-btn.editing{color:var(--teal);border-color:var(--teal);background:var(--teal-soft)}
+  .sched-row select{padding:7px 8px;font-size:12.5px}
+  .sched-row .off-toggle{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--text-2);white-space:nowrap;margin-top:6px}
+  .sched-edit-cell{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:2px 0 12px;border-top:1px dashed var(--border);margin-top:2px}
+  .sched-edit-cell .field{display:flex;flex-direction:column;gap:4px;min-width:130px;flex:1}
+  .sched-edit-cell .field.time{min-width:90px;flex:0 0 90px}
+  .sched-edit-cell label{margin-bottom:0}
+
+  @media (max-width:760px){
+    .sched-head{display:none}
+    .sched-row{grid-template-columns:1fr auto;grid-template-areas:"day edit" "view view" "time time"}
+    .sched-row .day-name{grid-area:day}
+    .sched-edit-btn{grid-area:edit;justify-self:end}
+    .sched-row .sched-view{grid-area:view}
+    .sched-row .sched-time{grid-area:time}
+  }
+
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--teal);
     color:#04201C;font-weight:700;font-size:13px;padding:12px 22px;border-radius:10px;
     box-shadow:0 12px 28px rgba(0,0,0,0.45);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:50}
@@ -637,64 +720,111 @@
 
   <!-- ============ VIEW: CONFIGURACIÓN ============ -->
   <div id="view-config" class="wrap" style="display:none">
-    <h1>Configuración</h1>
-    <p class="sub">La completás una vez. Después la app arranca cada día sabiendo qué te toca operar.</p>
-
-    <section>
-      <h2>Mis cuentas</h2>
-      <p class="hint">Las cuentas que operás (ej. cuenta propia, cuenta fondeada).</p>
-      <div class="chips" id="accountsChips"></div>
-      <div class="add-row">
-        <input type="text" id="accountInput" placeholder="Ej. Cuenta fondeada">
-        <button class="btn secondary" id="addAccountBtn" type="button">Agregar</button>
+    <div class="config-head-actions">
+      <div>
+        <h1>Configuración</h1>
+        <p class="sub">Cuentas, activos, esquema semanal y grabación.</p>
       </div>
-    </section>
+      <button class="btn" id="saveBtn" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:-2px"><path d="M20 6 9 17l-5-5"/></svg>
+        Guardar cambios
+      </button>
+    </div>
 
-    <section>
-      <h2>Mis activos</h2>
-      <p class="hint">Los activos que solés operar (ej. Bitcoin, Nasdaq).</p>
-      <div class="chips" id="assetsChips"></div>
-      <div class="add-row">
-        <input type="text" id="assetInput" placeholder="Ej. Nasdaq">
-        <button class="btn secondary" id="addAssetBtn" type="button">Agregar</button>
+    <div class="config-grid">
+      <div class="config-col-main">
+        <section>
+          <h2>Cuentas</h2>
+          <p class="hint">Activá o desactivá cada cuenta y anotá el bróker o la firma de fondeo.</p>
+          <div class="account-cards" id="accountCards"></div>
+          <div class="add-row">
+            <input type="text" id="accountInput" placeholder="Ej. Cuenta fondeada">
+            <button class="btn secondary" id="addAccountBtn" type="button">Agregar cuenta</button>
+          </div>
+        </section>
+
+        <section>
+          <h2>Mis activos</h2>
+          <p class="hint">Los activos que solés operar (ej. Bitcoin, Nasdaq).</p>
+          <div class="chips" id="assetsChips"></div>
+          <div class="add-row">
+            <input type="text" id="assetInput" placeholder="Ej. Nasdaq">
+            <button class="btn secondary" id="addAssetBtn" type="button">Agregar</button>
+          </div>
+        </section>
+
+        <section>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <h2 style="margin-bottom:0">Esquema semanal</h2>
+            <span class="pill-link" id="scheduleActiveCount" style="cursor:default;pointer-events:none">—</span>
+          </div>
+          <p class="hint">Qué activo, qué cuenta y en qué horario te toca cada día. Tocá el lápiz para editar.</p>
+          <div class="sched-head">
+            <span>Día</span><span>Activo</span><span>Cuenta</span><span>Horario</span><span></span>
+          </div>
+          <div class="sched-table" id="dayGrid"></div>
+        </section>
       </div>
-    </section>
 
-    <section>
-      <h2>Esquema semanal</h2>
-      <p class="hint">Qué activo y qué cuenta te toca cada día.</p>
-      <div class="day-grid" id="dayGrid"></div>
-    </section>
+      <div class="config-col-side">
+        <section>
+          <h2>Carpeta de guardado</h2>
+          <p class="hint">Ubicación en este equipo. Cada sesión crea una subcarpeta con fecha y activo.</p>
+          <div id="folderUnsupported" class="unsupported" style="display:none">
+            Tu navegador no soporta elegir una carpeta y guardar directo ahí. Esta función necesita Chrome (o Edge).
+          </div>
+          <div class="folder-row">
+            <div class="folder-status" id="folderStatus" style="margin-bottom:0;flex:1">
+              <span class="dot off"></span>
+              <span id="folderStatusText">No hay carpeta seleccionada todavía.</span>
+            </div>
+            <button class="btn secondary" id="pickFolderBtn" type="button">Elegir carpeta</button>
+          </div>
+        </section>
 
-    <section>
-      <h2>Horario y duración</h2>
-      <p class="hint">A qué hora empieza la sesión y cuánto dura la grabación.</p>
-      <div class="row">
-        <div>
-          <label for="startTime">Hora de inicio</label>
-          <input type="time" id="startTime" value="10:10">
-        </div>
-        <div>
-          <label for="duration">Duración (horas)</label>
-          <input type="number" id="duration" min="0.5" max="8" step="0.5" value="2">
-        </div>
+        <section>
+          <h2>Dispositivos de grabación</h2>
+          <p class="hint">Se usan la próxima vez que inicies una sesión.</p>
+          <div class="device-field">
+            <label for="cameraSelect">Cámara</label>
+            <select id="cameraSelect"><option value="">Predeterminada del sistema</option></select>
+          </div>
+          <div class="device-field">
+            <label for="micSelect">Micrófono</label>
+            <select id="micSelect"><option value="">Predeterminado del sistema</option></select>
+          </div>
+          <div class="device-field" id="deviceUnsupported" style="display:none;margin-bottom:0">
+            <p class="hint" style="margin:0">No pudimos leer la lista de cámaras/micrófonos. Se va a usar el dispositivo predeterminado.</p>
+          </div>
+          <div class="device-field" style="margin-bottom:0">
+            <label>Calidad de video</label>
+            <div class="quality-picker-mini" id="qualityPickerConfig">
+              <button type="button" class="quality-pill" data-value="baja">Baja</button>
+              <button type="button" class="quality-pill" data-value="media">Media</button>
+              <button type="button" class="quality-pill" data-value="alta">Alta</button>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Preferencias</h2>
+          <div class="pref-row">
+            <div>
+              <div class="pref-label">Recordatorio antes de sesión</div>
+              <div class="pref-sub">Un aviso 10 min antes de tu horario de hoy</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="prefReminder"><span class="slider"></span></label>
+          </div>
+          <div class="pref-row">
+            <div>
+              <div class="pref-label">Autoguardado de notas</div>
+              <div class="pref-sub">Respalda las notas de la sesión cada 5 min</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="prefAutosave"><span class="slider"></span></label>
+          </div>
+        </section>
       </div>
-    </section>
-
-    <section>
-      <h2>Carpeta de guardado</h2>
-      <p class="hint">Se elige una sola vez; ahí se van a guardar todos los videos, todos los días.</p>
-      <div id="folderUnsupported" class="unsupported" style="display:none">
-        Tu navegador no soporta elegir una carpeta y guardar directo ahí. Esta función necesita Chrome (o Edge).
-      </div>
-      <div class="folder-status" id="folderStatus">
-        <span class="dot off"></span>
-        <span id="folderStatusText">No hay carpeta seleccionada todavía.</span>
-      </div>
-      <button class="btn secondary" id="pickFolderBtn" type="button">Elegir carpeta</button>
-    </section>
-
-    <button class="btn big" id="saveBtn" type="button">Guardar configuración</button>
+    </div>
   </div>
 
   <!-- ============ VIEW: HISTORIAL ============ -->
@@ -1691,29 +1821,73 @@
 
   const defaultConfig = () => ({
     accounts: ['Cuenta propia', 'Cuenta fondeada'],
+    // Datos por cuenta que no son ni el nombre ni el esquema semanal: bróker
+    // o firma de fondeo, y si la cuenta está activa (las cuentas inactivas
+    // no aparecen para elegir en el esquema semanal ni al iniciar sesión).
+    accountMeta: {
+      'Cuenta propia': {broker:'', active:true},
+      'Cuenta fondeada': {broker:'', active:true}
+    },
     assets: ['Bitcoin', 'Nasdaq'],
     schedule: {
-      mon: {asset:'Bitcoin', account:'Cuenta propia', off:false},
-      tue: {asset:'Nasdaq', account:'Cuenta fondeada', off:false},
-      wed: {asset:'Nasdaq', account:'Cuenta fondeada', off:false},
-      thu: {asset:'Bitcoin', account:'Cuenta propia', off:false},
-      fri: {asset:'Nasdaq', account:'Cuenta fondeada', off:false}
+      mon: {asset:'Bitcoin', account:'Cuenta propia', off:false, start:'10:10', end:'12:10'},
+      tue: {asset:'Nasdaq', account:'Cuenta fondeada', off:false, start:'10:10', end:'12:10'},
+      wed: {asset:'Nasdaq', account:'Cuenta fondeada', off:false, start:'10:10', end:'12:10'},
+      thu: {asset:'Bitcoin', account:'Cuenta propia', off:false, start:'10:10', end:'12:10'},
+      fri: {asset:'Nasdaq', account:'Cuenta fondeada', off:false, start:'10:10', end:'12:10'}
     },
     startTime: '10:10',
-    durationHours: 2
+    durationHours: 2,
+    cameraDeviceId: '',
+    micDeviceId: '',
+    reminderEnabled: true,
+    autosaveEnabled: true
   });
 
   let config = defaultConfig(); // se reemplaza por loadConfig() recién después del login
 
+  // Suma horas (puede ser fraccionario, ej. 1.5) a una hora "HH:MM" y
+  // devuelve otra hora "HH:MM", dando la vuelta si cruza la medianoche.
+  function addHoursToTime(startStr, hours){
+    const parts = (startStr || '10:10').split(':').map(Number);
+    const h = parts[0] || 0, m = parts[1] || 0;
+    let total = h * 60 + m + Math.round((hours || 2) * 60);
+    total = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
+    return pad(Math.floor(total / 60)) + ':' + pad(total % 60);
+  }
+
+  // Duración en horas entre dos horas "HH:MM" (start/end de un día del
+  // esquema semanal). Si "end" quedó antes que "start" asumimos que cruza
+  // la medianoche.
+  function timeRangeHours(startStr, endStr){
+    const s = (startStr || '10:10').split(':').map(Number);
+    const e = (endStr || '12:10').split(':').map(Number);
+    let diff = (e[0] * 60 + (e[1] || 0)) - (s[0] * 60 + (s[1] || 0));
+    if (diff <= 0) diff += 24 * 60;
+    return diff / 60;
+  }
+
   function loadConfig(){
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultConfig();
-      const parsed = JSON.parse(raw);
       const base = defaultConfig();
-      return Object.assign(base, parsed, {
-        schedule: Object.assign(base.schedule, parsed.schedule || {})
+      if (!raw) return base;
+      const parsed = JSON.parse(raw);
+      const merged = Object.assign(base, parsed, {
+        schedule: Object.assign({}, base.schedule, parsed.schedule || {}),
+        accountMeta: Object.assign({}, base.accountMeta, parsed.accountMeta || {})
       });
+      // Completa horario por día y accountMeta que puedan faltar en
+      // configuraciones guardadas antes de este rediseño.
+      Object.keys(merged.schedule).forEach(key => {
+        const e = merged.schedule[key];
+        if (!e.start) e.start = merged.startTime || '10:10';
+        if (!e.end) e.end = addHoursToTime(e.start, merged.durationHours || 2);
+      });
+      (merged.accounts || []).forEach(name => {
+        if (!merged.accountMeta[name]) merged.accountMeta[name] = {broker: '', active: true};
+      });
+      return merged;
     } catch (e) { return defaultConfig(); }
   }
   function saveConfigToStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
@@ -1790,6 +1964,7 @@
     authOverlay.classList.remove('show');
     renderConfigView();
     checkExistingFolder();
+    refreshDeviceOptions();
 
     const hasBasics = config.accounts.length > 0 && config.assets.length > 0;
     if (!hasBasics){ showView('config'); return; }
@@ -1994,18 +2169,33 @@
     if (name === 'resumen') renderResumen();
   }
   navInicio.addEventListener('click', () => showView('inicio'));
-  navConfig.addEventListener('click', () => showView('config'));
+  navConfig.addEventListener('click', () => { showView('config'); refreshDeviceOptions(); });
   navHistorial.addEventListener('click', () => showView('historial'));
   navResumen.addEventListener('click', () => showView('resumen'));
 
   // =======================================================================
   // CONFIGURACIÓN VIEW
   // =======================================================================
-  const accountsChips = document.getElementById('accountsChips');
+  const accountCardsEl = document.getElementById('accountCards');
   const assetsChips = document.getElementById('assetsChips');
   const dayGrid = document.getElementById('dayGrid');
-  const startTimeInput = document.getElementById('startTime');
-  const durationInput = document.getElementById('duration');
+  const scheduleActiveCount = document.getElementById('scheduleActiveCount');
+  const cameraSelect = document.getElementById('cameraSelect');
+  const micSelect = document.getElementById('micSelect');
+  const deviceUnsupported = document.getElementById('deviceUnsupported');
+  const prefReminder = document.getElementById('prefReminder');
+  const prefAutosave = document.getElementById('prefAutosave');
+
+  // Colores estables por nombre (activo o cuenta): el mismo nombre siempre
+  // cae en el mismo color, así "Bitcoin" o "Nasdaq" se reconocen de un
+  // vistazo en las cuentas y en el esquema semanal.
+  const PILL_COLORS = ['#F5A623', '#2DD4BF', '#60A5FA', '#A78BFA', '#F472B6', '#34D399', '#FB923C'];
+  function colorFor(name){
+    let hash = 0;
+    const s = name || '';
+    for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
+    return PILL_COLORS[hash % PILL_COLORS.length];
+  }
 
   function renderChips(container, list, onRemove){
     container.innerHTML = '';
@@ -2039,43 +2229,219 @@
     return select;
   }
 
-  function renderDayGrid(){
-    dayGrid.innerHTML = '';
-    DAYS.forEach(day => {
-      const entry = config.schedule[day.key] || {asset:'', account:'', off:false};
-      const row = document.createElement('div');
-      row.className = 'day-row';
-      const name = document.createElement('div');
-      name.className = 'day-name'; name.textContent = day.label;
+  // Cuentas activas: las que el switch de su tarjeta tiene prendido. Son las
+  // que aparecen para elegir en el esquema semanal.
+  function activeAccountNames(){
+    return config.accounts.filter(a => !config.accountMeta[a] || config.accountMeta[a].active !== false);
+  }
 
-      const assetSelect = buildSelect(config.assets, entry.asset, (val) => { config.schedule[day.key].asset = val; });
-      const accountSelect = buildSelect(config.accounts, entry.account, (val) => { config.schedule[day.key].account = val; });
-      assetSelect.disabled = entry.off; accountSelect.disabled = entry.off;
+  // Texto tipo "Bitcoin · lunes y jueves" para la tarjeta de una cuenta,
+  // armado a partir de los días del esquema semanal que usan esa cuenta.
+  function accountSummary(name){
+    const days = DAYS.filter(d => {
+      const e = config.schedule[d.key];
+      return e && !e.off && e.account === name;
+    });
+    if (!days.length) return 'Sin días asignados todavía';
+    const byAsset = {};
+    days.forEach(d => {
+      const asset = config.schedule[d.key].asset || '—';
+      (byAsset[asset] = byAsset[asset] || []).push(d.long.toLowerCase());
+    });
+    return Object.keys(byAsset).map(asset => {
+      const names = byAsset[asset];
+      const joined = names.length === 1 ? names[0] : (names.slice(0, -1).join(', ') + ' y ' + names[names.length - 1]);
+      return asset + ' · ' + joined;
+    }).join(' — ');
+  }
 
-      const offLabel = document.createElement('label');
-      offLabel.className = 'off';
-      const offCheckbox = document.createElement('input');
-      offCheckbox.type = 'checkbox'; offCheckbox.checked = entry.off;
-      offCheckbox.addEventListener('change', () => {
-        config.schedule[day.key].off = offCheckbox.checked;
-        assetSelect.disabled = offCheckbox.checked;
-        accountSelect.disabled = offCheckbox.checked;
+  function renderAccountCards(){
+    accountCardsEl.innerHTML = '';
+    config.accounts.forEach((name, idx) => {
+      const meta = config.accountMeta[name] || (config.accountMeta[name] = {broker: '', active: true});
+      const card = document.createElement('div');
+      card.className = 'account-card' + (meta.active === false ? ' inactive' : '');
+
+      const top = document.createElement('div');
+      top.className = 'account-card-top';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name'; nameEl.textContent = name;
+      const switchLabel = document.createElement('label');
+      switchLabel.className = 'switch'; switchLabel.title = meta.active === false ? 'Cuenta desactivada' : 'Cuenta activa';
+      const switchInput = document.createElement('input');
+      switchInput.type = 'checkbox'; switchInput.checked = meta.active !== false;
+      switchInput.addEventListener('change', () => {
+        meta.active = switchInput.checked;
+        renderAccountCards();
+        renderDayGrid();
       });
-      offLabel.appendChild(offCheckbox);
-      offLabel.appendChild(document.createTextNode('Sin sesión'));
+      const slider = document.createElement('span'); slider.className = 'slider';
+      switchLabel.appendChild(switchInput); switchLabel.appendChild(slider);
+      top.appendChild(nameEl); top.appendChild(switchLabel);
 
-      row.appendChild(name); row.appendChild(assetSelect); row.appendChild(accountSelect); row.appendChild(offLabel);
-      dayGrid.appendChild(row);
+      const summary = document.createElement('div');
+      summary.className = 'account-card-summary';
+      const dot = document.createElement('span');
+      dot.className = 'pill-dot'; dot.style.background = colorFor(name);
+      summary.appendChild(dot);
+      summary.appendChild(document.createTextNode(accountSummary(name)));
+
+      const brokerLabel = document.createElement('label');
+      brokerLabel.textContent = 'Bróker / firma de fondeo';
+      const brokerInput = document.createElement('input');
+      brokerInput.type = 'text'; brokerInput.placeholder = 'Ej. Binance, FTMO...';
+      brokerInput.value = meta.broker || '';
+      brokerInput.addEventListener('input', () => { meta.broker = brokerInput.value; });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button'; removeBtn.className = 'remove-account'; removeBtn.textContent = 'Quitar cuenta';
+      removeBtn.addEventListener('click', () => {
+        config.accounts.splice(idx, 1);
+        delete config.accountMeta[name];
+        DAYS.forEach(d => { if (config.schedule[d.key].account === name) config.schedule[d.key].account = activeAccountNames()[0] || ''; });
+        renderConfigView();
+      });
+
+      card.appendChild(top);
+      card.appendChild(summary);
+      card.appendChild(brokerLabel);
+      card.appendChild(brokerInput);
+      card.appendChild(removeBtn);
+      accountCardsEl.appendChild(card);
     });
   }
 
-  function renderConfigView(){
-    renderChips(accountsChips, config.accounts, (idx) => {
-      const removed = config.accounts[idx];
-      config.accounts.splice(idx, 1);
-      DAYS.forEach(d => { if (config.schedule[d.key].account === removed) config.schedule[d.key].account = config.accounts[0] || ''; });
-      renderConfigView();
+  // Guarda qué días del esquema semanal están en modo edición (lápiz
+  // tocado); es un estado puramente visual, no se persiste.
+  const scheduleEditingDays = new Set();
+
+  function formatDayTime(entry){ return entry.start + ' – ' + entry.end; }
+
+  function renderDayGrid(){
+    dayGrid.innerHTML = '';
+    let activeDays = 0;
+    DAYS.forEach(day => {
+      const entry = config.schedule[day.key] || (config.schedule[day.key] = {asset: '', account: '', off: false, start: '10:10', end: '12:10'});
+      if (!entry.off) activeDays++;
+      const isEditing = scheduleEditingDays.has(day.key);
+
+      const row = document.createElement('div');
+      row.className = 'sched-row';
+
+      const name = document.createElement('div');
+      name.className = 'day-name'; name.textContent = day.long;
+      row.appendChild(name);
+
+      if (!isEditing){
+        const assetView = document.createElement('div');
+        assetView.className = 'sched-view' + (entry.off ? ' muted' : '');
+        if (entry.off){
+          assetView.textContent = 'Sin sesión';
+        } else {
+          const dot = document.createElement('span'); dot.className = 'pill-dot'; dot.style.background = colorFor(entry.asset);
+          assetView.appendChild(dot);
+          assetView.appendChild(document.createTextNode(entry.asset || '—'));
+        }
+        const accountView = document.createElement('div');
+        accountView.className = 'sched-view' + (entry.off ? ' muted' : '');
+        accountView.textContent = entry.off ? '' : (entry.account || '—');
+
+        const timeView = document.createElement('div');
+        timeView.className = 'sched-time';
+        timeView.textContent = entry.off ? '' : formatDayTime(entry);
+
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button'; editBtn.className = 'sched-edit-btn'; editBtn.title = 'Editar ' + day.long;
+        editBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4Z"/></svg>';
+        editBtn.addEventListener('click', () => { scheduleEditingDays.add(day.key); renderDayGrid(); });
+
+        row.appendChild(assetView); row.appendChild(accountView); row.appendChild(timeView); row.appendChild(editBtn);
+      } else {
+        const acctOptions = activeAccountNames();
+        if (entry.account && !acctOptions.includes(entry.account)) acctOptions.push(entry.account);
+        const assetSelect = buildSelect(config.assets, entry.asset, (val) => { entry.asset = val; });
+        const accountSelect = buildSelect(acctOptions, entry.account, (val) => { entry.account = val; });
+        assetSelect.disabled = entry.off; accountSelect.disabled = entry.off;
+
+        const timeText = document.createElement('div');
+        timeText.className = 'sched-time'; timeText.textContent = formatDayTime(entry);
+
+        const doneBtn = document.createElement('button');
+        doneBtn.type = 'button'; doneBtn.className = 'sched-edit-btn editing'; doneBtn.title = 'Listo';
+        doneBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+        doneBtn.addEventListener('click', () => { scheduleEditingDays.delete(day.key); renderDayGrid(); });
+
+        row.appendChild(assetSelect); row.appendChild(accountSelect); row.appendChild(timeText); row.appendChild(doneBtn);
+
+        const editCell = document.createElement('div');
+        editCell.className = 'sched-edit-cell';
+
+        const startField = document.createElement('div'); startField.className = 'field time';
+        const startLabel = document.createElement('label'); startLabel.textContent = 'Inicio';
+        const startInput = document.createElement('input'); startInput.type = 'time'; startInput.value = entry.start;
+        startInput.addEventListener('change', () => { entry.start = startInput.value || entry.start; timeText.textContent = formatDayTime(entry); });
+        startField.appendChild(startLabel); startField.appendChild(startInput);
+
+        const endField = document.createElement('div'); endField.className = 'field time';
+        const endLabel = document.createElement('label'); endLabel.textContent = 'Fin';
+        const endInput = document.createElement('input'); endInput.type = 'time'; endInput.value = entry.end;
+        endInput.addEventListener('change', () => { entry.end = endInput.value || entry.end; timeText.textContent = formatDayTime(entry); });
+        endField.appendChild(endLabel); endField.appendChild(endInput);
+
+        const offField = document.createElement('label'); offField.className = 'off-toggle';
+        const offCheckbox = document.createElement('input');
+        offCheckbox.type = 'checkbox'; offCheckbox.checked = entry.off;
+        offCheckbox.addEventListener('change', () => {
+          entry.off = offCheckbox.checked;
+          assetSelect.disabled = entry.off; accountSelect.disabled = entry.off;
+          renderDayGrid();
+        });
+        offField.appendChild(offCheckbox); offField.appendChild(document.createTextNode('Sin sesión este día'));
+
+        editCell.appendChild(startField); editCell.appendChild(endField); editCell.appendChild(offField);
+        row.appendChild(editCell);
+      }
+
+      dayGrid.appendChild(row);
     });
+    if (scheduleActiveCount) scheduleActiveCount.textContent = activeDays + (activeDays === 1 ? ' día activo' : ' días activos');
+  }
+
+  // ---- Cámara y micrófono: lista real de dispositivos del equipo ----
+  function fillDeviceSelect(select, list, selectedId, kindLabel, defaultLabel){
+    select.innerHTML = '';
+    const defOpt = document.createElement('option');
+    defOpt.value = ''; defOpt.textContent = defaultLabel;
+    select.appendChild(defOpt);
+    list.forEach((d, i) => {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      opt.textContent = d.label || (kindLabel + ' ' + (i + 1));
+      select.appendChild(opt);
+    });
+    select.value = list.some(d => d.deviceId === selectedId) ? selectedId : '';
+  }
+  async function refreshDeviceOptions(){
+    if (!cameraSelect || !micSelect) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices){
+      if (deviceUnsupported) deviceUnsupported.style.display = 'block';
+      return;
+    }
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cams = devices.filter(d => d.kind === 'videoinput');
+      const mics = devices.filter(d => d.kind === 'audioinput');
+      fillDeviceSelect(cameraSelect, cams, config.cameraDeviceId, 'Cámara', 'Predeterminada del sistema');
+      fillDeviceSelect(micSelect, mics, config.micDeviceId, 'Micrófono', 'Predeterminado del sistema');
+    } catch (e) {
+      if (deviceUnsupported) deviceUnsupported.style.display = 'block';
+    }
+  }
+  if (cameraSelect) cameraSelect.addEventListener('change', () => { config.cameraDeviceId = cameraSelect.value; });
+  if (micSelect) micSelect.addEventListener('change', () => { config.micDeviceId = micSelect.value; });
+
+  function renderConfigView(){
+    renderAccountCards();
     renderChips(assetsChips, config.assets, (idx) => {
       const removed = config.assets[idx];
       config.assets.splice(idx, 1);
@@ -2083,15 +2449,20 @@
       renderConfigView();
     });
     renderDayGrid();
-    startTimeInput.value = config.startTime;
-    durationInput.value = config.durationHours;
+    if (cameraSelect) cameraSelect.value = config.cameraDeviceId || '';
+    if (micSelect) micSelect.value = config.micDeviceId || '';
+    if (prefReminder) prefReminder.checked = config.reminderEnabled !== false;
+    if (prefAutosave) prefAutosave.checked = config.autosaveEnabled !== false;
+    renderQualityPicker();
   }
 
   document.getElementById('addAccountBtn').addEventListener('click', () => {
     const input = document.getElementById('accountInput');
     const val = input.value.trim();
     if (!val || config.accounts.includes(val)) return;
-    config.accounts.push(val); input.value = ''; renderConfigView();
+    config.accounts.push(val);
+    config.accountMeta[val] = {broker: '', active: true};
+    input.value = ''; renderConfigView();
   });
   document.getElementById('addAssetBtn').addEventListener('click', () => {
     const input = document.getElementById('assetInput');
@@ -2099,6 +2470,8 @@
     if (!val || config.assets.includes(val)) return;
     config.assets.push(val); input.value = ''; renderConfigView();
   });
+  if (prefReminder) prefReminder.addEventListener('change', () => { config.reminderEnabled = prefReminder.checked; });
+  if (prefAutosave) prefAutosave.addEventListener('change', () => { config.autosaveEnabled = prefAutosave.checked; });
 
   const folderStatusText = document.getElementById('folderStatusText');
   const folderStatusDot = document.querySelector('#folderStatus .dot');
@@ -2165,10 +2538,11 @@
     setTimeout(() => toast.classList.remove('show'), 1800);
   }
   document.getElementById('saveBtn').addEventListener('click', () => {
-    config.startTime = startTimeInput.value || '10:10';
-    config.durationHours = parseFloat(durationInput.value) || 2;
     saveConfigToStorage();
     showToast('Configuración guardada');
+    if (config.reminderEnabled && 'Notification' in window && Notification.permission === 'default'){
+      Notification.requestPermission();
+    }
   });
 
   // =======================================================================
@@ -2251,6 +2625,31 @@
     const entry = dayDef ? config.schedule[dowKey] : null;
     return {now, dowKey, dayDef, entry};
   }
+
+  // ---- "Recordatorio antes de sesión" (Preferencias en Configuración) ----
+  // Cada 30s se fija si faltan 10 minutos o menos para el horario de hoy y,
+  // si todavía no se avisó hoy, manda una notificación del sistema. No
+  // depende de tener la pestaña de Grabación abierta.
+  const REMINDER_SHOWN_KEY = 'tradecam_reminder_shown_v1';
+  function maybeShowReminder(){
+    if (!currentUser || !config.reminderEnabled) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const {now, entry} = todayInfo();
+    if (!entry || entry.off || !entry.start || sessionInProgress) return;
+    const [sh, sm] = entry.start.split(':').map(Number);
+    const startMinutes = sh * 60 + (sm || 0);
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const diff = startMinutes - nowMinutes;
+    if (diff < 0 || diff > 10) return;
+    const todayStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+    const shownKey = REMINDER_SHOWN_KEY + '::' + currentUser.id;
+    if (localStorage.getItem(shownKey) === todayStr) return;
+    localStorage.setItem(shownKey, todayStr);
+    try {
+      new Notification('TradeCam', {body: 'Tu sesión de ' + (entry.asset || 'hoy') + ' empieza a las ' + entry.start + '.'});
+    } catch (e) { /* si el sistema operativo bloquea notificaciones, no hacemos nada más */ }
+  }
+  setInterval(maybeShowReminder, 30000);
 
   async function renderInicio(){
     const {now, dayDef, entry} = todayInfo();
@@ -2482,16 +2881,31 @@
   };
   let selectedQuality = QUALITY_PRESETS[localStorage.getItem(QUALITY_KEY)] ? localStorage.getItem(QUALITY_KEY) : 'media';
 
+  // El picker de calidad vive en dos lugares: la pantalla de "Comenzar
+  // grabación" (qualityBtns) y la tarjeta "Dispositivos de grabación" en
+  // Configuración (qualityConfigBtns). Ambos leen/escriben la misma
+  // QUALITY_KEY, así que elegir la calidad en Configuración define el
+  // valor por defecto de la próxima sesión, sin sacarte la posibilidad de
+  // cambiarla ese día puntual desde la pantalla de Grabación.
+  const qualityConfigPicker = document.getElementById('qualityPickerConfig');
+  const qualityConfigBtns = qualityConfigPicker ? Array.from(qualityConfigPicker.querySelectorAll('.quality-pill')) : [];
+
   function renderQualityPicker(){
     qualityBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.value === selectedQuality));
+    qualityConfigBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.value === selectedQuality));
+  }
+  function chooseQuality(value){
+    selectedQuality = value;
+    localStorage.setItem(QUALITY_KEY, selectedQuality);
+    renderQualityPicker();
   }
   qualityBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedQuality = btn.dataset.value;
-      localStorage.setItem(QUALITY_KEY, selectedQuality);
-      renderQualityPicker();
-    });
+    btn.addEventListener('click', () => chooseQuality(btn.dataset.value));
   });
+  qualityConfigBtns.forEach(btn => {
+    btn.addEventListener('click', () => chooseQuality(btn.dataset.value));
+  });
+  renderQualityPicker();
 
   // ---- Modo de video activo de la sesión en curso ----
   // 'screen' = compartiendo pantalla (cámara en un recuadro), 'camera' = sin
@@ -2987,8 +3401,14 @@
 
     let screenStream, camStream, folderHandle, fileHandle, writable, recorder, canvas, ctx, rafId, timerId, camPos;
     let isPaused = false, pauseStartedAt = null;
-    let sessionMarkers = [];
     let activeMarkers = [];
+    // Guarda un borrador del journal de esta sesión cada 5 min mientras se
+    // graba (si "Autoguardado de notas" está activo en Configuración), para
+    // no perder las notas si la app se cierra antes de terminar. Se
+    // actualiza siempre el mismo registro (draftEntryId), y al terminar de
+    // grabar el guardado automático final lo reutiliza en vez de duplicarlo.
+    let draftEntryId = null;
+    let autosaveTimerId = null;
 
     // ---- Paso 1: elegir la calidad de hoy, antes de pedir permisos ----
     qualityStep.style.display = 'flex';
@@ -3014,16 +3434,30 @@
       startupBackBtn.style.display = 'inline-block';
       return;
     }
+    // Usa la cámara/micrófono elegidos en Configuración si hay uno guardado;
+    // si ese dispositivo ya no está disponible (desconectado, en uso por
+    // otra app), reintenta con los predeterminados del sistema en vez de
+    // cortar la sesión.
+    const camConstraints = config.cameraDeviceId ? {deviceId: {exact: config.cameraDeviceId}} : true;
+    const micConstraints = config.micDeviceId ? {deviceId: {exact: config.micDeviceId}} : true;
     try {
-      camStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+      camStream = await navigator.mediaDevices.getUserMedia({video: camConstraints, audio: micConstraints});
     } catch (e) {
-      startupMsg.textContent = 'No se pudo acceder a la cámara/micrófono. Podés volver a intentarlo desde Inicio.';
-      startupBackBtn.style.display = 'inline-block';
-      if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-      return;
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+      } catch (e2) {
+        startupMsg.textContent = 'No se pudo acceder a la cámara/micrófono. Podés volver a intentarlo desde Inicio.';
+        startupBackBtn.style.display = 'inline-block';
+        if (screenStream) screenStream.getTracks().forEach(t => t.stop());
+        return;
+      }
     }
     activeCamStream = camStream;
     updateSessionControlsUI();
+    // Ya tenemos permiso de cámara/mic: ahora enumerateDevices() puede
+    // devolver nombres reales en vez de genéricos, así que refrescamos los
+    // selects de Configuración para la próxima vez que el usuario entre ahí.
+    refreshDeviceOptions();
 
     folderHandle = await idbGet(HANDLE_KEY);
     if (!folderHandle){
@@ -3192,17 +3626,20 @@
       if (screenStream) screenStream.getTracks().forEach(t => t.stop());
       camStream.getTracks().forEach(t => t.stop());
       clearInterval(timerId);
+      if (autosaveTimerId) clearInterval(autosaveTimerId);
       activeCamStream = null;
 
       // Guardamos el journal de esta sesión YA, apenas termina de grabar —
       // así las notas y el video quedan a salvo aunque cierres la pestaña
-      // antes de llegar a la pantalla "Cerrá el día".
+      // antes de llegar a la pantalla "Cerrá el día". Si el autoguardado de
+      // notas ya había creado un borrador de esta sesión, lo completamos en
+      // vez de duplicarlo.
       const autoEntry = {
         date: dateStr,
         videoFilename: filename,
         durationMin: Math.round((Date.now() - sessionStartedAt) / 60000),
         photoFilename: null,
-        markers: sessionMarkers.slice(),
+        markers: sessionNoteLog.slice(),
         asset: (entry && entry.asset) || '',
         account: (entry && entry.account) || '',
         notes: notesBody.textContent || '',
@@ -3211,11 +3648,13 @@
         tradesTotal: null,
         tradesWin: null,
         tradesLoss: null,
-        createdAt: Date.now()
+        createdAt: draftEntryId || Date.now()
       };
       try {
         const journalAuto = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
-        journalAuto.push(autoEntry);
+        const draftIdx = draftEntryId ? journalAuto.findIndex(e => e.createdAt === draftEntryId) : -1;
+        if (draftIdx !== -1) journalAuto[draftIdx] = Object.assign(journalAuto[draftIdx], autoEntry);
+        else journalAuto.push(autoEntry);
         localStorage.setItem(JOURNAL_KEY, JSON.stringify(journalAuto));
       } catch (e) {
         // Si esto falla, el video ya quedó guardado en la carpeta igual.
@@ -3240,7 +3679,7 @@
       startupOverlay.style.display = 'none';
       sessionInProgress = false;
 
-      showPost(filename, sessionStartedAt, entry, dateStr, sessionMarkers, autoEntry.createdAt);
+      showPost(filename, sessionStartedAt, entry, dateStr, sessionNoteLog, autoEntry.createdAt);
     };
 
     let sessionStartedAt = Date.now();
@@ -3249,12 +3688,44 @@
     startupOverlay.style.display = 'none';
     pauseSessionBtn.disabled = false;
 
+    // ---- Autoguardado de notas cada 5 min ("Preferencias" en Configuración) ----
+    // El video en sí ya se escribe solo, en vivo, en el archivo de la carpeta
+    // elegida (arriba, en ondataavailable) — esto es un respaldo aparte para
+    // no perder las notas de la sesión si la app se cierra antes de llegar a
+    // la pantalla final. Actualiza siempre el mismo registro del journal.
+    function saveDraftEntry(){
+      try {
+        const journalDraft = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+        const id = draftEntryId || Date.now();
+        const idx = journalDraft.findIndex(e => e.createdAt === id);
+        const draft = {
+          date: dateStr,
+          videoFilename: filename,
+          durationMin: Math.round((Date.now() - sessionStartedAt) / 60000),
+          photoFilename: null,
+          markers: sessionNoteLog.slice(),
+          asset: (entry && entry.asset) || '',
+          account: (entry && entry.account) || '',
+          notes: '',
+          result: null, pnl: null, tradesTotal: null, tradesWin: null, tradesLoss: null,
+          createdAt: id
+        };
+        if (idx !== -1) journalDraft[idx] = Object.assign(journalDraft[idx], draft);
+        else journalDraft.push(draft);
+        localStorage.setItem(JOURNAL_KEY, JSON.stringify(journalDraft));
+        draftEntryId = id;
+      } catch (e) { /* si falla, el video sigue grabándose igual */ }
+    }
+    if (config.autosaveEnabled !== false){
+      autosaveTimerId = setInterval(saveDraftEntry, 5 * 60 * 1000);
+    }
+
     timerId = setInterval(() => {
       if (isPaused) return;
       const elapsed = Date.now() - sessionStartedAt;
       currentElapsedMs = elapsed;
       sesionTimer.textContent = formatElapsed(elapsed);
-      if (elapsed >= config.durationHours * 3600 * 1000) stopSession();
+      if (elapsed >= timeRangeHours(entry && entry.start, entry && entry.end) * 3600 * 1000) stopSession();
     }, 1000);
 
     function stopSession(){
