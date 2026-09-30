@@ -9,7 +9,7 @@ function createWindow() {
     height: 880,
     minWidth: 980,
     minHeight: 640,
-    backgroundColor: '#0b0f14',
+    backgroundColor: '#0A0D12',
     title: 'TradeCam',
     webPreferences: {
       contextIsolation: true,
