@@ -237,6 +237,78 @@
   .folder-row{display:flex;gap:10px}
   .folder-row input{flex:1;cursor:default}
 
+  /* ---------- Detalle de sesión ---------- */
+  .detalle-back{background:none;border:none;color:var(--text-2);font-size:13px;font-weight:700;
+    cursor:pointer;font-family:var(--font-ui);display:flex;align-items:center;gap:4px;padding:0;margin-bottom:18px}
+  .detalle-back:hover{color:var(--teal)}
+  .detalle-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+  .detalle-header h1{margin-bottom:0}
+  .detalle-header-actions{display:flex;gap:10px;flex:none}
+  .detalle-badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px}
+  .detalle-badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
+    padding:6px 13px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-2)}
+  .detalle-badge .pill-dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .detalle-badge.result-win{background:var(--accent-soft);border-color:rgba(34,197,94,.35);color:var(--accent)}
+  .detalle-badge.result-loss{background:var(--danger-soft);border-color:rgba(240,68,56,.35);color:var(--danger)}
+  .detalle-badge.result-neutral{background:var(--surface-2);color:var(--text)}
+  .detalle-badge .num{font-family:var(--font-mono)}
+
+  .detalle-layout{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+  .detalle-col-main{flex:1 1 640px;min-width:0}
+  .detalle-col-side{flex:0 0 320px;min-width:280px}
+  .detalle-col-side section{margin-bottom:16px}
+  .detalle-col-side section:last-child{margin-bottom:0}
+
+  .detalle-player-card{padding:18px;margin-bottom:20px}
+  .detalle-player{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 2px, transparent 2px, transparent 14px),
+      linear-gradient(160deg,#171C25,#0A0D12);
+    display:flex;align-items:center;justify-content:center}
+  .detalle-player video{width:100%;height:100%;object-fit:contain;background:transparent;display:block}
+  .detalle-player-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:var(--text-2);font-size:13px;text-align:center;padding:20px}
+  .detalle-play-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;
+    border-radius:50%;background:rgba(18,22,29,0.72);border:1.5px solid rgba(255,255,255,0.18);color:var(--text);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);
+    transition:background .15s,transform .15s}
+  .detalle-play-btn:hover{background:rgba(45,212,191,0.22);border-color:var(--teal);transform:translate(-50%,-50%) scale(1.06)}
+  .detalle-play-btn.playing{opacity:0;pointer-events:none}
+  .detalle-player:hover .detalle-play-btn.playing{opacity:1;pointer-events:auto}
+
+  .detalle-progress-wrap{padding-top:14px}
+  .detalle-progress-track{position:relative;height:6px;border-radius:999px;background:var(--surface-3);cursor:pointer}
+  .detalle-progress-fill{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:999px;background:var(--teal)}
+  .detalle-progress-handle{position:absolute;top:50%;left:0%;width:12px;height:12px;border-radius:50%;
+    background:var(--teal);transform:translate(-50%,-50%);box-shadow:0 0 0 3px rgba(45,212,191,0.22)}
+  .detalle-progress-markers{position:absolute;inset:0}
+  .detalle-marker{position:absolute;top:50%;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);
+    border:2px solid var(--surface);cursor:pointer;background:var(--text-2)}
+  .detalle-marker.tag-setup{background:var(--teal)}
+  .detalle-marker.tag-entrada{background:var(--info)}
+  .detalle-marker.tag-gestion{background:var(--accent)}
+  .detalle-marker.tag-error{background:var(--danger)}
+  .detalle-time-row{display:flex;justify-content:space-between;margin-top:9px;font-size:12px;color:var(--text-2)}
+
+  #detalleNotesSection .notes-list{padding:10px 4px 0 32px;overflow:visible}
+  #detalleNotesSection .note-item{cursor:pointer;border-radius:8px;padding:6px 8px;margin:0 -8px;transition:background .15s}
+  #detalleNotesSection .note-item:hover{background:var(--surface-2)}
+
+  .metric-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0}
+  .metric-label{font-size:13px;color:var(--text-2);font-weight:600}
+  .metric-input{width:130px;background:none;border:none;color:var(--text);font-family:var(--font-mono);
+    font-size:13px;text-align:right;padding:2px 0;outline:none;border-bottom:1px solid transparent}
+  .metric-input:hover{border-bottom-color:var(--border)}
+  .metric-input:focus{border-bottom-color:var(--teal)}
+  .metric-divider{height:1px;background:var(--border);margin:6px 0}
+  .metric-row-net{padding-top:4px}
+  .metric-row-net .metric-label{color:var(--text);font-weight:700}
+  .metric-net{font-family:var(--font-mono);font-size:16px;font-weight:700;color:var(--accent)}
+  .metric-net.negative{color:var(--danger)}
+  .eval-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;
+    border-bottom:1px solid var(--border);font-size:13px}
+  .eval-row:last-child{border-bottom:none}
+
   .device-field{margin-bottom:14px}
   .device-field:last-child{margin-bottom:0}
   .quality-picker-mini{display:flex;gap:8px}
@@ -1111,6 +1183,98 @@
       No grabaste ninguna sesión esta semana.
     </div>
     <div id="resumenList"></div>
+  </div>
+
+  <!-- ============ VIEW: DETALLE DE SESIÓN ============ -->
+  <div id="view-detalle" class="wrap" style="display:none;max-width:1180px">
+    <button class="detalle-back" id="detalleBackBtn" type="button">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      Volver al dashboard
+    </button>
+
+    <div class="detalle-header">
+      <h1 id="detalleTitle">—</h1>
+      <div class="detalle-header-actions">
+        <button class="btn secondary" id="detalleDownloadBtn" type="button">Descargar clip</button>
+        <button class="btn" id="detalleEditNotesBtn" type="button">Editar notas</button>
+      </div>
+    </div>
+    <div class="detalle-badges" id="detalleBadges"></div>
+
+    <div class="detalle-layout">
+      <div class="detalle-col-main">
+        <div class="card detalle-player-card">
+          <div class="detalle-player" id="detallePlayer">
+            <video id="detalleVideo" playsinline></video>
+            <div class="detalle-player-empty" id="detallePlayerEmpty">Esta sesión no tiene video guardado.</div>
+            <button class="detalle-play-btn" id="detallePlayBtn" type="button" aria-label="Reproducir">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+          </div>
+          <div class="detalle-progress-wrap">
+            <div class="detalle-progress-track" id="detalleProgressTrack">
+              <div class="detalle-progress-fill" id="detalleProgressFill"></div>
+              <div class="detalle-progress-markers" id="detalleProgressMarkers"></div>
+              <div class="detalle-progress-handle" id="detalleProgressHandle"></div>
+            </div>
+            <div class="detalle-time-row">
+              <span class="num" id="detalleTimeCurrent">00:00:00</span>
+              <span class="num" id="detalleTimeTotal">00:00:00</span>
+            </div>
+          </div>
+        </div>
+
+        <section id="detalleNotesSection">
+          <h2>Notas cronológicas</h2>
+          <p class="hint">Tocá una nota para saltar a ese momento del video.</p>
+          <div class="notes-list" id="detalleNotesList"></div>
+          <div class="notes-list-empty" id="detalleNotesEmpty" style="display:none">Esta sesión no tiene notas cargadas.</div>
+        </section>
+      </div>
+
+      <div class="detalle-col-side">
+        <section class="card detalle-metrics-card">
+          <h2>Métricas de la operación</h2>
+          <div class="metric-row">
+            <span class="metric-label">Entrada</span>
+            <input type="text" class="metric-input" id="detalleEntryPrice" placeholder="—" inputmode="decimal">
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Salida</span>
+            <input type="text" class="metric-input" id="detalleExitPrice" placeholder="—" inputmode="decimal">
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Riesgo:beneficio</span>
+            <input type="text" class="metric-input" id="detalleRiskReward" placeholder="Ej. 1:2">
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Comisiones</span>
+            <input type="text" class="metric-input" id="detalleCommissions" placeholder="—" inputmode="decimal">
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-row metric-row-net">
+            <span class="metric-label">Resultado neto</span>
+            <span class="metric-net" id="detalleNetResult">—</span>
+          </div>
+        </section>
+
+        <section class="card detalle-eval-card">
+          <h2>Autoevaluación</h2>
+          <div class="eval-row">
+            <span>Respeté el plan de trading</span>
+            <label class="switch"><input type="checkbox" id="detalleEval-plan"><span class="slider"></span></label>
+          </div>
+          <div class="eval-row">
+            <span>Tamaño de posición correcto</span>
+            <label class="switch"><input type="checkbox" id="detalleEval-size"><span class="slider"></span></label>
+          </div>
+          <div class="eval-row">
+            <span>Gestioné bien la emoción</span>
+            <label class="switch"><input type="checkbox" id="detalleEval-emotion"><span class="slider"></span></label>
+          </div>
+        </section>
+      </div>
+    </div>
   </div>
 
   <!-- ============ VIEW: SESIÓN EN VIVO (full screen) ============ -->
@@ -2148,6 +2312,7 @@
     config: document.getElementById('view-config'),
     historial: document.getElementById('view-historial'),
     resumen: document.getElementById('view-resumen'),
+    detalle: document.getElementById('view-detalle'),
     sesion: document.getElementById('view-sesion'),
     post: document.getElementById('view-post'),
     done: document.getElementById('view-done')
@@ -2806,7 +2971,7 @@
         const viewBtn = document.createElement('button');
         viewBtn.type = 'button'; viewBtn.className = 'btn secondary'; viewBtn.textContent = 'Ver';
         viewBtn.style.padding = '6px 12px'; viewBtn.style.fontSize = '12px';
-        viewBtn.addEventListener('click', () => openEditModal(entry));
+        viewBtn.addEventListener('click', () => openDetalle(entry, 'inicio'));
         actionTd.appendChild(viewBtn);
         tr.appendChild(actionTd);
         dashRecentBody.appendChild(tr);
@@ -4063,6 +4228,11 @@
     renderDashboardWidgets();
     renderHistorial();
     renderResumen();
+    if (views.detalle.style.display !== 'none' && currentDetalleEntry){
+      const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+      const fresh = journal.find(e => e.createdAt === currentDetalleEntry.createdAt);
+      if (fresh){ currentDetalleEntry = fresh; renderDetalleInfo(); }
+    }
   }
 
   function renderHistorial(){
@@ -4172,6 +4342,10 @@
 
     const actions = document.createElement('div');
     actions.className = 'hist-actions';
+    const detalleBtn = document.createElement('button');
+    detalleBtn.className = 'btn'; detalleBtn.type = 'button'; detalleBtn.textContent = 'Ver detalle';
+    detalleBtn.addEventListener('click', () => openDetalle(entry, 'historial'));
+    actions.appendChild(detalleBtn);
     if (entry.videoFilename){
       const btn = document.createElement('button');
       btn.className = 'btn secondary'; btn.type = 'button'; btn.textContent = 'Ver video';
@@ -4396,6 +4570,309 @@
   }
   document.getElementById('viewerCloseBtn').addEventListener('click', closeViewer);
   viewerModal.addEventListener('click', (e) => { if (e.target === viewerModal) closeViewer(); });
+
+  // =======================================================================
+  // DETALLE DE SESIÓN
+  // =======================================================================
+  const detalleBackBtn = document.getElementById('detalleBackBtn');
+  const detalleTitle = document.getElementById('detalleTitle');
+  const detalleBadges = document.getElementById('detalleBadges');
+  const detalleDownloadBtn = document.getElementById('detalleDownloadBtn');
+  const detalleEditNotesBtn = document.getElementById('detalleEditNotesBtn');
+  const detalleVideo = document.getElementById('detalleVideo');
+  const detallePlayer = document.getElementById('detallePlayer');
+  const detallePlayerEmpty = document.getElementById('detallePlayerEmpty');
+  const detallePlayBtn = document.getElementById('detallePlayBtn');
+  const detalleProgressTrack = document.getElementById('detalleProgressTrack');
+  const detalleProgressFill = document.getElementById('detalleProgressFill');
+  const detalleProgressHandle = document.getElementById('detalleProgressHandle');
+  const detalleProgressMarkers = document.getElementById('detalleProgressMarkers');
+  const detalleTimeCurrent = document.getElementById('detalleTimeCurrent');
+  const detalleTimeTotal = document.getElementById('detalleTimeTotal');
+  const detalleNotesList = document.getElementById('detalleNotesList');
+  const detalleNotesEmpty = document.getElementById('detalleNotesEmpty');
+  const detalleEntryPrice = document.getElementById('detalleEntryPrice');
+  const detalleExitPrice = document.getElementById('detalleExitPrice');
+  const detalleRiskReward = document.getElementById('detalleRiskReward');
+  const detalleCommissions = document.getElementById('detalleCommissions');
+  const detalleNetResult = document.getElementById('detalleNetResult');
+  const detalleEvalPlan = document.getElementById('detalleEval-plan');
+  const detalleEvalSize = document.getElementById('detalleEval-size');
+  const detalleEvalEmotion = document.getElementById('detalleEval-emotion');
+
+  let currentDetalleEntry = null;
+  let detalleReturnView = 'historial';
+  let detalleVideoUrl = null;
+
+  function formatDurationLong(min){
+    if (typeof min !== 'number' || isNaN(min)) return '—';
+    const h = Math.floor(min / 60), m = Math.round(min % 60);
+    return h > 0 ? (h + 'h ' + pad(m) + 'm') : (m + 'm');
+  }
+
+  // Abre la vista de Detalle para una entrada del journal. `returnView` es
+  // adónde vuelve el botón "Volver al dashboard" (historial, inicio o resumen,
+  // según desde dónde se haya abierto).
+  function openDetalle(entry, returnView){
+    currentDetalleEntry = entry;
+    detalleReturnView = returnView || 'historial';
+    showView('detalle');
+    renderDetalleInfo();
+    loadDetalleVideo(entry);
+  }
+
+  detalleBackBtn.addEventListener('click', () => {
+    stopDetalleVideo();
+    showView(detalleReturnView);
+  });
+
+  function stopDetalleVideo(){
+    try { detalleVideo.pause(); } catch (e) {}
+    detalleVideo.removeAttribute('src');
+    detalleVideo.load();
+    if (detalleVideoUrl){ URL.revokeObjectURL(detalleVideoUrl); detalleVideoUrl = null; }
+  }
+
+  function renderDetalleInfo(){
+    const entry = currentDetalleEntry;
+    if (!entry) return;
+
+    let title = entry.asset || 'Sesión';
+    if (entry.date){
+      const d = parseDateStrLocal(entry.date);
+      title = formatDayMonth(d) + ' — ' + (entry.asset || 'Sesión');
+    }
+    detalleTitle.textContent = title;
+
+    // ---- badges ----
+    const badges = [];
+    if (entry.result === 'win' || entry.result === 'loss' || entry.result === 'neutral'){
+      const dotColor = entry.result === 'win' ? 'var(--accent)' : entry.result === 'loss' ? 'var(--danger)' : 'var(--text-2)';
+      let label = typeof entry.pnl === 'number' && !isNaN(entry.pnl)
+        ? (entry.pnl > 0 ? '+$' : entry.pnl < 0 ? '-$' : '$') + Math.abs(entry.pnl).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})
+        : (entry.result === 'win' ? 'Ganadora' : entry.result === 'loss' ? 'Perdedora' : 'Neutro');
+      badges.push('<span class="detalle-badge result-' + entry.result + '"><span class="pill-dot" style="background:' + dotColor + '"></span><span class="num">' + label + '</span></span>');
+    }
+    badges.push('<span class="detalle-badge">' + escapeHtml(entry.account || 'Sin cuenta') + '</span>');
+    badges.push('<span class="detalle-badge num">' + formatDurationLong(entry.durationMin) + '</span>');
+    const notesCount = Array.isArray(entry.markers) ? entry.markers.length : 0;
+    badges.push('<span class="detalle-badge">' + notesCount + (notesCount === 1 ? ' nota' : ' notas') + '</span>');
+    detalleBadges.innerHTML = badges.join('');
+
+    // ---- métricas ----
+    detalleEntryPrice.value = (entry.entryPrice ?? '') === null ? '' : (entry.entryPrice ?? '');
+    detalleExitPrice.value = (entry.exitPrice ?? '') === null ? '' : (entry.exitPrice ?? '');
+    detalleRiskReward.value = entry.riskReward || '';
+    detalleCommissions.value = (entry.commissions ?? '') === null ? '' : (entry.commissions ?? '');
+    if (typeof entry.pnl === 'number' && !isNaN(entry.pnl)){
+      detalleNetResult.textContent = (entry.pnl > 0 ? '+$' : entry.pnl < 0 ? '-$' : '$') + Math.abs(entry.pnl).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2});
+      detalleNetResult.classList.toggle('negative', entry.pnl < 0);
+    } else {
+      detalleNetResult.textContent = '—';
+      detalleNetResult.classList.remove('negative');
+    }
+
+    // ---- autoevaluación ----
+    const evalData = entry.selfEval || {};
+    detalleEvalPlan.checked = !!evalData.plan;
+    detalleEvalSize.checked = !!evalData.size;
+    detalleEvalEmotion.checked = !!evalData.emotion;
+
+    // ---- notas cronológicas ----
+    detalleNotesList.innerHTML = '';
+    const markers = Array.isArray(entry.markers) ? entry.markers.slice() : [];
+    detalleNotesEmpty.style.display = markers.length ? 'none' : 'block';
+    detalleNotesList.classList.toggle('has-notes', markers.length > 0);
+    markers.forEach((m) => {
+      const slug = noteTagSlug(m.tag);
+      const item = document.createElement('div');
+      item.className = 'note-item';
+      const dot = document.createElement('span');
+      dot.className = 'note-item-dot' + (slug ? ' tag-' + slug : '');
+      item.appendChild(dot);
+      const meta = document.createElement('div');
+      meta.className = 'note-item-meta';
+      const time = document.createElement('span');
+      time.className = 'note-item-time';
+      time.textContent = formatElapsed(typeof m.atMs === 'number' ? m.atMs : 0);
+      meta.appendChild(time);
+      if (m.tag){
+        const pill = document.createElement('span');
+        pill.className = 'note-tag-pill' + (slug ? ' tag-' + slug : '');
+        pill.textContent = m.tag;
+        meta.appendChild(pill);
+      }
+      const text = document.createElement('div');
+      text.className = 'note-item-text';
+      text.textContent = m.text || '';
+      item.appendChild(meta);
+      item.appendChild(text);
+      item.addEventListener('click', () => {
+        if (typeof m.atMs === 'number' && detalleVideo.duration){
+          detalleVideo.currentTime = Math.min(m.atMs / 1000, detalleVideo.duration);
+          detalleVideo.play().catch(() => {});
+        }
+      });
+      detalleNotesList.appendChild(item);
+    });
+
+    renderDetalleMarkers();
+  }
+
+  // Dibuja los marcadores de color sobre la barra de progreso, una vez que
+  // conocemos la duración real del video (así el % queda bien calculado).
+  function renderDetalleMarkers(){
+    detalleProgressMarkers.innerHTML = '';
+    const entry = currentDetalleEntry;
+    const duration = detalleVideo.duration;
+    if (!entry || !Array.isArray(entry.markers) || !duration || !isFinite(duration)) return;
+    entry.markers.forEach(m => {
+      if (typeof m.atMs !== 'number') return;
+      const pct = Math.max(0, Math.min(100, (m.atMs / 1000 / duration) * 100));
+      const slug = noteTagSlug(m.tag);
+      const dot = document.createElement('div');
+      dot.className = 'detalle-marker' + (slug ? ' tag-' + slug : '');
+      dot.style.left = pct + '%';
+      dot.title = (m.tag ? m.tag + ' · ' : '') + formatElapsed(m.atMs);
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        detalleVideo.currentTime = Math.min(m.atMs / 1000, duration);
+        detalleVideo.play().catch(() => {});
+      });
+      detalleProgressMarkers.appendChild(dot);
+    });
+  }
+
+  async function loadDetalleVideo(entry){
+    stopDetalleVideo();
+    detalleVideo.style.display = 'none';
+    detallePlayerEmpty.style.display = 'none';
+    detallePlayBtn.style.display = 'none';
+    detalleTimeCurrent.textContent = '00:00:00';
+    detalleTimeTotal.textContent = '00:00:00';
+    detalleProgressFill.style.width = '0%';
+    detalleProgressHandle.style.left = '0%';
+
+    if (!entry.videoFilename){
+      detallePlayerEmpty.textContent = 'Esta sesión no tiene video guardado.';
+      detallePlayerEmpty.style.display = 'flex';
+      return;
+    }
+    try {
+      const folderHandle = await idbGet(HANDLE_KEY);
+      if (!folderHandle){
+        detallePlayerEmpty.textContent = 'No hay ninguna carpeta de guardado configurada. Andá a Configuración y elegí una.';
+        detallePlayerEmpty.style.display = 'flex';
+        return;
+      }
+      let perm = await folderHandle.queryPermission({mode:'readwrite'});
+      if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'readwrite'});
+      if (perm !== 'granted'){
+        detallePlayerEmpty.textContent = 'Falta confirmar el acceso a la carpeta "' + folderHandle.name + '" desde Configuración.';
+        detallePlayerEmpty.style.display = 'flex';
+        return;
+      }
+      const fh = await folderHandle.getFileHandle(entry.videoFilename);
+      const file = await fh.getFile();
+      const url = URL.createObjectURL(file);
+      detalleVideoUrl = url;
+      detalleVideo.src = url;
+      detalleVideo.style.display = 'block';
+      detallePlayBtn.style.display = 'flex';
+    } catch (e) {
+      detallePlayerEmpty.textContent = 'No pude abrir "' + entry.videoFilename + '" (' + (e && (e.name || e.message) || 'error desconocido') + ').';
+      detallePlayerEmpty.style.display = 'flex';
+    }
+  }
+
+  detalleVideo.addEventListener('loadedmetadata', () => {
+    detalleTimeTotal.textContent = formatElapsed(detalleVideo.duration * 1000);
+    renderDetalleMarkers();
+  });
+  detalleVideo.addEventListener('timeupdate', () => {
+    if (!detalleVideo.duration || !isFinite(detalleVideo.duration)) return;
+    const pct = (detalleVideo.currentTime / detalleVideo.duration) * 100;
+    detalleProgressFill.style.width = pct + '%';
+    detalleProgressHandle.style.left = pct + '%';
+    detalleTimeCurrent.textContent = formatElapsed(detalleVideo.currentTime * 1000);
+  });
+  detalleVideo.addEventListener('play', () => detallePlayBtn.classList.add('playing'));
+  detalleVideo.addEventListener('pause', () => detallePlayBtn.classList.remove('playing'));
+  detalleVideo.addEventListener('ended', () => detallePlayBtn.classList.remove('playing'));
+
+  function toggleDetallePlay(){
+    if (!detalleVideo.src) return;
+    if (detalleVideo.paused) detalleVideo.play().catch(() => {});
+    else detalleVideo.pause();
+  }
+  detallePlayBtn.addEventListener('click', toggleDetallePlay);
+  detallePlayer.addEventListener('click', (e) => { if (e.target === detallePlayer || e.target === detalleVideo) toggleDetallePlay(); });
+
+  function seekDetalleFromEvent(e){
+    if (!detalleVideo.duration || !isFinite(detalleVideo.duration)) return;
+    const rect = detalleProgressTrack.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    detalleVideo.currentTime = pct * detalleVideo.duration;
+  }
+  detalleProgressTrack.addEventListener('click', seekDetalleFromEvent);
+
+  // ---- métricas editables inline: se guardan solas al perder el foco ----
+  function saveDetalleField(field, parseFn){
+    return (e) => {
+      if (!currentDetalleEntry) return;
+      const raw = e.target.value.trim();
+      const value = raw === '' ? null : (parseFn ? parseFn(raw) : raw);
+      const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+      const idx = journal.findIndex(x => x.createdAt === currentDetalleEntry.createdAt);
+      if (idx === -1) return;
+      journal[idx][field] = value;
+      currentDetalleEntry = journal[idx];
+      localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+    };
+  }
+  const parseNumOrText = (s) => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? s : n; };
+  detalleEntryPrice.addEventListener('change', saveDetalleField('entryPrice', parseNumOrText));
+  detalleExitPrice.addEventListener('change', saveDetalleField('exitPrice', parseNumOrText));
+  detalleRiskReward.addEventListener('change', saveDetalleField('riskReward', null));
+  detalleCommissions.addEventListener('change', saveDetalleField('commissions', parseNumOrText));
+
+  function saveDetalleEval(){
+    if (!currentDetalleEntry) return;
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    const idx = journal.findIndex(x => x.createdAt === currentDetalleEntry.createdAt);
+    if (idx === -1) return;
+    journal[idx].selfEval = {
+      plan: detalleEvalPlan.checked,
+      size: detalleEvalSize.checked,
+      emotion: detalleEvalEmotion.checked
+    };
+    currentDetalleEntry = journal[idx];
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+  }
+  [detalleEvalPlan, detalleEvalSize, detalleEvalEmotion].forEach(el => el.addEventListener('change', saveDetalleEval));
+
+  detalleEditNotesBtn.addEventListener('click', () => { if (currentDetalleEntry) openEditModal(currentDetalleEntry); });
+
+  detalleDownloadBtn.addEventListener('click', async () => {
+    const entry = currentDetalleEntry;
+    if (!entry || !entry.videoFilename){ alert('Esta sesión no tiene video guardado.'); return; }
+    try {
+      const folderHandle = await idbGet(HANDLE_KEY);
+      if (!folderHandle){ alert('No hay ninguna carpeta de guardado configurada todavía.'); return; }
+      let perm = await folderHandle.queryPermission({mode:'readwrite'});
+      if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'readwrite'});
+      if (perm !== 'granted'){ alert('Falta confirmar el acceso a la carpeta "' + folderHandle.name + '".'); return; }
+      const fh = await folderHandle.getFileHandle(entry.videoFilename);
+      const file = await fh.getFile();
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url; a.download = entry.videoFilename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch (e) {
+      alert('No pude descargar "' + entry.videoFilename + '" (' + (e && (e.name || e.message) || 'error desconocido') + ').');
+    }
+  });
 
   // =======================================================================
   // EDITAR / BORRAR UNA ENTRADA DEL JOURNAL
