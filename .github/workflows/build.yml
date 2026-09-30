@@ -1,0 +1,42 @@
+name: Build & publish TradeCam
+
+# Se dispara cada vez que subís un tag con forma v1.0.0, v1.0.1, etc.
+# Compila la app en una Windows, una Mac y una Linux reales (las tres
+# corren en paralelo) y deja los instaladores listos para descargar
+# en la sección "Releases" del repositorio.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: {} # también se puede disparar a mano desde la pestaña "Actions"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: npm run dist:win
+          - os: macos-latest
+            script: npm run dist:mac
+          - os: ubuntu-latest
+            script: npm run dist:linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Compilar y publicar en el Release
+        run: ${{ matrix.script }} -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

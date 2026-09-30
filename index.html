@@ -1,0 +1,3375 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradeCam</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#232b36;
+    --text:#e9edf1; --text-2:#8a94a3; --accent:#33c56a; --accent-soft:rgba(51,197,106,0.14);
+    --danger:#f0605a; --danger-soft:rgba(240,96,90,0.16);
+    --font-ui:'Manrope',system-ui,sans-serif; --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui)}
+  .num{font-family:var(--font-mono)}
+  a{color:inherit}
+
+  /* ---------- Top nav ---------- */
+  .topnav{display:flex;align-items:center;gap:20px;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand span{font-weight:800;font-size:16px;letter-spacing:-0.2px}
+  .navlink{font-size:13px;font-weight:700;color:var(--text-2);cursor:pointer;padding:6px 10px;border-radius:6px;background:none;border:none;font-family:var(--font-ui)}
+  .navlink.active{color:var(--accent);background:var(--accent-soft)}
+  .topnav .navlink.logout{margin-left:auto;color:var(--text-2)}
+  .topnav .userchip{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-2)}
+  .topnav .userchip .name{color:var(--text);font-weight:700}
+
+  /* ---------- Auth (login / registro) ---------- */
+  #authOverlay{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
+  #authOverlay.show{display:flex}
+  .auth-box{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px}
+  .auth-brand{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:22px}
+  .auth-brand span{font-weight:800;font-size:18px;letter-spacing:-0.2px}
+  .auth-tabs{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:22px}
+  .auth-tab{flex:1;background:none;border:none;border-radius:7px;padding:9px 0;font-family:var(--font-ui);font-size:13px;font-weight:700;color:var(--text-2);cursor:pointer}
+  .auth-tab.active{background:var(--accent);color:#06210f}
+  .auth-field{margin-bottom:14px}
+  .auth-error{color:var(--danger);font-size:13px;margin:-4px 0 14px;min-height:1px;display:none}
+  .auth-error.show{display:block}
+
+  /* ---------- Shared page wrap (config / inicio / done) ---------- */
+  .wrap{max-width:880px;margin:0 auto;padding:36px 24px 96px}
+  h1{font-size:24px;font-weight:800;letter-spacing:-0.3px;margin:0 0 6px}
+  .sub{color:var(--text-2);font-size:14px;margin:0 0 32px}
+  section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 28px;margin-bottom:20px}
+  section h2{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--accent);margin:0 0 4px}
+  section p.hint{color:var(--text-2);font-size:13px;margin:0 0 18px}
+  label{font-size:13px;font-weight:700;color:var(--text-2);display:block;margin-bottom:6px}
+  input[type=text],input[type=time],input[type=number],input[type=email],input[type=password],input[type=date],select{
+    width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-ui);font-size:14px;padding:10px 12px;outline:none
+  }
+  input:focus,select:focus{border-color:var(--accent)}
+  .row{display:flex;gap:12px}
+  .row > *{flex:1;min-width:0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .chip{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:999px;padding:6px 8px 6px 14px;font-size:13px;font-weight:600}
+  .chip button{background:none;border:none;color:var(--text-2);cursor:pointer;font-size:14px;line-height:1;
+    width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .chip button:hover{background:var(--danger-soft);color:var(--danger)}
+  .add-row{display:flex;gap:8px}
+  .add-row input{flex:1}
+  .btn{background:var(--accent);color:#06210f;border:none;border-radius:8px;padding:10px 18px;
+    font-weight:800;font-size:13px;cursor:pointer;font-family:var(--font-ui);white-space:nowrap}
+  .btn:disabled{opacity:0.4;cursor:not-allowed}
+  .btn.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+  .btn.danger{background:var(--danger-soft);color:var(--danger);border:1px solid var(--danger)}
+  .btn.big{width:100%;padding:16px;font-size:15px;margin-top:6px}
+  .day-grid{display:flex;flex-direction:column;gap:10px}
+  .day-row{display:grid;grid-template-columns:64px 1fr 1fr auto;gap:10px;align-items:center}
+  .day-name{font-weight:800;font-size:13px;color:var(--text)}
+  .day-row label.off{display:flex;align-items:center;gap:6px;font-weight:600;font-size:12px;color:var(--text-2);
+    white-space:nowrap;margin:0}
+  .folder-status{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:14px}
+  .folder-status .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .dot.ok{background:var(--accent)}
+  .dot.warn{background:#e3b341}
+  .dot.off{background:var(--text-2)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);
+    color:#06210f;font-weight:800;font-size:13px;padding:12px 22px;border-radius:10px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.4);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+  .unsupported{background:var(--danger-soft);border:1px solid var(--danger);color:#ffd7d5;
+    border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:14px}
+
+  /* ---------- Inicio ---------- */
+  .hero{border-radius:16px;border:1px solid var(--border);background:linear-gradient(180deg,var(--surface-2),var(--surface));
+    padding:28px 32px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  .hero .eyebrow{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em}
+  .hero .asset{font-size:28px;font-weight:800;letter-spacing:-0.4px;margin-top:8px}
+  .hero .asset .acct{color:var(--text-2);font-weight:600;font-size:16px}
+  .hero .meta{display:flex;gap:16px;color:var(--text-2);font-size:13px;margin-top:8px}
+  .startbtn{background:var(--accent);color:#06210f;border:none;border-radius:10px;padding:16px 28px;
+    font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:var(--font-ui)}
+  .startbtn:disabled{opacity:0.4;cursor:not-allowed}
+
+  /* ---------- Sesión en vivo (full screen) ---------- */
+  #view-sesion{position:fixed;inset:0;background:#000;display:none;flex-direction:column;z-index:20}
+  .sesion-topbar{height:56px;flex:none;display:flex;align-items:center;padding:0 24px;gap:20px;
+    background:rgba(11,15,20,0.94);border-bottom:1px solid var(--border)}
+  .sesion-topbar .info{font-weight:700;font-size:14px}
+  .sesion-topbar .info .acct{color:var(--text-2);font-weight:600}
+  .rec-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
+  .rec-dot.paused{background:var(--text-2);box-shadow:none}
+  .timer{font-size:15px;font-weight:600;letter-spacing:0.02em}
+  #stageOuter{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
+  #stage{position:relative;background:#000;overflow:hidden}
+  #stage video{width:100%;height:100%;object-fit:fill;display:block}
+  .draggable{position:absolute;cursor:grab;user-select:none;touch-action:none}
+  .draggable.dragging{cursor:grabbing}
+  .cam-box{border-radius:14px;border:2px solid var(--accent);overflow:hidden;background:#1a2029;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+  .cam-box video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
+  .drag-handle{position:absolute;top:6px;left:6px;display:flex;align-items:center;gap:6px;
+    background:rgba(0,0,0,0.5);padding:3px 7px;border-radius:6px;font-size:10px;font-weight:700;color:#fff;
+    letter-spacing:0.04em;z-index:2}
+  .notes-panel{width:280px;border-radius:14px;background:var(--surface);border:1px solid var(--border);
+    box-shadow:0 12px 32px rgba(0,0,0,0.45);display:flex;flex-direction:column}
+  .notes-header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+  .notes-header span{font-size:12px;font-weight:700;color:var(--text-2)}
+  .notes-body{padding:12px 14px;font-size:13px;line-height:1.5;color:var(--text);outline:none;
+    overflow-y:auto;flex:1;min-height:0}
+  .notes-body:empty:before{content:attr(data-placeholder);color:var(--text-2)}
+  .startup-overlay{position:absolute;inset:0;background:var(--bg);display:flex;align-items:center;
+    justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:24px;z-index:5}
+  .startup-overlay p{color:var(--text-2);font-size:14px;max-width:360px;margin:0}
+  .quality-step{display:flex;flex-direction:column;align-items:center;gap:16px}
+  .quality-picker{display:flex;gap:10px}
+  .quality-btn{width:110px;padding:16px 10px;border-radius:12px;border:1px solid var(--border);
+    background:var(--surface-2);color:var(--text);cursor:pointer;text-align:center;font-family:var(--font-ui);
+    display:flex;flex-direction:column;gap:5px;align-items:center}
+  .quality-btn .qname{font-size:14px;font-weight:800}
+  .quality-btn .qdesc{font-size:11px;font-weight:600;color:var(--text-2);line-height:1.3}
+  .quality-btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .quality-btn.active .qdesc{color:var(--accent)}
+  .zoom-bar{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;align-items:center;gap:2px;
+    padding:10px 20px;background:rgba(13,17,23,0.97);border-top:1px solid var(--border);backdrop-filter:blur(8px)}
+  .zoom-bar-spacer{flex:1}
+  .zoom-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+    background:none;border:none;color:var(--text);cursor:pointer;padding:8px 14px;border-radius:8px;
+    font-family:var(--font-ui);flex:none}
+  .zoom-btn:hover{background:rgba(255,255,255,0.07)}
+  .zoom-btn .zicon{font-size:17px;line-height:1;height:20px;display:flex;align-items:center;justify-content:center}
+  .zoom-btn .zicon svg{display:block}
+  .zoom-btn .zlabel{font-size:11px;font-weight:700;white-space:nowrap}
+  .zoom-btn.off .zicon{color:var(--danger)}
+  .zoom-btn.off .zlabel{color:var(--danger)}
+  .zoom-btn.active .zicon{color:var(--accent)}
+  .zoom-btn.active .zlabel{color:var(--accent)}
+  .zoom-more-wrap{position:relative;flex:none}
+  .zoom-more-menu{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);display:none;
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;min-width:230px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.45);z-index:7}
+  .zoom-more-menu.show{display:block}
+  .more-item{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;color:var(--text);
+    font-family:var(--font-ui);font-size:13px;font-weight:600;text-align:left;padding:10px 12px;
+    border-radius:6px;cursor:pointer}
+  .more-item:hover{background:var(--surface-2)}
+  .more-item.more-info{color:var(--text-2);cursor:default}
+  .more-item.more-info:hover{background:none}
+  .zoom-end{flex-direction:row;background:var(--danger);color:#2a0d0c;border-radius:8px;gap:7px;padding:10px 18px}
+  .zoom-end .zlabel{font-size:13px;font-weight:800;color:inherit}
+  .zoom-end .zicon{color:inherit;font-size:13px}
+  .zoom-end:hover{background:#e2716c}
+  .marker-flash{position:absolute;top:18px;left:50%;
+    transform:translateX(-50%) translateY(-12px) scale(0.9);display:flex;align-items:center;gap:8px;
+    background:rgba(17,22,29,0.94);border:1px solid var(--accent);color:var(--accent);font-weight:800;
+    font-size:13px;padding:10px 18px;border-radius:999px;opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;z-index:8}
+  .marker-flash.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+  .marker-flash-icon{font-size:16px}
+
+  /* ---------- Post-sesión ---------- */
+  textarea{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-ui);font-size:14px;padding:10px 12px;outline:none;
+    resize:vertical;min-height:90px}
+  textarea:focus{border-color:var(--accent)}
+  .photo-drop{display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--border);
+    border-radius:10px;padding:22px;text-align:center;cursor:pointer;background:var(--surface-2);
+    font-size:13px;font-weight:600;color:var(--text-2)}
+  .photo-drop:hover{border-color:var(--accent);color:var(--text)}
+  .photo-drop input[type=file]{display:none}
+  .photo-preview{max-width:100%;max-height:260px;object-fit:contain;border-radius:10px;
+    border:1px solid var(--border);display:block;margin-top:14px}
+  .post-actions{display:flex;gap:12px;margin-top:6px}
+  .post-actions .btn{flex:1}
+  .result-picker{display:flex;gap:8px}
+  .result-btn{flex:1;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);
+    color:var(--text-2);font-weight:800;font-size:13px;cursor:pointer;text-align:center;font-family:var(--font-ui)}
+  .result-btn.active.win{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .result-btn.active.loss{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  .result-btn.active.neutral{background:var(--surface-2);border-color:var(--text-2);color:var(--text)}
+  .hist-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;
+    padding:3px 9px;border-radius:999px;margin-top:8px;font-family:var(--font-mono)}
+  .hist-badge.win{background:var(--accent-soft);color:var(--accent)}
+  .hist-badge.loss{background:var(--danger-soft);color:var(--danger)}
+  .hist-badge.neutral{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border)}
+
+  /* ---------- Historial ---------- */
+  .hist-empty{color:var(--text-2);font-size:14px;text-align:center;padding:60px 20px;
+    border:1px dashed var(--border);border-radius:14px}
+  .hist-card{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:14px}
+  .hist-date{font-family:var(--font-mono);font-size:12px;color:var(--text-2);margin-bottom:4px}
+  .hist-asset{font-size:16px;font-weight:800}
+  .hist-asset .acct{color:var(--text-2);font-weight:600;font-size:13px}
+  .hist-notes{color:var(--text-2);font-size:13px;margin-top:6px;max-width:480px}
+  .hist-actions{display:flex;gap:8px;flex:none}
+  .hist-group-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .hist-group-header:first-child{margin-top:0}
+  .hist-group-title{font-size:15px;font-weight:800;text-transform:capitalize}
+  .hist-group-meta{font-size:12px;color:var(--text-2);font-family:var(--font-mono);white-space:nowrap}
+  .week-nav{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .week-nav-label{font-weight:800;font-size:15px;text-align:center;flex:1}
+  @media (max-width:560px){ .week-nav{flex-direction:column;gap:10px} }
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .stat-box{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;
+    padding:16px 18px;text-align:center}
+  .stat-value{font-family:var(--font-mono);font-size:26px;font-weight:800;color:var(--text);line-height:1.1}
+  .stat-value.accent{color:var(--accent)}
+  .stat-value.negative{color:var(--danger)}
+  .stat-label{font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;
+    letter-spacing:0.04em;margin-top:8px}
+  @media (max-width:640px){ .stats-grid{grid-template-columns:repeat(2,1fr)} }
+  .viewer-modal{position:fixed;inset:0;background:rgba(5,7,10,0.85);display:none;align-items:center;
+    justify-content:center;z-index:40;padding:24px}
+  .viewer-modal.show{display:flex}
+  .viewer-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:20px;max-width:min(920px,92vw);max-height:88vh;display:flex;flex-direction:column;gap:14px;
+    overflow-y:auto;overscroll-behavior:contain}
+  .viewer-box video,.viewer-box img{max-width:100%;max-height:66vh;border-radius:10px;display:block;margin:0 auto}
+  .viewer-close{align-self:flex-end}
+  .viewer-caption{font-size:12px;color:var(--text-2);text-align:center}
+
+  /* ---------- Done ---------- */
+  .done-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:48px 24px}
+</style>
+</head>
+<body>
+
+  <!-- ============ LOGIN / REGISTRO ============ -->
+  <div id="authOverlay">
+    <div class="auth-box">
+      <div class="auth-brand">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect width="22" height="22" rx="6" fill="#33c56a"/><path d="M6 14l3.5-5 3 3.5L17 7" stroke="#0b0f14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>TradeCam</span>
+      </div>
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="authTabLogin">Iniciar sesión</button>
+        <button type="button" class="auth-tab" id="authTabRegister">Crear cuenta</button>
+      </div>
+
+      <div id="authFormLogin">
+        <div class="auth-field">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" placeholder="tu@email.com" autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <label for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div class="auth-error" id="loginError"></div>
+        <button class="btn big" id="loginBtn" type="button">Entrar</button>
+      </div>
+
+      <div id="authFormRegister" style="display:none">
+        <div class="auth-field">
+          <label for="registerName">Tu nombre</label>
+          <input type="text" id="registerName" placeholder="Ej. Manuel" autocomplete="name">
+        </div>
+        <div class="auth-field">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" placeholder="tu@email.com" autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <label for="registerPassword">Contraseña</label>
+          <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        </div>
+        <div class="auth-field">
+          <label for="registerPassword2">Repetir contraseña</label>
+          <input type="password" id="registerPassword2" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <div class="auth-error" id="registerError"></div>
+        <button class="btn big" id="registerBtn" type="button">Crear mi cuenta</button>
+      </div>
+
+      <p class="sub" style="margin:18px 0 0;text-align:center;font-size:12px">
+        Tus datos quedan guardados en esta computadora, separados de los de otros usuarios.
+      </p>
+    </div>
+  </div>
+
+  <div class="topnav" id="topnav" style="display:none">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 22 22" fill="none"><rect width="22" height="22" rx="6" fill="#33c56a"/><path d="M6 14l3.5-5 3 3.5L17 7" stroke="#0b0f14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>TradeCam</span>
+    </div>
+    <button class="navlink" id="navInicio" type="button">Inicio</button>
+    <button class="navlink" id="navHistorial" type="button">Historial</button>
+    <button class="navlink" id="navResumen" type="button">Resumen semanal</button>
+    <button class="navlink" id="navConfig" type="button">Configuración</button>
+    <div class="userchip">
+      <span class="name" id="topnavUserName">—</span>
+      <button class="navlink logout" id="logoutBtn" type="button">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: INICIO ============ -->
+  <div id="view-inicio" class="wrap" style="display:none">
+    <h1 id="inicioGreeting">Hola</h1>
+    <p class="sub" id="inicioDate">—</p>
+
+    <div class="hero">
+      <div>
+        <div class="eyebrow" id="planEyebrow">Hoy toca</div>
+        <div class="asset" id="planAsset">—</div>
+        <div class="meta" id="planMeta"></div>
+      </div>
+      <button class="startbtn" id="startSessionBtn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"></circle></svg>
+        Iniciar sesión
+      </button>
+    </div>
+    <div id="inicioWarning" class="unsupported" style="display:none;margin-top:16px"></div>
+  </div>
+
+  <!-- ============ VIEW: CONFIGURACIÓN ============ -->
+  <div id="view-config" class="wrap" style="display:none">
+    <h1>Configuración</h1>
+    <p class="sub">La completás una vez. Después la app arranca cada día sabiendo qué te toca operar.</p>
+
+    <section>
+      <h2>Mis cuentas</h2>
+      <p class="hint">Las cuentas que operás (ej. cuenta propia, cuenta fondeada).</p>
+      <div class="chips" id="accountsChips"></div>
+      <div class="add-row">
+        <input type="text" id="accountInput" placeholder="Ej. Cuenta fondeada">
+        <button class="btn secondary" id="addAccountBtn" type="button">Agregar</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Mis activos</h2>
+      <p class="hint">Los activos que solés operar (ej. Bitcoin, Nasdaq).</p>
+      <div class="chips" id="assetsChips"></div>
+      <div class="add-row">
+        <input type="text" id="assetInput" placeholder="Ej. Nasdaq">
+        <button class="btn secondary" id="addAssetBtn" type="button">Agregar</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Esquema semanal</h2>
+      <p class="hint">Qué activo y qué cuenta te toca cada día.</p>
+      <div class="day-grid" id="dayGrid"></div>
+    </section>
+
+    <section>
+      <h2>Horario y duración</h2>
+      <p class="hint">A qué hora empieza la sesión y cuánto dura la grabación.</p>
+      <div class="row">
+        <div>
+          <label for="startTime">Hora de inicio</label>
+          <input type="time" id="startTime" value="10:10">
+        </div>
+        <div>
+          <label for="duration">Duración (horas)</label>
+          <input type="number" id="duration" min="0.5" max="8" step="0.5" value="2">
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Carpeta de guardado</h2>
+      <p class="hint">Se elige una sola vez; ahí se van a guardar todos los videos, todos los días.</p>
+      <div id="folderUnsupported" class="unsupported" style="display:none">
+        Tu navegador no soporta elegir una carpeta y guardar directo ahí. Esta función necesita Chrome (o Edge).
+      </div>
+      <div class="folder-status" id="folderStatus">
+        <span class="dot off"></span>
+        <span id="folderStatusText">No hay carpeta seleccionada todavía.</span>
+      </div>
+      <button class="btn secondary" id="pickFolderBtn" type="button">Elegir carpeta</button>
+    </section>
+
+    <button class="btn big" id="saveBtn" type="button">Guardar configuración</button>
+  </div>
+
+  <!-- ============ VIEW: HISTORIAL ============ -->
+  <div id="view-historial" class="wrap" style="display:none">
+    <h1>Historial</h1>
+    <p class="sub">Tus sesiones grabadas, con la foto de operaciones y el journal de cada día.</p>
+    <button class="btn secondary" id="manualAddBtn" type="button" style="margin-bottom:20px">+ Agregar sesión manualmente</button>
+
+    <section id="historialStats">
+      <h2>Estadísticas</h2>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value accent" id="statDaysMonth">0</div>
+          <div class="stat-label">Días grabados este mes</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value accent" id="statStreak">0</div>
+          <div class="stat-label">Racha actual</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statMinutes">0</div>
+          <div class="stat-label">Minutos grabados en total</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statWinrate">—</div>
+          <div class="stat-label">Winrate</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="historialFilters">
+      <h2>Buscar</h2>
+      <div class="row">
+        <div>
+          <label for="filterFrom">Desde</label>
+          <input type="date" id="filterFrom">
+        </div>
+        <div>
+          <label for="filterTo">Hasta</label>
+          <input type="date" id="filterTo">
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="filterAsset">Activo</label>
+          <select id="filterAsset"><option value="">Todos</option></select>
+        </div>
+        <div>
+          <label for="filterAccount">Cuenta</label>
+          <select id="filterAccount"><option value="">Todas</option></select>
+        </div>
+        <div>
+          <label for="filterResult">Resultado</label>
+          <select id="filterResult">
+            <option value="">Todos</option>
+            <option value="win">Ganador</option>
+            <option value="loss">Perdedor</option>
+            <option value="neutral">Neutro</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="filterGroupBy">Agrupar por</label>
+          <select id="filterGroupBy">
+            <option value="none">Sin agrupar</option>
+            <option value="week" selected>Semana</option>
+            <option value="month">Mes</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn secondary" id="filterClearBtn" type="button">Limpiar filtros</button>
+        <span id="filterCount" style="margin-left:12px;font-size:13px;color:var(--text-2)"></span>
+      </div>
+    </section>
+
+    <div id="historialEmpty" class="hist-empty" style="display:none">
+      Todavía no grabaste ninguna sesión. Cuando termines tu primera, va a aparecer acá.
+    </div>
+    <div id="historialList"></div>
+
+    <section style="margin-top:8px">
+      <h2>¿Un video viejo no se puede adelantar?</h2>
+      <p class="hint">Los videos grabados antes de este arreglo se guardaron sin la duración total, por eso no dejan mover la barra de reproducción. Elegilo acá y se lo arreglamos, sin perder nada del contenido.</p>
+      <button class="btn secondary" id="repairPickBtn" type="button">Elegir video para reparar</button>
+      <div id="repairStatus" style="margin-top:12px;font-size:13px;color:var(--text-2)"></div>
+    </section>
+  </div>
+
+  <!-- ============ VISOR DE VIDEO / FOTO ============ -->
+  <div class="viewer-modal" id="viewerModal">
+    <div class="viewer-box">
+      <button class="btn secondary viewer-close" id="viewerCloseBtn" type="button">Cerrar</button>
+      <div id="viewerContent"></div>
+    </div>
+  </div>
+
+  <!-- ============ EDITAR ENTRADA DEL JOURNAL ============ -->
+  <div class="viewer-modal" id="editModal">
+    <div class="viewer-box" style="text-align:left;width:520px">
+      <button class="btn secondary viewer-close" id="editCloseBtn" type="button">Cerrar</button>
+      <h1 style="margin:0 0 4px;font-size:18px">Editar sesión</h1>
+      <p class="sub" id="editDateLabel" style="margin:0 0 18px">—</p>
+
+      <div class="row">
+        <div>
+          <label for="editAsset">Activo operado</label>
+          <select id="editAsset"></select>
+        </div>
+        <div>
+          <label for="editAccount">Cuenta usada</label>
+          <select id="editAccount"></select>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <label>Resultado del día</label>
+        <div class="result-picker" id="editResultPicker">
+          <button type="button" class="result-btn" data-value="win">Ganador</button>
+          <button type="button" class="result-btn" data-value="loss">Perdedor</button>
+          <button type="button" class="result-btn" data-value="neutral">Neutro</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="editPnl">P&amp;L del día (opcional)</label>
+          <input type="number" id="editPnl" step="0.01" placeholder="Ej. 120 o -80">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="editTradesTotal">Operaciones totales</label>
+          <input type="number" id="editTradesTotal" min="0" step="1" placeholder="Ej. 5">
+        </div>
+        <div>
+          <label for="editTradesWin">Ganadoras</label>
+          <input type="number" id="editTradesWin" min="0" step="1" placeholder="Ej. 3">
+        </div>
+        <div>
+          <label for="editTradesLoss">Perdedoras</label>
+          <input type="number" id="editTradesLoss" min="0" step="1" placeholder="Ej. 2">
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <label for="editNotes">Notas del día</label>
+        <textarea id="editNotes"></textarea>
+      </div>
+
+      <div class="post-actions" style="margin-top:20px">
+        <button class="btn danger" id="editDeleteBtn" type="button">Borrar sesión</button>
+        <button class="btn" id="editSaveBtn" type="button">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ AGREGAR SESIÓN MANUALMENTE (para videos "huérfanos") ============ -->
+  <div class="viewer-modal" id="manualAddModal">
+    <div class="viewer-box" style="text-align:left;width:520px">
+      <button class="btn secondary viewer-close" id="manualCloseBtn" type="button">Cerrar</button>
+      <h1 style="margin:0 0 4px;font-size:18px">Agregar sesión manualmente</h1>
+      <p class="sub" style="margin:0 0 18px">Para un video que ya está en tu carpeta pero no tiene tarjeta en el Historial.</p>
+
+      <div class="row">
+        <div>
+          <label for="manualDate">Fecha de la sesión</label>
+          <input type="date" id="manualDate">
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <label for="manualFilename">Nombre del archivo de video (tal cual está en la carpeta)</label>
+        <div class="row">
+          <input type="text" id="manualFilename" placeholder="Ej. 2026-09-29_10-14.webm">
+          <button class="btn secondary" id="manualVerifyBtn" type="button" style="flex:none">Verificar</button>
+        </div>
+        <div id="manualFileStatus" style="margin-top:8px;font-size:13px;color:var(--text-2)"></div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="manualAsset">Activo operado</label>
+          <select id="manualAsset"></select>
+        </div>
+        <div>
+          <label for="manualAccount">Cuenta usada</label>
+          <select id="manualAccount"></select>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <label>Resultado del día</label>
+        <div class="result-picker" id="manualResultPicker">
+          <button type="button" class="result-btn" data-value="win">Ganador</button>
+          <button type="button" class="result-btn" data-value="loss">Perdedor</button>
+          <button type="button" class="result-btn" data-value="neutral">Neutro</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="manualPnl">P&amp;L del día (opcional)</label>
+          <input type="number" id="manualPnl" step="0.01" placeholder="Ej. 120 o -80">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="manualTradesTotal">Operaciones totales</label>
+          <input type="number" id="manualTradesTotal" min="0" step="1" placeholder="Ej. 5">
+        </div>
+        <div>
+          <label for="manualTradesWin">Ganadoras</label>
+          <input type="number" id="manualTradesWin" min="0" step="1" placeholder="Ej. 3">
+        </div>
+        <div>
+          <label for="manualTradesLoss">Perdedoras</label>
+          <input type="number" id="manualTradesLoss" min="0" step="1" placeholder="Ej. 2">
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <label for="manualNotes">Notas del día</label>
+        <textarea id="manualNotes"></textarea>
+      </div>
+
+      <div class="post-actions" style="margin-top:20px">
+        <button class="btn" id="manualSaveBtn" type="button" style="flex:1">Agregar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: RESUMEN SEMANAL ============ -->
+  <div id="view-resumen" class="wrap" style="display:none">
+    <h1>Resumen semanal</h1>
+    <p class="sub">Un vistazo rápido a cómo te fue esta semana.</p>
+
+    <div class="week-nav">
+      <button class="btn secondary" id="resumenPrevBtn" type="button">← Semana anterior</button>
+      <div class="week-nav-label" id="resumenWeekLabel">Semana del — al —</div>
+      <button class="btn secondary" id="resumenNextBtn" type="button">Semana siguiente →</button>
+    </div>
+    <div style="text-align:center;margin:2px 0 26px">
+      <button class="navlink" id="resumenTodayBtn" type="button" style="text-decoration:underline">Ir a esta semana</button>
+    </div>
+
+    <section id="resumenStatsSection">
+      <h2>Estadísticas de la semana</h2>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value accent" id="resumenDays">0</div>
+          <div class="stat-label">Días grabados</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="resumenMinutes">0</div>
+          <div class="stat-label">Minutos grabados</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="resumenWinrate">—</div>
+          <div class="stat-label">Winrate</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="resumenPnl">—</div>
+          <div class="stat-label">P&amp;L acumulado</div>
+        </div>
+      </div>
+    </section>
+
+    <div id="resumenEmpty" class="hist-empty" style="display:none">
+      No grabaste ninguna sesión esta semana.
+    </div>
+    <div id="resumenList"></div>
+  </div>
+
+  <!-- ============ VIEW: SESIÓN EN VIVO (full screen) ============ -->
+  <div id="view-sesion">
+    <div class="sesion-topbar">
+      <div class="info" id="sesionInfo">—</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+        <span class="rec-dot" id="recDot"></span>
+        <span class="timer num" id="sesionTimer">00:00:00</span>
+      </div>
+    </div>
+    <div id="stageOuter">
+      <div id="stage">
+        <video id="screenVideo" autoplay muted playsinline></video>
+        <div class="draggable cam-box" id="camBox" style="width:180px;height:180px">
+          <div class="drag-handle">● REC</div>
+          <video id="camVideo" autoplay muted playsinline></video>
+        </div>
+        <div class="draggable notes-panel" id="notesBox" style="width:280px;height:260px">
+          <div class="notes-header" id="notesDragHandle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2"><circle cx="8" cy="6" r="1"></circle><circle cx="16" cy="6" r="1"></circle><circle cx="8" cy="12" r="1"></circle><circle cx="16" cy="12" r="1"></circle><circle cx="8" cy="18" r="1"></circle><circle cx="16" cy="18" r="1"></circle></svg>
+            <span>Notas de hoy</span>
+          </div>
+          <div class="notes-body" id="notesBody" contenteditable="true" data-placeholder="Escribí tu plan y lo que vayas viendo..."></div>
+        </div>
+        <div class="marker-flash" id="markerFlash">
+          <span class="marker-flash-icon">🚩</span>
+          <span class="marker-flash-text">Operación marcada</span>
+        </div>
+      </div>
+      <div class="zoom-bar" id="zoomBar">
+        <button class="zoom-btn" id="toggleMicBtn" type="button" title="Silenciar micrófono">
+          <span class="zicon" id="micIcon"></span>
+          <span class="zlabel" id="micLabel">Silenciar</span>
+        </button>
+        <button class="zoom-btn" id="toggleCamBtn" type="button" title="Apagar cámara">
+          <span class="zicon" id="camIcon"></span>
+          <span class="zlabel" id="camLabel">Detener video</span>
+        </button>
+        <button class="zoom-btn" id="toggleNotesBtn" type="button" title="Ocultar notas">
+          <span class="zicon" id="notesIcon"></span>
+          <span class="zlabel" id="notesLabel">Notas</span>
+        </button>
+        <button class="zoom-btn" id="markMomentBtn" type="button" title="Marcar este momento en el video">
+          <span class="zicon">🚩</span>
+          <span class="zlabel">Marcar</span>
+        </button>
+        <div class="zoom-more-wrap">
+          <button class="zoom-btn" id="moreBtn" type="button" title="Más opciones">
+            <span class="zicon">⋯</span>
+            <span class="zlabel">Más</span>
+          </button>
+          <div class="zoom-more-menu" id="moreMenu">
+            <button type="button" class="more-item" id="cycleShapeBtn">
+              <span id="shapeItemIcon"></span>
+              <span id="shapeItemLabel">Forma de cámara: Redondeada</span>
+            </button>
+            <div class="more-item more-info" id="qualityInfoItem">Calidad de hoy: —</div>
+            <div class="more-item more-info" style="white-space:normal;line-height:1.6;font-size:12px">
+              Atajos de teclado: <b>M</b> mic · <b>V</b> cámara · <b>N</b> notas · <b>Espacio</b> pausar · <b>F</b> marcar
+            </div>
+          </div>
+        </div>
+        <div class="zoom-bar-spacer"></div>
+        <button class="zoom-btn" id="pauseSessionBtn" type="button" title="Pausar grabación">
+          <span class="zicon" id="pauseIcon">⏸</span>
+          <span class="zlabel" id="pauseLabel">Pausar</span>
+        </button>
+        <button class="zoom-btn zoom-end" id="endSessionBtn" type="button" title="Finalizar sesión">
+          <span class="zicon">✕</span>
+          <span class="zlabel">Fin</span>
+        </button>
+      </div>
+      <div class="startup-overlay" id="startupOverlay">
+        <div class="quality-step" id="qualityStep">
+          <div class="num" style="font-size:13px;color:var(--text-2)">Antes de arrancar</div>
+          <p style="margin:0">Elegí la calidad de grabación para hoy</p>
+          <div class="quality-picker" id="qualityPicker">
+            <button type="button" class="quality-btn" data-value="baja">
+              <span class="qname">Baja</span><span class="qdesc">Archivo más liviano</span>
+            </button>
+            <button type="button" class="quality-btn" data-value="media">
+              <span class="qname">Media</span><span class="qdesc">Recomendada</span>
+            </button>
+            <button type="button" class="quality-btn" data-value="alta">
+              <span class="qname">Alta</span><span class="qdesc">Máxima nitidez</span>
+            </button>
+          </div>
+          <button class="btn big" id="qualityStartBtn" type="button" style="margin-top:0;max-width:330px">Comenzar grabación</button>
+        </div>
+        <div id="permissionStep" style="display:none;flex-direction:column;align-items:center;gap:16px">
+          <div class="num" style="font-size:13px;color:var(--text-2)">Preparando la grabación…</div>
+          <p id="startupMsg">Te vamos a pedir permiso para compartir la pantalla y usar la cámara.</p>
+          <button class="btn secondary" id="startupBackBtn" type="button" style="display:none">Volver a Inicio</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: POST-SESIÓN ============ -->
+  <div id="view-post" class="wrap" style="display:none">
+    <h1>Cerrá el día</h1>
+    <p class="sub" id="postSummary">—</p>
+
+    <section>
+      <h2>Foto de tus operaciones</h2>
+      <p class="hint">Subí una captura del resumen de operaciones de hoy (opcional, pero recomendado).</p>
+      <label class="photo-drop" id="photoDrop" for="photoInput">
+        <span id="photoDropLabel">Hacé clic para elegir una imagen</span>
+        <input type="file" id="photoInput" accept="image/*">
+      </label>
+      <img id="photoPreview" class="photo-preview" style="display:none">
+    </section>
+
+    <section>
+      <h2>Journal del día</h2>
+      <p class="hint">Confirmá qué operaste y dejá tus observaciones.</p>
+      <div class="row">
+        <div>
+          <label for="journalAsset">Activo operado</label>
+          <select id="journalAsset"></select>
+        </div>
+        <div>
+          <label for="journalAccount">Cuenta usada</label>
+          <select id="journalAccount"></select>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <label>Resultado del día</label>
+        <div class="result-picker" id="resultPicker">
+          <button type="button" class="result-btn" data-value="win">Ganador</button>
+          <button type="button" class="result-btn" data-value="loss">Perdedor</button>
+          <button type="button" class="result-btn" data-value="neutral">Neutro</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="journalPnl">P&amp;L del día (opcional)</label>
+          <input type="number" id="journalPnl" step="0.01" placeholder="Ej. 120 o -80">
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="journalTradesTotal">Operaciones totales</label>
+          <input type="number" id="journalTradesTotal" min="0" step="1" placeholder="Ej. 5">
+        </div>
+        <div>
+          <label for="journalTradesWin">Ganadoras</label>
+          <input type="number" id="journalTradesWin" min="0" step="1" placeholder="Ej. 3">
+        </div>
+        <div>
+          <label for="journalTradesLoss">Perdedoras</label>
+          <input type="number" id="journalTradesLoss" min="0" step="1" placeholder="Ej. 2">
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <label for="journalNotes">Notas del día</label>
+        <textarea id="journalNotes" placeholder="¿Cómo te fue? ¿Seguiste el plan? ¿Qué mejorarías?"></textarea>
+      </div>
+    </section>
+
+    <div class="post-actions">
+      <button class="btn secondary" id="skipJournalBtn" type="button">Saltar por ahora</button>
+      <button class="btn" id="saveJournalBtn" type="button">Guardar journal</button>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: SESIÓN GUARDADA ============ -->
+  <div id="view-done" class="wrap" style="display:none">
+    <div class="done-card">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 12l3 3 5-6"></path></svg>
+      <h1 style="margin:0">Sesión guardada</h1>
+      <p class="sub" id="doneSummary" style="margin:0;max-width:420px">—</p>
+      <button class="btn" id="doneBackBtn" type="button">Volver al inicio</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Configuración guardada</div>
+
+<!-- fix-webm-duration (MIT, https://github.com/yusitnikov/fix-webm-duration) -->
+<!-- Corrige la duracion del webm grabado en vivo para que se pueda adelantar/atrasar -->
+<script>
+(function (name, definition) {
+    if (typeof define === 'function' && define.amd) { // RequireJS / AMD
+        define(definition);
+    } else if (typeof module !== 'undefined' && module.exports) { // CommonJS / Node.js
+        module.exports = definition();
+    } else { // Direct include
+        window.ysFixWebmDuration = definition();
+    }
+})('fix-webm-duration', function () {
+    /*
+     * This is the list of possible WEBM file sections by their IDs.
+     * Possible types: Container, Binary, Uint, Int, String, Float, Date
+     */
+    var sections = {
+        0xa45dfa3: { name: 'EBML', type: 'Container' },
+        0x286: { name: 'EBMLVersion', type: 'Uint' },
+        0x2f7: { name: 'EBMLReadVersion', type: 'Uint' },
+        0x2f2: { name: 'EBMLMaxIDLength', type: 'Uint' },
+        0x2f3: { name: 'EBMLMaxSizeLength', type: 'Uint' },
+        0x282: { name: 'DocType', type: 'String' },
+        0x287: { name: 'DocTypeVersion', type: 'Uint' },
+        0x285: { name: 'DocTypeReadVersion', type: 'Uint' },
+        0x6c: { name: 'Void', type: 'Binary' },
+        0x3f: { name: 'CRC-32', type: 'Binary' },
+        0xb538667: { name: 'SignatureSlot', type: 'Container' },
+        0x3e8a: { name: 'SignatureAlgo', type: 'Uint' },
+        0x3e9a: { name: 'SignatureHash', type: 'Uint' },
+        0x3ea5: { name: 'SignaturePublicKey', type: 'Binary' },
+        0x3eb5: { name: 'Signature', type: 'Binary' },
+        0x3e5b: { name: 'SignatureElements', type: 'Container' },
+        0x3e7b: { name: 'SignatureElementList', type: 'Container' },
+        0x2532: { name: 'SignedElement', type: 'Binary' },
+        0x8538067: { name: 'Segment', type: 'Container' },
+        0x14d9b74: { name: 'SeekHead', type: 'Container' },
+        0xdbb: { name: 'Seek', type: 'Container' },
+        0x13ab: { name: 'SeekID', type: 'Binary' },
+        0x13ac: { name: 'SeekPosition', type: 'Uint' },
+        0x549a966: { name: 'Info', type: 'Container' },
+        0x33a4: { name: 'SegmentUID', type: 'Binary' },
+        0x3384: { name: 'SegmentFilename', type: 'String' },
+        0x1cb923: { name: 'PrevUID', type: 'Binary' },
+        0x1c83ab: { name: 'PrevFilename', type: 'String' },
+        0x1eb923: { name: 'NextUID', type: 'Binary' },
+        0x1e83bb: { name: 'NextFilename', type: 'String' },
+        0x444: { name: 'SegmentFamily', type: 'Binary' },
+        0x2924: { name: 'ChapterTranslate', type: 'Container' },
+        0x29fc: { name: 'ChapterTranslateEditionUID', type: 'Uint' },
+        0x29bf: { name: 'ChapterTranslateCodec', type: 'Uint' },
+        0x29a5: { name: 'ChapterTranslateID', type: 'Binary' },
+        0xad7b1: { name: 'TimecodeScale', type: 'Uint' },
+        0x489: { name: 'Duration', type: 'Float' },
+        0x461: { name: 'DateUTC', type: 'Date' },
+        0x3ba9: { name: 'Title', type: 'String' },
+        0xd80: { name: 'MuxingApp', type: 'String' },
+        0x1741: { name: 'WritingApp', type: 'String' },
+        // 0xf43b675: { name: 'Cluster', type: 'Container' },
+        0x67: { name: 'Timecode', type: 'Uint' },
+        0x1854: { name: 'SilentTracks', type: 'Container' },
+        0x18d7: { name: 'SilentTrackNumber', type: 'Uint' },
+        0x27: { name: 'Position', type: 'Uint' },
+        0x2b: { name: 'PrevSize', type: 'Uint' },
+        0x23: { name: 'SimpleBlock', type: 'Binary' },
+        0x20: { name: 'BlockGroup', type: 'Container' },
+        0x21: { name: 'Block', type: 'Binary' },
+        0x22: { name: 'BlockVirtual', type: 'Binary' },
+        0x35a1: { name: 'BlockAdditions', type: 'Container' },
+        0x26: { name: 'BlockMore', type: 'Container' },
+        0x6e: { name: 'BlockAddID', type: 'Uint' },
+        0x25: { name: 'BlockAdditional', type: 'Binary' },
+        0x1b: { name: 'BlockDuration', type: 'Uint' },
+        0x7a: { name: 'ReferencePriority', type: 'Uint' },
+        0x7b: { name: 'ReferenceBlock', type: 'Int' },
+        0x7d: { name: 'ReferenceVirtual', type: 'Int' },
+        0x24: { name: 'CodecState', type: 'Binary' },
+        0x35a2: { name: 'DiscardPadding', type: 'Int' },
+        0xe: { name: 'Slices', type: 'Container' },
+        0x68: { name: 'TimeSlice', type: 'Container' },
+        0x4c: { name: 'LaceNumber', type: 'Uint' },
+        0x4d: { name: 'FrameNumber', type: 'Uint' },
+        0x4b: { name: 'BlockAdditionID', type: 'Uint' },
+        0x4e: { name: 'Delay', type: 'Uint' },
+        0x4f: { name: 'SliceDuration', type: 'Uint' },
+        0x48: { name: 'ReferenceFrame', type: 'Container' },
+        0x49: { name: 'ReferenceOffset', type: 'Uint' },
+        0x4a: { name: 'ReferenceTimeCode', type: 'Uint' },
+        0x2f: { name: 'EncryptedBlock', type: 'Binary' },
+        0x654ae6b: { name: 'Tracks', type: 'Container' },
+        0x2e: { name: 'TrackEntry', type: 'Container' },
+        0x57: { name: 'TrackNumber', type: 'Uint' },
+        0x33c5: { name: 'TrackUID', type: 'Uint' },
+        0x3: { name: 'TrackType', type: 'Uint' },
+        0x39: { name: 'FlagEnabled', type: 'Uint' },
+        0x8: { name: 'FlagDefault', type: 'Uint' },
+        0x15aa: { name: 'FlagForced', type: 'Uint' },
+        0x1c: { name: 'FlagLacing', type: 'Uint' },
+        0x2de7: { name: 'MinCache', type: 'Uint' },
+        0x2df8: { name: 'MaxCache', type: 'Uint' },
+        0x3e383: { name: 'DefaultDuration', type: 'Uint' },
+        0x34e7a: { name: 'DefaultDecodedFieldDuration', type: 'Uint' },
+        0x3314f: { name: 'TrackTimecodeScale', type: 'Float' },
+        0x137f: { name: 'TrackOffset', type: 'Int' },
+        0x15ee: { name: 'MaxBlockAdditionID', type: 'Uint' },
+        0x136e: { name: 'Name', type: 'String' },
+        0x2b59c: { name: 'Language', type: 'String' },
+        0x6: { name: 'CodecID', type: 'String' },
+        0x23a2: { name: 'CodecPrivate', type: 'Binary' },
+        0x58688: { name: 'CodecName', type: 'String' },
+        0x3446: { name: 'AttachmentLink', type: 'Uint' },
+        0x1a9697: { name: 'CodecSettings', type: 'String' },
+        0x1b4040: { name: 'CodecInfoURL', type: 'String' },
+        0x6b240: { name: 'CodecDownloadURL', type: 'String' },
+        0x2a: { name: 'CodecDecodeAll', type: 'Uint' },
+        0x2fab: { name: 'TrackOverlay', type: 'Uint' },
+        0x16aa: { name: 'CodecDelay', type: 'Uint' },
+        0x16bb: { name: 'SeekPreRoll', type: 'Uint' },
+        0x2624: { name: 'TrackTranslate', type: 'Container' },
+        0x26fc: { name: 'TrackTranslateEditionUID', type: 'Uint' },
+        0x26bf: { name: 'TrackTranslateCodec', type: 'Uint' },
+        0x26a5: { name: 'TrackTranslateTrackID', type: 'Binary' },
+        0x60: { name: 'Video', type: 'Container' },
+        0x1a: { name: 'FlagInterlaced', type: 'Uint' },
+        0x13b8: { name: 'StereoMode', type: 'Uint' },
+        0x13c0: { name: 'AlphaMode', type: 'Uint' },
+        0x13b9: { name: 'OldStereoMode', type: 'Uint' },
+        0x30: { name: 'PixelWidth', type: 'Uint' },
+        0x3a: { name: 'PixelHeight', type: 'Uint' },
+        0x14aa: { name: 'PixelCropBottom', type: 'Uint' },
+        0x14bb: { name: 'PixelCropTop', type: 'Uint' },
+        0x14cc: { name: 'PixelCropLeft', type: 'Uint' },
+        0x14dd: { name: 'PixelCropRight', type: 'Uint' },
+        0x14b0: { name: 'DisplayWidth', type: 'Uint' },
+        0x14ba: { name: 'DisplayHeight', type: 'Uint' },
+        0x14b2: { name: 'DisplayUnit', type: 'Uint' },
+        0x14b3: { name: 'AspectRatioType', type: 'Uint' },
+        0xeb524: { name: 'ColourSpace', type: 'Binary' },
+        0xfb523: { name: 'GammaValue', type: 'Float' },
+        0x383e3: { name: 'FrameRate', type: 'Float' },
+        0x61: { name: 'Audio', type: 'Container' },
+        0x35: { name: 'SamplingFrequency', type: 'Float' },
+        0x38b5: { name: 'OutputSamplingFrequency', type: 'Float' },
+        0x1f: { name: 'Channels', type: 'Uint' },
+        0x3d7b: { name: 'ChannelPositions', type: 'Binary' },
+        0x2264: { name: 'BitDepth', type: 'Uint' },
+        0x62: { name: 'TrackOperation', type: 'Container' },
+        0x63: { name: 'TrackCombinePlanes', type: 'Container' },
+        0x64: { name: 'TrackPlane', type: 'Container' },
+        0x65: { name: 'TrackPlaneUID', type: 'Uint' },
+        0x66: { name: 'TrackPlaneType', type: 'Uint' },
+        0x69: { name: 'TrackJoinBlocks', type: 'Container' },
+        0x6d: { name: 'TrackJoinUID', type: 'Uint' },
+        0x40: { name: 'TrickTrackUID', type: 'Uint' },
+        0x41: { name: 'TrickTrackSegmentUID', type: 'Binary' },
+        0x46: { name: 'TrickTrackFlag', type: 'Uint' },
+        0x47: { name: 'TrickMasterTrackUID', type: 'Uint' },
+        0x44: { name: 'TrickMasterTrackSegmentUID', type: 'Binary' },
+        0x2d80: { name: 'ContentEncodings', type: 'Container' },
+        0x2240: { name: 'ContentEncoding', type: 'Container' },
+        0x1031: { name: 'ContentEncodingOrder', type: 'Uint' },
+        0x1032: { name: 'ContentEncodingScope', type: 'Uint' },
+        0x1033: { name: 'ContentEncodingType', type: 'Uint' },
+        0x1034: { name: 'ContentCompression', type: 'Container' },
+        0x254: { name: 'ContentCompAlgo', type: 'Uint' },
+        0x255: { name: 'ContentCompSettings', type: 'Binary' },
+        0x1035: { name: 'ContentEncryption', type: 'Container' },
+        0x7e1: { name: 'ContentEncAlgo', type: 'Uint' },
+        0x7e2: { name: 'ContentEncKeyID', type: 'Binary' },
+        0x7e3: { name: 'ContentSignature', type: 'Binary' },
+        0x7e4: { name: 'ContentSigKeyID', type: 'Binary' },
+        0x7e5: { name: 'ContentSigAlgo', type: 'Uint' },
+        0x7e6: { name: 'ContentSigHashAlgo', type: 'Uint' },
+        0xc53bb6b: { name: 'Cues', type: 'Container' },
+        0x3b: { name: 'CuePoint', type: 'Container' },
+        0x33: { name: 'CueTime', type: 'Uint' },
+        0x37: { name: 'CueTrackPositions', type: 'Container' },
+        0x77: { name: 'CueTrack', type: 'Uint' },
+        0x71: { name: 'CueClusterPosition', type: 'Uint' },
+        0x70: { name: 'CueRelativePosition', type: 'Uint' },
+        0x32: { name: 'CueDuration', type: 'Uint' },
+        0x1378: { name: 'CueBlockNumber', type: 'Uint' },
+        0x6a: { name: 'CueCodecState', type: 'Uint' },
+        0x5b: { name: 'CueReference', type: 'Container' },
+        0x16: { name: 'CueRefTime', type: 'Uint' },
+        0x17: { name: 'CueRefCluster', type: 'Uint' },
+        0x135f: { name: 'CueRefNumber', type: 'Uint' },
+        0x6b: { name: 'CueRefCodecState', type: 'Uint' },
+        0x941a469: { name: 'Attachments', type: 'Container' },
+        0x21a7: { name: 'AttachedFile', type: 'Container' },
+        0x67e: { name: 'FileDescription', type: 'String' },
+        0x66e: { name: 'FileName', type: 'String' },
+        0x660: { name: 'FileMimeType', type: 'String' },
+        0x65c: { name: 'FileData', type: 'Binary' },
+        0x6ae: { name: 'FileUID', type: 'Uint' },
+        0x675: { name: 'FileReferral', type: 'Binary' },
+        0x661: { name: 'FileUsedStartTime', type: 'Uint' },
+        0x662: { name: 'FileUsedEndTime', type: 'Uint' },
+        0x43a770: { name: 'Chapters', type: 'Container' },
+        0x5b9: { name: 'EditionEntry', type: 'Container' },
+        0x5bc: { name: 'EditionUID', type: 'Uint' },
+        0x5bd: { name: 'EditionFlagHidden', type: 'Uint' },
+        0x5db: { name: 'EditionFlagDefault', type: 'Uint' },
+        0x5dd: { name: 'EditionFlagOrdered', type: 'Uint' },
+        0x36: { name: 'ChapterAtom', type: 'Container' },
+        0x33c4: { name: 'ChapterUID', type: 'Uint' },
+        0x1654: { name: 'ChapterStringUID', type: 'String' },
+        0x11: { name: 'ChapterTimeStart', type: 'Uint' },
+        0x12: { name: 'ChapterTimeEnd', type: 'Uint' },
+        0x18: { name: 'ChapterFlagHidden', type: 'Uint' },
+        0x598: { name: 'ChapterFlagEnabled', type: 'Uint' },
+        0x2e67: { name: 'ChapterSegmentUID', type: 'Binary' },
+        0x2ebc: { name: 'ChapterSegmentEditionUID', type: 'Uint' },
+        0x23c3: { name: 'ChapterPhysicalEquiv', type: 'Uint' },
+        0xf: { name: 'ChapterTrack', type: 'Container' },
+        0x9: { name: 'ChapterTrackNumber', type: 'Uint' },
+        0x0: { name: 'ChapterDisplay', type: 'Container' },
+        0x5: { name: 'ChapString', type: 'String' },
+        0x37c: { name: 'ChapLanguage', type: 'String' },
+        0x37e: { name: 'ChapCountry', type: 'String' },
+        0x2944: { name: 'ChapProcess', type: 'Container' },
+        0x2955: { name: 'ChapProcessCodecID', type: 'Uint' },
+        0x50d: { name: 'ChapProcessPrivate', type: 'Binary' },
+        0x2911: { name: 'ChapProcessCommand', type: 'Container' },
+        0x2922: { name: 'ChapProcessTime', type: 'Uint' },
+        0x2933: { name: 'ChapProcessData', type: 'Binary' },
+        0x254c367: { name: 'Tags', type: 'Container' },
+        0x3373: { name: 'Tag', type: 'Container' },
+        0x23c0: { name: 'Targets', type: 'Container' },
+        0x28ca: { name: 'TargetTypeValue', type: 'Uint' },
+        0x23ca: { name: 'TargetType', type: 'String' },
+        0x23c5: { name: 'TagTrackUID', type: 'Uint' },
+        0x23c9: { name: 'TagEditionUID', type: 'Uint' },
+        0x23c4: { name: 'TagChapterUID', type: 'Uint' },
+        0x23c6: { name: 'TagAttachmentUID', type: 'Uint' },
+        0x27c8: { name: 'SimpleTag', type: 'Container' },
+        0x5a3: { name: 'TagName', type: 'String' },
+        0x47a: { name: 'TagLanguage', type: 'String' },
+        0x484: { name: 'TagDefault', type: 'Uint' },
+        0x487: { name: 'TagString', type: 'String' },
+        0x485: { name: 'TagBinary', type: 'Binary' }
+    };
+
+    function doInherit(newClass, baseClass) {
+        newClass.prototype = Object.create(baseClass.prototype);
+        newClass.prototype.constructor = newClass;
+    }
+
+    function WebmBase(name, type) {
+        this.name = name || 'Unknown';
+        this.type = type || 'Unknown';
+    }
+    WebmBase.prototype.updateBySource = function() { };
+    WebmBase.prototype.setSource = function(source) {
+        this.source = source;
+        this.updateBySource();
+    };
+    WebmBase.prototype.updateByData = function() { };
+    WebmBase.prototype.setData = function(data) {
+        this.data = data;
+        this.updateByData();
+    };
+
+    function WebmUint(name, type) {
+        WebmBase.call(this, name, type || 'Uint');
+    }
+    doInherit(WebmUint, WebmBase);
+    function padHex(hex) {
+        return hex.length % 2 === 1 ? '0' + hex : hex;
+    }
+    WebmUint.prototype.updateBySource = function() {
+        // use hex representation of a number instead of number value
+        this.data = '';
+        for (var i = 0; i < this.source.length; i++) {
+            var hex = this.source[i].toString(16);
+            this.data += padHex(hex);
+        }
+    };
+    WebmUint.prototype.updateByData = function() {
+        var length = this.data.length / 2;
+        this.source = new Uint8Array(length);
+        for (var i = 0; i < length; i++) {
+            var hex = this.data.substr(i * 2, 2);
+            this.source[i] = parseInt(hex, 16);
+        }
+    };
+    WebmUint.prototype.getValue = function() {
+        return parseInt(this.data, 16);
+    };
+    WebmUint.prototype.setValue = function(value) {
+        this.setData(padHex(value.toString(16)));
+    };
+
+    function WebmFloat(name, type) {
+        WebmBase.call(this, name, type || 'Float');
+    }
+    doInherit(WebmFloat, WebmBase);
+    WebmFloat.prototype.getFloatArrayType = function() {
+        return this.source && this.source.length === 4 ? Float32Array : Float64Array;
+    };
+    WebmFloat.prototype.updateBySource = function() {
+        var byteArray = this.source.reverse();
+        var floatArrayType = this.getFloatArrayType();
+        var floatArray = new floatArrayType(byteArray.buffer);
+        this.data = floatArray[0];
+    };
+    WebmFloat.prototype.updateByData = function() {
+        var floatArrayType = this.getFloatArrayType();
+        var floatArray = new floatArrayType([ this.data ]);
+        var byteArray = new Uint8Array(floatArray.buffer);
+        this.source = byteArray.reverse();
+    };
+    WebmFloat.prototype.getValue = function() {
+        return this.data;
+    };
+    WebmFloat.prototype.setValue = function(value) {
+        this.setData(value);
+    };
+
+    function WebmContainer(name, type) {
+        WebmBase.call(this, name, type || 'Container');
+    }
+    doInherit(WebmContainer, WebmBase);
+    WebmContainer.prototype.readByte = function() {
+        return this.source[this.offset++];
+    };
+    WebmContainer.prototype.readUint = function() {
+        var firstByte = this.readByte();
+        var bytes = 8 - firstByte.toString(2).length;
+        var value = firstByte - (1 << (7 - bytes));
+        for (var i = 0; i < bytes; i++) {
+            // don't use bit operators to support x86
+            value *= 256;
+            value += this.readByte();
+        }
+        return value;
+    };
+    WebmContainer.prototype.updateBySource = function() {
+        this.data = [];
+        for (this.offset = 0; this.offset < this.source.length; this.offset = end) {
+            var id = this.readUint();
+            var len = this.readUint();
+            var end = Math.min(this.offset + len, this.source.length);
+            var data = this.source.slice(this.offset, end);
+
+            var info = sections[id] || { name: 'Unknown', type: 'Unknown' };
+            var ctr = WebmBase;
+            switch (info.type) {
+                case 'Container':
+                    ctr = WebmContainer;
+                    break;
+                case 'Uint':
+                    ctr = WebmUint;
+                    break;
+                case 'Float':
+                    ctr = WebmFloat;
+                    break;
+            }
+            var section = new ctr(info.name, info.type);
+            section.setSource(data);
+            this.data.push({
+                id: id,
+                idHex: id.toString(16),
+                data: section
+            });
+        }
+    };
+    WebmContainer.prototype.writeUint = function(x, draft) {
+        for (var bytes = 1, flag = 0x80; x >= flag && bytes < 8; bytes++, flag *= 0x80) { }
+
+        if (!draft) {
+            var value = flag + x;
+            for (var i = bytes - 1; i >= 0; i--) {
+                // don't use bit operators to support x86
+                var c = value % 256;
+                this.source[this.offset + i] = c;
+                value = (value - c) / 256;
+            }
+        }
+
+        this.offset += bytes;
+    };
+    WebmContainer.prototype.writeSections = function(draft) {
+        this.offset = 0;
+        for (var i = 0; i < this.data.length; i++) {
+            var section = this.data[i],
+                content = section.data.source,
+                contentLength = content.length;
+            this.writeUint(section.id, draft);
+            this.writeUint(contentLength, draft);
+            if (!draft) {
+                this.source.set(content, this.offset);
+            }
+            this.offset += contentLength;
+        }
+        return this.offset;
+    };
+    WebmContainer.prototype.updateByData = function() {
+        // run without accessing this.source to determine total length - need to know it to create Uint8Array
+        var length = this.writeSections('draft');
+        this.source = new Uint8Array(length);
+        // now really write data
+        this.writeSections();
+    };
+    WebmContainer.prototype.getSectionById = function(id) {
+        for (var i = 0; i < this.data.length; i++) {
+            var section = this.data[i];
+            if (section.id === id) {
+                return section.data;
+            }
+        }
+        return null;
+    };
+
+    function WebmFile(source) {
+        WebmContainer.call(this, 'File', 'File');
+        this.setSource(source);
+    }
+    doInherit(WebmFile, WebmContainer);
+    WebmFile.prototype.fixDuration = function(duration, options) {
+        var logger = options && options.logger;
+        if (logger === undefined) {
+            logger = function(message) {
+                console.log(message);
+            };
+        } else if (!logger) {
+            logger = function() { };
+        }
+
+        var segmentSection = this.getSectionById(0x8538067);
+        if (!segmentSection) {
+            logger('[fix-webm-duration] Segment section is missing');
+            return false;
+        }
+
+        var infoSection = segmentSection.getSectionById(0x549a966);
+        if (!infoSection) {
+            logger('[fix-webm-duration] Info section is missing');
+            return false;
+        }
+
+        var timeScaleSection = infoSection.getSectionById(0xad7b1);
+        if (!timeScaleSection) {
+            logger('[fix-webm-duration] TimecodeScale section is missing');
+            return false;
+        }
+
+        var durationSection = infoSection.getSectionById(0x489);
+        if (durationSection) {
+            if (durationSection.getValue() <= 0) {
+                logger(`[fix-webm-duration] Duration section is present, but the value is ${durationSection.getValue()}`);
+                durationSection.setValue(duration);
+            } else {
+                logger(`[fix-webm-duration] Duration section is present, and the value is ${durationSection.getValue()}`);
+                return false;
+            }
+        } else {
+            logger('[fix-webm-duration] Duration section is missing');
+            // append Duration section
+            durationSection = new WebmFloat('Duration', 'Float');
+            durationSection.setValue(duration);
+            infoSection.data.push({
+                id: 0x489,
+                data: durationSection
+            });
+        }
+
+        // set default time scale to 1 millisecond (1000000 nanoseconds)
+        timeScaleSection.setValue(1000000);
+        infoSection.updateByData();
+        segmentSection.updateByData();
+        this.updateByData();
+
+        return true;
+    };
+    WebmFile.prototype.toBlob = function(mimeType) {
+        return new Blob([ this.source.buffer ], { type: mimeType || 'video/webm' });
+    };
+
+    function fixWebmDuration(blob, duration, callback, options) {
+        // The callback may be omitted - then the third argument is options
+        if (typeof callback === "object") {
+            options = callback;
+            callback = undefined;
+        }
+
+        if (!callback) {
+            return new Promise(function(resolve) {
+                fixWebmDuration(blob, duration, resolve, options);
+            });
+        }
+
+        try {
+            var reader = new FileReader();
+            reader.onloadend = function() {
+                try {
+                    var file = new WebmFile(new Uint8Array(reader.result));
+                    if (file.fixDuration(duration, options)) {
+                        blob = file.toBlob(blob.type);
+                    }
+                } catch (ex) {
+                    // ignore
+                }
+                callback(blob);
+            };
+            reader.readAsArrayBuffer(blob);
+        } catch (ex) {
+            callback(blob);
+        }
+    }
+
+    // Support AMD import default
+    fixWebmDuration.default = fixWebmDuration;
+
+    return fixWebmDuration;
+});
+
+</script>
+
+<script>
+(function(){
+  const DAYS = [
+    {key:'mon', label:'LUN', long:'Lunes'}, {key:'tue', label:'MAR', long:'Martes'}, {key:'wed', label:'MIÉ', long:'Miércoles'},
+    {key:'thu', label:'JUE', long:'Jueves'}, {key:'fri', label:'VIE', long:'Viernes'}
+  ];
+  const DOW_KEY = ['sun','mon','tue','wed','thu','fri','sat'];
+  // Estas tres claves quedan "namespaced" por usuario apenas alguien inicia sesión
+  // (ver applyUserNamespace más abajo) para que cada trader tenga su propia
+  // configuración, journal y carpeta de videos, aunque usen la misma instalación.
+  let STORAGE_KEY = 'tradecam_config_v1';
+  let JOURNAL_KEY = 'tradecam_journal_v1';
+  const DB_NAME = 'tradecam'; const STORE_NAME = 'handles'; let HANDLE_KEY = 'saveFolder';
+
+  const defaultConfig = () => ({
+    accounts: ['Cuenta propia', 'Cuenta fondeada'],
+    assets: ['Bitcoin', 'Nasdaq'],
+    schedule: {
+      mon: {asset:'Bitcoin', account:'Cuenta propia', off:false},
+      tue: {asset:'Nasdaq', account:'Cuenta fondeada', off:false},
+      wed: {asset:'Nasdaq', account:'Cuenta fondeada', off:false},
+      thu: {asset:'Bitcoin', account:'Cuenta propia', off:false},
+      fri: {asset:'Nasdaq', account:'Cuenta fondeada', off:false}
+    },
+    startTime: '10:10',
+    durationHours: 2
+  });
+
+  let config = defaultConfig(); // se reemplaza por loadConfig() recién después del login
+
+  function loadConfig(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultConfig();
+      const parsed = JSON.parse(raw);
+      const base = defaultConfig();
+      return Object.assign(base, parsed, {
+        schedule: Object.assign(base.schedule, parsed.schedule || {})
+      });
+    } catch (e) { return defaultConfig(); }
+  }
+  function saveConfigToStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
+
+  // ---------- IndexedDB helpers (for the folder handle) ----------
+  function openDb(){
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbSet(key, value){
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function idbGet(key){
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const req = tx.objectStore(STORE_NAME).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // =======================================================================
+  // CUENTAS (modo multi-trader): registro, login y namespacing de datos
+  // =======================================================================
+  const USERS_KEY = 'tradecam_users_v1';
+  const SESSION_KEY = 'tradecam_session_v1';
+
+  function getUsers(){
+    try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function saveUsers(users){ localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+  function findUserByEmail(email){
+    const norm = (email || '').trim().toLowerCase();
+    return getUsers().find(u => u.email === norm) || null;
+  }
+
+  async function hashPassword(password){
+    const enc = new TextEncoder().encode(password);
+    const digest = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  let currentUser = null; // {id, name, email}
+
+  // Namespacea configuración, journal y carpeta de guardado por usuario, para
+  // que varios traders puedan usar esta misma instalación sin pisarse datos.
+  function applyUserNamespace(user){
+    currentUser = user;
+    STORAGE_KEY = 'tradecam_config_v1::' + user.id;
+    JOURNAL_KEY = 'tradecam_journal_v1::' + user.id;
+    HANDLE_KEY = 'saveFolder::' + user.id;
+    config = loadConfig();
+  }
+
+  function bootApp(){
+    topnav.style.display = 'flex';
+    topnavUserName.textContent = currentUser.name || currentUser.email;
+    authOverlay.classList.remove('show');
+    renderConfigView();
+    checkExistingFolder();
+    const hasBasics = config.accounts.length > 0 && config.assets.length > 0;
+    showView(hasBasics ? 'inicio' : 'config');
+  }
+
+  function showAuthOverlay(){
+    topnav.style.display = 'none';
+    Object.values(views).forEach(v => { if (v) v.style.display = 'none'; });
+    authOverlay.classList.add('show');
+    loginEmail.value = '';
+    loginPassword.value = '';
+    loginError.classList.remove('show');
+  }
+
+  const authOverlay = document.getElementById('authOverlay');
+  const topnav = document.getElementById('topnav');
+  const topnavUserName = document.getElementById('topnavUserName');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const authTabLogin = document.getElementById('authTabLogin');
+  const authTabRegister = document.getElementById('authTabRegister');
+  const authFormLogin = document.getElementById('authFormLogin');
+  const authFormRegister = document.getElementById('authFormRegister');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginError = document.getElementById('loginError');
+  const loginBtn = document.getElementById('loginBtn');
+  const registerName = document.getElementById('registerName');
+  const registerEmail = document.getElementById('registerEmail');
+  const registerPassword = document.getElementById('registerPassword');
+  const registerPassword2 = document.getElementById('registerPassword2');
+  const registerError = document.getElementById('registerError');
+  const registerBtn = document.getElementById('registerBtn');
+
+  authTabLogin.addEventListener('click', () => {
+    authTabLogin.classList.add('active'); authTabRegister.classList.remove('active');
+    authFormLogin.style.display = 'block'; authFormRegister.style.display = 'none';
+  });
+  authTabRegister.addEventListener('click', () => {
+    authTabRegister.classList.add('active'); authTabLogin.classList.remove('active');
+    authFormRegister.style.display = 'block'; authFormLogin.style.display = 'none';
+  });
+
+  function startSession(userId){
+    localStorage.setItem(SESSION_KEY, userId);
+  }
+
+  loginBtn.addEventListener('click', async () => {
+    loginError.classList.remove('show');
+    const email = loginEmail.value.trim().toLowerCase();
+    const password = loginPassword.value;
+    if (!email || !password){
+      loginError.textContent = 'Completá email y contraseña.';
+      loginError.classList.add('show');
+      return;
+    }
+    const user = findUserByEmail(email);
+    if (!user){
+      loginError.textContent = 'No existe una cuenta con ese email. ¿Querés crear una?';
+      loginError.classList.add('show');
+      return;
+    }
+    const hash = await hashPassword(password);
+    if (hash !== user.passwordHash){
+      loginError.textContent = 'Contraseña incorrecta.';
+      loginError.classList.add('show');
+      return;
+    }
+    startSession(user.id);
+    applyUserNamespace(user);
+    bootApp();
+  });
+  loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginBtn.click(); });
+
+  registerBtn.addEventListener('click', async () => {
+    registerError.classList.remove('show');
+    const name = registerName.value.trim();
+    const email = registerEmail.value.trim().toLowerCase();
+    const password = registerPassword.value;
+    const password2 = registerPassword2.value;
+    if (!name || !email || !password){
+      registerError.textContent = 'Completá todos los campos.';
+      registerError.classList.add('show');
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)){
+      registerError.textContent = 'Ese email no parece válido.';
+      registerError.classList.add('show');
+      return;
+    }
+    if (password.length < 6){
+      registerError.textContent = 'La contraseña tiene que tener al menos 6 caracteres.';
+      registerError.classList.add('show');
+      return;
+    }
+    if (password !== password2){
+      registerError.textContent = 'Las contraseñas no coinciden.';
+      registerError.classList.add('show');
+      return;
+    }
+    if (findUserByEmail(email)){
+      registerError.textContent = 'Ya existe una cuenta con ese email. Iniciá sesión en vez de crear otra.';
+      registerError.classList.add('show');
+      return;
+    }
+    const passwordHash = await hashPassword(password);
+    const user = { id: (crypto.randomUUID ? crypto.randomUUID() : ('u_' + Date.now() + '_' + Math.random().toString(36).slice(2))),
+      name, email, passwordHash, createdAt: Date.now() };
+    const users = getUsers();
+    users.push(user);
+    saveUsers(users);
+    startSession(user.id);
+    applyUserNamespace(user);
+    bootApp();
+  });
+  registerPassword2.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerBtn.click(); });
+
+  logoutBtn.addEventListener('click', () => {
+    const ok = confirm('¿Cerrar sesión? Vas a volver a la pantalla de login.');
+    if (!ok) return;
+    localStorage.removeItem(SESSION_KEY);
+    currentUser = null;
+    showAuthOverlay();
+  });
+
+  // =======================================================================
+  // VIEW ROUTER
+  // =======================================================================
+  const views = {
+    inicio: document.getElementById('view-inicio'),
+    config: document.getElementById('view-config'),
+    historial: document.getElementById('view-historial'),
+    resumen: document.getElementById('view-resumen'),
+    sesion: document.getElementById('view-sesion'),
+    post: document.getElementById('view-post'),
+    done: document.getElementById('view-done')
+  };
+  const navInicio = document.getElementById('navInicio');
+  const navConfig = document.getElementById('navConfig');
+  const navHistorial = document.getElementById('navHistorial');
+  const navResumen = document.getElementById('navResumen');
+
+  function showView(name){
+    Object.keys(views).forEach(k => { views[k].style.display = (k === name) ? (k === 'sesion' ? 'flex' : 'block') : 'none'; });
+    navInicio.classList.toggle('active', name === 'inicio');
+    navConfig.classList.toggle('active', name === 'config');
+    navHistorial.classList.toggle('active', name === 'historial');
+    navResumen.classList.toggle('active', name === 'resumen');
+    if (name === 'inicio') renderInicio();
+    if (name === 'historial') renderHistorial();
+    if (name === 'resumen') renderResumen();
+  }
+  navInicio.addEventListener('click', () => showView('inicio'));
+  navConfig.addEventListener('click', () => showView('config'));
+  navHistorial.addEventListener('click', () => showView('historial'));
+  navResumen.addEventListener('click', () => showView('resumen'));
+
+  // =======================================================================
+  // CONFIGURACIÓN VIEW
+  // =======================================================================
+  const accountsChips = document.getElementById('accountsChips');
+  const assetsChips = document.getElementById('assetsChips');
+  const dayGrid = document.getElementById('dayGrid');
+  const startTimeInput = document.getElementById('startTime');
+  const durationInput = document.getElementById('duration');
+
+  function renderChips(container, list, onRemove){
+    container.innerHTML = '';
+    list.forEach((item, idx) => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      const span = document.createElement('span');
+      span.textContent = item;
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.textContent = '×'; btn.title = 'Quitar';
+      btn.addEventListener('click', () => onRemove(idx));
+      chip.appendChild(span); chip.appendChild(btn);
+      container.appendChild(chip);
+    });
+  }
+
+  function buildSelect(options, selected, onChange){
+    const select = document.createElement('select');
+    if (options.length === 0){
+      const opt = document.createElement('option');
+      opt.textContent = 'Agregá una arriba'; opt.value = '';
+      select.appendChild(opt); select.disabled = true;
+    }
+    options.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt; o.textContent = opt;
+      if (opt === selected) o.selected = true;
+      select.appendChild(o);
+    });
+    select.addEventListener('change', () => onChange(select.value));
+    return select;
+  }
+
+  function renderDayGrid(){
+    dayGrid.innerHTML = '';
+    DAYS.forEach(day => {
+      const entry = config.schedule[day.key] || {asset:'', account:'', off:false};
+      const row = document.createElement('div');
+      row.className = 'day-row';
+      const name = document.createElement('div');
+      name.className = 'day-name'; name.textContent = day.label;
+
+      const assetSelect = buildSelect(config.assets, entry.asset, (val) => { config.schedule[day.key].asset = val; });
+      const accountSelect = buildSelect(config.accounts, entry.account, (val) => { config.schedule[day.key].account = val; });
+      assetSelect.disabled = entry.off; accountSelect.disabled = entry.off;
+
+      const offLabel = document.createElement('label');
+      offLabel.className = 'off';
+      const offCheckbox = document.createElement('input');
+      offCheckbox.type = 'checkbox'; offCheckbox.checked = entry.off;
+      offCheckbox.addEventListener('change', () => {
+        config.schedule[day.key].off = offCheckbox.checked;
+        assetSelect.disabled = offCheckbox.checked;
+        accountSelect.disabled = offCheckbox.checked;
+      });
+      offLabel.appendChild(offCheckbox);
+      offLabel.appendChild(document.createTextNode('Sin sesión'));
+
+      row.appendChild(name); row.appendChild(assetSelect); row.appendChild(accountSelect); row.appendChild(offLabel);
+      dayGrid.appendChild(row);
+    });
+  }
+
+  function renderConfigView(){
+    renderChips(accountsChips, config.accounts, (idx) => {
+      const removed = config.accounts[idx];
+      config.accounts.splice(idx, 1);
+      DAYS.forEach(d => { if (config.schedule[d.key].account === removed) config.schedule[d.key].account = config.accounts[0] || ''; });
+      renderConfigView();
+    });
+    renderChips(assetsChips, config.assets, (idx) => {
+      const removed = config.assets[idx];
+      config.assets.splice(idx, 1);
+      DAYS.forEach(d => { if (config.schedule[d.key].asset === removed) config.schedule[d.key].asset = config.assets[0] || ''; });
+      renderConfigView();
+    });
+    renderDayGrid();
+    startTimeInput.value = config.startTime;
+    durationInput.value = config.durationHours;
+  }
+
+  document.getElementById('addAccountBtn').addEventListener('click', () => {
+    const input = document.getElementById('accountInput');
+    const val = input.value.trim();
+    if (!val || config.accounts.includes(val)) return;
+    config.accounts.push(val); input.value = ''; renderConfigView();
+  });
+  document.getElementById('addAssetBtn').addEventListener('click', () => {
+    const input = document.getElementById('assetInput');
+    const val = input.value.trim();
+    if (!val || config.assets.includes(val)) return;
+    config.assets.push(val); input.value = ''; renderConfigView();
+  });
+
+  const folderStatusText = document.getElementById('folderStatusText');
+  const folderStatusDot = document.querySelector('#folderStatus .dot');
+  const pickFolderBtn = document.getElementById('pickFolderBtn');
+  const folderUnsupported = document.getElementById('folderUnsupported');
+  const supportsFsAccess = 'showDirectoryPicker' in window;
+
+  function setFolderStatus(state, text){
+    folderStatusDot.className = 'dot ' + state;
+    folderStatusText.textContent = text;
+  }
+  async function checkExistingFolder(){
+    if (!supportsFsAccess){
+      folderUnsupported.style.display = 'block';
+      pickFolderBtn.disabled = true;
+      setFolderStatus('off', 'No disponible en este navegador.');
+      return;
+    }
+    try {
+      const handle = await idbGet(HANDLE_KEY);
+      if (!handle){ setFolderStatus('off', 'No hay carpeta seleccionada todavía.'); return; }
+      const perm = await handle.queryPermission({mode:'readwrite'});
+      if (perm === 'granted'){
+        setFolderStatus('ok', 'Guardando en: ' + handle.name);
+        pickFolderBtn.textContent = 'Cambiar carpeta';
+      } else {
+        setFolderStatus('warn', 'Carpeta elegida (' + handle.name + '), falta confirmar acceso.');
+        pickFolderBtn.textContent = 'Confirmar acceso a la carpeta';
+      }
+    } catch (e) { setFolderStatus('off', 'No hay carpeta seleccionada todavía.'); }
+  }
+  pickFolderBtn.addEventListener('click', async () => {
+    if (!supportsFsAccess) return;
+    // Si el botón dice "Cambiar carpeta" es porque ya había una confirmada:
+    // en ese caso el usuario quiere elegir una carpeta DISTINTA, así que
+    // vamos directo al buscador en vez de re-confirmar la de siempre.
+    const wantsNewFolder = pickFolderBtn.textContent.trim() === 'Cambiar carpeta';
+    try {
+      if (!wantsNewFolder){
+        const existing = await idbGet(HANDLE_KEY);
+        if (existing){
+          const perm = await existing.requestPermission({mode:'readwrite'});
+          if (perm === 'granted'){
+            setFolderStatus('ok', 'Guardando en: ' + existing.name);
+            pickFolderBtn.textContent = 'Cambiar carpeta';
+            return;
+          }
+        }
+      }
+      const handle = await window.showDirectoryPicker({mode:'readwrite'});
+      await idbSet(HANDLE_KEY, handle);
+      setFolderStatus('ok', 'Guardando en: ' + handle.name);
+      pickFolderBtn.textContent = 'Cambiar carpeta';
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      setFolderStatus('off', 'No se pudo confirmar la carpeta. Probá de nuevo.');
+    }
+  });
+
+  const toast = document.getElementById('toast');
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    config.startTime = startTimeInput.value || '10:10';
+    config.durationHours = parseFloat(durationInput.value) || 2;
+    saveConfigToStorage();
+    showToast('Configuración guardada');
+  });
+
+  // =======================================================================
+  // INICIO VIEW
+  // =======================================================================
+  const planAsset = document.getElementById('planAsset');
+  const planMeta = document.getElementById('planMeta');
+  const planEyebrow = document.getElementById('planEyebrow');
+  const startSessionBtn = document.getElementById('startSessionBtn');
+  const inicioWarning = document.getElementById('inicioWarning');
+
+  function todayInfo(){
+    const now = new Date();
+    const dowKey = DOW_KEY[now.getDay()];
+    const dayDef = DAYS.find(d => d.key === dowKey);
+    const entry = dayDef ? config.schedule[dowKey] : null;
+    return {now, dowKey, dayDef, entry};
+  }
+
+  async function renderInicio(){
+    const {now, dayDef, entry} = todayInfo();
+    document.getElementById('inicioGreeting').textContent = 'Hola';
+    document.getElementById('inicioDate').textContent =
+      (dayDef ? dayDef.long : now.toLocaleDateString('es-AR', {weekday:'long'})) + ' ' +
+      now.toLocaleDateString('es-AR', {day:'numeric', month:'long', year:'numeric'});
+
+    let canStart = true;
+    inicioWarning.style.display = 'none';
+
+    if (!dayDef || !entry || entry.off || !entry.asset || !entry.account){
+      planEyebrow.textContent = 'Hoy';
+      planAsset.innerHTML = 'No tenés sesión programada';
+      planMeta.textContent = '';
+      canStart = false;
+    } else {
+      planEyebrow.textContent = 'Hoy toca';
+      planAsset.innerHTML = entry.asset + ' <span class="acct">· ' + entry.account + '</span>';
+      planMeta.textContent = '';
+    }
+
+    if (!supportsFsAccess){
+      inicioWarning.style.display = 'block';
+      inicioWarning.textContent = 'Tu navegador no soporta guardar en carpeta directo. Usá Chrome o Edge.';
+      canStart = false;
+    } else {
+      const handle = await idbGet(HANDLE_KEY);
+      if (!handle){
+        inicioWarning.style.display = 'block';
+        inicioWarning.textContent = 'Todavía no elegiste una carpeta de guardado. Andá a Configuración.';
+        canStart = false;
+      }
+    }
+    startSessionBtn.disabled = !canStart;
+  }
+
+  startSessionBtn.addEventListener('click', () => {
+    const {entry} = todayInfo();
+    startSession(entry);
+  });
+
+  // =======================================================================
+  // SESIÓN EN VIVO — recording engine
+  // =======================================================================
+  const stage = document.getElementById('stage');
+  const stageOuter = document.getElementById('stageOuter');
+  const screenVideo = document.getElementById('screenVideo');
+  const camVideo = document.getElementById('camVideo');
+  const camBox = document.getElementById('camBox');
+  const notesBox = document.getElementById('notesBox');
+  const notesBody = document.getElementById('notesBody');
+  const notesDragHandle = document.getElementById('notesDragHandle');
+  const sesionInfo = document.getElementById('sesionInfo');
+  const sesionTimer = document.getElementById('sesionTimer');
+  const recDot = document.getElementById('recDot');
+  const pauseSessionBtn = document.getElementById('pauseSessionBtn');
+  const endSessionBtn = document.getElementById('endSessionBtn');
+  const startupOverlay = document.getElementById('startupOverlay');
+  const startupMsg = document.getElementById('startupMsg');
+  const startupBackBtn = document.getElementById('startupBackBtn');
+  const qualityStep = document.getElementById('qualityStep');
+  const permissionStep = document.getElementById('permissionStep');
+  const qualityPicker = document.getElementById('qualityPicker');
+  const qualityBtns = Array.from(qualityPicker.querySelectorAll('.quality-btn'));
+  const qualityStartBtn = document.getElementById('qualityStartBtn');
+  const toggleMicBtn = document.getElementById('toggleMicBtn');
+  const micIcon = document.getElementById('micIcon');
+  const micLabel = document.getElementById('micLabel');
+  const toggleCamBtn = document.getElementById('toggleCamBtn');
+  const camIcon = document.getElementById('camIcon');
+  const camLabel = document.getElementById('camLabel');
+  const toggleNotesBtn = document.getElementById('toggleNotesBtn');
+  const notesIcon = document.getElementById('notesIcon');
+  const notesLabel = document.getElementById('notesLabel');
+  const moreBtn = document.getElementById('moreBtn');
+  const moreMenu = document.getElementById('moreMenu');
+  const cycleShapeBtn = document.getElementById('cycleShapeBtn');
+  const shapeItemIcon = document.getElementById('shapeItemIcon');
+  const shapeItemLabel = document.getElementById('shapeItemLabel');
+  const qualityInfoItem = document.getElementById('qualityInfoItem');
+  const markMomentBtn = document.getElementById('markMomentBtn');
+  const markerFlash = document.getElementById('markerFlash');
+  const pauseIcon = document.getElementById('pauseIcon');
+  const pauseLabel = document.getElementById('pauseLabel');
+
+  // ---- Calidad de grabación: elegida cada vez en la pantalla de sesión ----
+  const QUALITY_KEY = 'tradecam_quality_v1';
+  const QUALITY_PRESETS = {
+    baja: {label: 'Baja', videoBitsPerSecond: 1500000},
+    media: {label: 'Media', videoBitsPerSecond: 4000000},
+    alta: {label: 'Alta', videoBitsPerSecond: 8000000}
+  };
+  let selectedQuality = QUALITY_PRESETS[localStorage.getItem(QUALITY_KEY)] ? localStorage.getItem(QUALITY_KEY) : 'media';
+
+  function renderQualityPicker(){
+    qualityBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.value === selectedQuality));
+  }
+  qualityBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedQuality = btn.dataset.value;
+      localStorage.setItem(QUALITY_KEY, selectedQuality);
+      renderQualityPicker();
+    });
+  });
+
+  let recState = null; // holds everything about the active recording
+
+  // ---- estado de los controles tipo Zoom durante la sesión en vivo ----
+  let activeCamStream = null;
+  let camEnabled = true;
+  let micEnabled = true;
+  let notesVisible = true;
+  const CAM_SHAPES = ['rounded', 'circle', 'square'];
+  let camShape = 'rounded';
+  const MARKER_DURATION_MS = 2200;
+
+  const ICON_MIC_ON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0014 0"></path><path d="M12 19v3"></path></svg>';
+  const ICON_MIC_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"></path><path d="M9 9v3a3 3 0 004.6 2.5"></path><path d="M15 9V5a3 3 0 00-5.7-1.3"></path><path d="M5 10a7 7 0 0010.3 6.2"></path><path d="M12 19v3"></path></svg>';
+  const ICON_CAM_ON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"></rect><path d="M22 8l-6 4 6 4V8z"></path></svg>';
+  const ICON_CAM_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l20 20"></path><path d="M16 8l6-4v16l-6-4"></path><path d="M2 8v8a2 2 0 002 2h9"></path><path d="M2 6a2 2 0 012-2h6"></path></svg>';
+  const ICON_EYE_ON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+  const ICON_EYE_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"></path><path d="M9.9 5.2A10.9 10.9 0 0112 5c7 0 11 7 11 7a17.7 17.7 0 01-3.2 4.1"></path><path d="M6.5 6.5A17.7 17.7 0 001 12s4 7 11 7a10.9 10.9 0 005.1-1.2"></path><path d="M9.5 9.5a3 3 0 004.2 4.2"></path></svg>';
+  const SHAPE_ICONS = {
+    rounded: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="6"></rect></svg>',
+    circle: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle></svg>',
+    square: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="1"></rect></svg>'
+  };
+  const SHAPE_LABELS = {rounded: 'Redondeada', circle: 'Círculo', square: 'Cuadrada'};
+  const SHAPE_RADIUS_CSS = {rounded: '14px', circle: '50%', square: '4px'};
+
+  function updateSessionControlsUI(){
+    toggleMicBtn.classList.toggle('off', !micEnabled);
+    micIcon.innerHTML = micEnabled ? ICON_MIC_ON : ICON_MIC_OFF;
+    micLabel.textContent = micEnabled ? 'Silenciar' : 'Activar mic';
+    toggleMicBtn.title = micEnabled ? 'Silenciar micrófono' : 'Activar micrófono';
+
+    toggleCamBtn.classList.toggle('off', !camEnabled);
+    camIcon.innerHTML = camEnabled ? ICON_CAM_ON : ICON_CAM_OFF;
+    camLabel.textContent = camEnabled ? 'Detener video' : 'Iniciar video';
+    toggleCamBtn.title = camEnabled ? 'Apagar cámara' : 'Encender cámara';
+
+    toggleNotesBtn.classList.toggle('off', !notesVisible);
+    notesIcon.innerHTML = notesVisible ? ICON_EYE_ON : ICON_EYE_OFF;
+    notesLabel.textContent = notesVisible ? 'Notas' : 'Notas ocultas';
+    toggleNotesBtn.title = notesVisible ? 'Ocultar notas' : 'Mostrar notas';
+
+    shapeItemIcon.innerHTML = SHAPE_ICONS[camShape];
+    shapeItemLabel.textContent = 'Forma de cámara: ' + SHAPE_LABELS[camShape];
+  }
+
+  function applyCamShape(){
+    camBox.style.borderRadius = SHAPE_RADIUS_CSS[camShape];
+  }
+
+  toggleMicBtn.addEventListener('click', () => {
+    if (!activeCamStream) return;
+    micEnabled = !micEnabled;
+    activeCamStream.getAudioTracks().forEach(t => { t.enabled = micEnabled; });
+    updateSessionControlsUI();
+  });
+
+  toggleCamBtn.addEventListener('click', () => {
+    if (!activeCamStream) return;
+    camEnabled = !camEnabled;
+    activeCamStream.getVideoTracks().forEach(t => { t.enabled = camEnabled; });
+    camBox.style.display = camEnabled ? 'block' : 'none';
+    updateSessionControlsUI();
+  });
+
+  toggleNotesBtn.addEventListener('click', () => {
+    notesVisible = !notesVisible;
+    notesBox.style.display = notesVisible ? 'flex' : 'none';
+    updateSessionControlsUI();
+  });
+
+  cycleShapeBtn.addEventListener('click', () => {
+    const idx = CAM_SHAPES.indexOf(camShape);
+    camShape = CAM_SHAPES[(idx + 1) % CAM_SHAPES.length];
+    applyCamShape();
+    updateSessionControlsUI();
+  });
+
+  // ---- menú "Más": forma de cámara + info de calidad, estilo Zoom ----
+  moreBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    moreMenu.classList.toggle('show');
+  });
+  document.addEventListener('click', (e) => {
+    if (moreMenu.classList.contains('show') && !moreMenu.contains(e.target) && e.target !== moreBtn){
+      moreMenu.classList.remove('show');
+    }
+  });
+
+  // ---- atajos de teclado durante la sesión en vivo ----
+  // Se desactivan solos mientras estás escribiendo en el cuadro de notas.
+  document.addEventListener('keydown', (e) => {
+    if (views.sesion.style.display !== 'flex') return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const activeEl = document.activeElement;
+    if (activeEl === notesBody || (activeEl && notesBody.contains(activeEl))) return;
+
+    if (e.code === 'Space'){ e.preventDefault(); pauseSessionBtn.click(); return; }
+    const key = e.key.toLowerCase();
+    if (key === 'm'){ toggleMicBtn.click(); return; }
+    if (key === 'v'){ toggleCamBtn.click(); return; }
+    if (key === 'n'){ toggleNotesBtn.click(); return; }
+    if (key === 'f'){ markMomentBtn.click(); return; }
+  });
+
+  startupBackBtn.addEventListener('click', () => {
+    startupBackBtn.style.display = 'none';
+    showView('inicio');
+  });
+
+  function pad(n){ return String(n).padStart(2, '0'); }
+  const MONTH_NAMES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  function parseDateStrLocal(dateStr){
+    const parts = dateStr.split('-').map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  function dateToKey(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function getWeekStart(dateStr){
+    const d = parseDateStrLocal(dateStr);
+    const dow = (d.getDay() + 6) % 7; // lunes = 0 ... domingo = 6
+    d.setDate(d.getDate() - dow);
+    return d;
+  }
+  function formatDayMonth(d){ return d.getDate() + ' de ' + MONTH_NAMES_ES[d.getMonth()]; }
+  function parseIntOrNull(str){
+    if (str === '' || str === null || str === undefined) return null;
+    const n = parseInt(str, 10);
+    return isNaN(n) ? null : n;
+  }
+  function formatElapsed(ms){
+    const s = Math.floor(ms / 1000);
+    return pad(Math.floor(s/3600)) + ':' + pad(Math.floor(s/60)%60) + ':' + pad(s%60);
+  }
+
+  // ---- draggable elements: position kept as fractions of the stage size ----
+  function makeDraggable(el, handle, initial){
+    let pos = Object.assign({}, initial);
+    function apply(){
+      const w = stage.clientWidth, h = stage.clientHeight;
+      el.style.left = (pos.x * w) + 'px';
+      el.style.top = (pos.y * h) + 'px';
+    }
+    let dragging = false, startX = 0, startY = 0, startPos = null;
+    handle.addEventListener('pointerdown', (e) => {
+      dragging = true; el.classList.add('dragging');
+      startX = e.clientX; startY = e.clientY; startPos = Object.assign({}, pos);
+      handle.setPointerCapture(e.pointerId);
+    });
+    handle.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const w = stage.clientWidth, h = stage.clientHeight;
+      const dx = (e.clientX - startX) / w, dy = (e.clientY - startY) / h;
+      let nx = startPos.x + dx, ny = startPos.y + dy;
+      const ew = el.offsetWidth / w, eh = el.offsetHeight / h;
+      nx = Math.max(0, Math.min(1 - ew, nx));
+      ny = Math.max(0, Math.min(1 - eh, ny));
+      pos.x = nx; pos.y = ny; apply();
+    });
+    handle.addEventListener('pointerup', (e) => { dragging = false; el.classList.remove('dragging'); });
+    window.addEventListener('resize', apply);
+    apply();
+    return { getPos: () => pos };
+  }
+
+  function fitStageToVideo(videoW, videoH){
+    const maxW = stageOuter.clientWidth, maxH = stageOuter.clientHeight;
+    let w = maxW, h = w * (videoH / videoW);
+    if (h > maxH){ h = maxH; w = h * (videoW / videoH); }
+    stage.style.width = Math.round(w) + 'px';
+    stage.style.height = Math.round(h) + 'px';
+  }
+
+  function drawRoundedClip(ctx, x, y, w, h, r){
+    if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+    else {
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y, x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x, y+h, r);
+      ctx.arcTo(x, y+h, x, y, r);
+      ctx.arcTo(x, y, x+w, y, r);
+      ctx.closePath();
+    }
+  }
+
+  function wrapText(ctx, text, maxWidth){
+    const words = text.split(/\s+/);
+    const lines = [];
+    let line = '';
+    words.forEach(word => {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxWidth && line){
+        lines.push(line); line = word;
+      } else { line = test; }
+    });
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  async function startSession(entry){
+    showView('sesion');
+    startupOverlay.style.display = 'flex';
+    startupBackBtn.style.display = 'none';
+    sesionInfo.innerHTML = (entry && entry.asset ? entry.asset : 'Sesión') +
+      ' <span class="acct">· ' + (entry && entry.account ? entry.account : '—') + '</span>';
+    notesBody.textContent = '';
+
+    // reiniciar los controles tipo Zoom para esta nueva sesión
+    activeCamStream = null;
+    camEnabled = true; micEnabled = true; notesVisible = true; camShape = 'rounded';
+    camBox.style.display = 'block';
+    notesBox.style.display = 'flex';
+    applyCamShape();
+    updateSessionControlsUI();
+
+    // reiniciar el estado de pausa para esta nueva sesión
+    recDot.classList.remove('paused');
+    pauseSessionBtn.classList.remove('active');
+    pauseLabel.textContent = 'Pausar';
+    pauseSessionBtn.disabled = true;
+    markMomentBtn.disabled = true;
+    moreMenu.classList.remove('show');
+    markerFlash.classList.remove('show');
+
+    let screenStream, camStream, folderHandle, fileHandle, writable, recorder, canvas, ctx, rafId, timerId, camPos, notesPos;
+    let isPaused = false, pauseStartedAt = null;
+    let sessionMarkers = [];
+    let activeMarkers = [];
+
+    // ---- Paso 1: elegir la calidad de hoy, antes de pedir permisos ----
+    qualityStep.style.display = 'flex';
+    permissionStep.style.display = 'none';
+    renderQualityPicker();
+    const chosenQuality = await new Promise(resolve => {
+      qualityStartBtn.onclick = () => resolve(selectedQuality);
+    });
+    const qualityPreset = QUALITY_PRESETS[chosenQuality] || QUALITY_PRESETS.media;
+    qualityInfoItem.textContent = 'Calidad de hoy: ' + qualityPreset.label;
+    qualityStep.style.display = 'none';
+    permissionStep.style.display = 'flex';
+    startupMsg.textContent = 'Te vamos a pedir permiso para compartir la pantalla y usar la cámara.';
+
+    try {
+      screenStream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30}, audio:false});
+    } catch (e) {
+      startupMsg.textContent = 'No se pudo compartir la pantalla. Podés volver a intentarlo desde Inicio.';
+      startupBackBtn.style.display = 'inline-block';
+      return;
+    }
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+    } catch (e) {
+      startupMsg.textContent = 'No se pudo acceder a la cámara/micrófono. Podés volver a intentarlo desde Inicio.';
+      startupBackBtn.style.display = 'inline-block';
+      screenStream.getTracks().forEach(t => t.stop());
+      return;
+    }
+    activeCamStream = camStream;
+    updateSessionControlsUI();
+
+    folderHandle = await idbGet(HANDLE_KEY);
+    if (!folderHandle){
+      startupMsg.textContent = 'No hay carpeta de guardado configurada. Andá a Configuración.';
+      startupBackBtn.style.display = 'inline-block';
+      screenStream.getTracks().forEach(t => t.stop());
+      camStream.getTracks().forEach(t => t.stop());
+      return;
+    }
+    try {
+      let perm = await folderHandle.queryPermission({mode:'readwrite'});
+      if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'readwrite'});
+      if (perm !== 'granted') throw new Error('permission-denied');
+    } catch (e) {
+      startupMsg.textContent = 'Falta confirmar el acceso a la carpeta de guardado. Andá a Configuración y tocá "Confirmar acceso a la carpeta", después volvé a intentar.';
+      startupBackBtn.style.display = 'inline-block';
+      screenStream.getTracks().forEach(t => t.stop());
+      camStream.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    screenVideo.srcObject = screenStream;
+    camVideo.srcObject = camStream;
+    await new Promise(r => { screenVideo.onloadedmetadata = r; });
+    await new Promise(r => { camVideo.onloadedmetadata = r; });
+
+    fitStageToVideo(screenVideo.videoWidth, screenVideo.videoHeight);
+    window.addEventListener('resize', () => fitStageToVideo(screenVideo.videoWidth, screenVideo.videoHeight));
+
+    camPos = makeDraggable(camBox, camBox, {x:0.02, y:0.06});
+    notesPos = makeDraggable(notesBox, notesDragHandle, {x:0.7, y:0.1});
+
+    canvas = document.createElement('canvas');
+    canvas.width = screenVideo.videoWidth;
+    canvas.height = screenVideo.videoHeight;
+    ctx = canvas.getContext('2d');
+
+    function renderFrame(){
+      const w = canvas.width, h = canvas.height;
+      ctx.drawImage(screenVideo, 0, 0, w, h);
+
+      if (camEnabled){
+        const cp = camPos.getPos();
+        const cw = camBox.offsetWidth / stage.clientWidth * w;
+        const ch = camBox.offsetHeight / stage.clientHeight * h;
+        const cx = cp.x * w, cy = cp.y * h;
+        const r = camShape === 'circle' ? Math.min(cw, ch) / 2 :
+          (camShape === 'square' ? 4 * (w / stage.clientWidth) : 14 * (w / stage.clientWidth));
+        ctx.save();
+        drawRoundedClip(ctx, cx, cy, cw, ch, r);
+        ctx.clip();
+        ctx.save();
+        ctx.translate(cx + cw, cy);
+        ctx.scale(-1, 1);
+        ctx.drawImage(camVideo, 0, 0, cw, ch);
+        ctx.restore();
+        ctx.restore();
+        ctx.save();
+        ctx.strokeStyle = '#33c56a';
+        ctx.lineWidth = 2 * (w / stage.clientWidth);
+        drawRoundedClip(ctx, cx, cy, cw, ch, r);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (notesVisible){
+        const np = notesPos.getPos();
+        const nw = notesBox.offsetWidth / stage.clientWidth * w;
+        const nh = notesBox.offsetHeight / stage.clientHeight * h;
+        const nx = np.x * w, ny = np.y * h;
+        const nr = 14 * (w / stage.clientWidth);
+        ctx.save();
+        ctx.fillStyle = 'rgba(17,22,29,0.94)';
+        drawRoundedClip(ctx, nx, ny, nw, nh, nr);
+        ctx.fill();
+        ctx.strokeStyle = '#232b36';
+        ctx.lineWidth = 1 * (w / stage.clientWidth);
+        ctx.stroke();
+        const pad14 = 14 * (w / stage.clientWidth);
+        ctx.fillStyle = '#8a94a3';
+        const headerSize = 12 * (w / stage.clientWidth);
+        ctx.font = '700 ' + headerSize + 'px Manrope, sans-serif';
+        ctx.fillText('Notas de hoy', nx + pad14, ny + pad14 + headerSize);
+        ctx.strokeStyle = '#232b36';
+        ctx.beginPath();
+        ctx.moveTo(nx, ny + pad14*2 + headerSize);
+        ctx.lineTo(nx + nw, ny + pad14*2 + headerSize);
+        ctx.stroke();
+        ctx.fillStyle = '#e9edf1';
+        const bodySize = 13 * (w / stage.clientWidth);
+        ctx.font = '500 ' + bodySize + 'px Manrope, sans-serif';
+        const text = notesBody.innerText || '';
+        const lines = wrapText(ctx, text, nw - pad14*2);
+        let ly = ny + pad14*3 + headerSize + bodySize;
+        const lineH = bodySize * 1.45;
+        lines.forEach(line => {
+          if (ly < ny + nh - 6){ ctx.fillText(line, nx + pad14, ly); ly += lineH; }
+        });
+        ctx.restore();
+      }
+
+      if (activeMarkers.length){
+        const now2 = performance.now();
+        activeMarkers = activeMarkers.filter(m => now2 - m.t < MARKER_DURATION_MS);
+        const scale = w / stage.clientWidth;
+        activeMarkers.forEach(m => {
+          const progress = (now2 - m.t) / MARKER_DURATION_MS;
+          let alpha;
+          if (progress < 0.15) alpha = progress / 0.15;
+          else if (progress > 0.7) alpha = Math.max(0, 1 - (progress - 0.7) / 0.3);
+          else alpha = 1;
+          const boxW = 240 * scale, boxH = 46 * scale;
+          const bx = w/2 - boxW/2, by = 26 * scale;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = 'rgba(17,22,29,0.92)';
+          drawRoundedClip(ctx, bx, by, boxW, boxH, boxH/2);
+          ctx.fill();
+          ctx.strokeStyle = '#33c56a';
+          ctx.lineWidth = 1.5 * scale;
+          ctx.stroke();
+          ctx.fillStyle = '#33c56a';
+          ctx.font = '800 ' + (15 * scale) + 'px Manrope, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🚩 Operación marcada', bx + boxW/2, by + boxH/2 + 1);
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'alphabetic';
+          ctx.restore();
+        });
+      }
+
+      rafId = requestAnimationFrame(renderFrame);
+    }
+    renderFrame();
+
+    const canvasStream = canvas.captureStream(30);
+    const mixedStream = new MediaStream([
+      ...canvasStream.getVideoTracks(),
+      ...camStream.getAudioTracks()
+    ]);
+
+    const now = new Date();
+    const dateStr = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate());
+    const filename = dateStr + '_' + pad(now.getHours()) + '-' + pad(now.getMinutes()) + '.webm';
+    try {
+      fileHandle = await folderHandle.getFileHandle(filename, {create:true});
+      writable = await fileHandle.createWritable();
+    } catch (e) {
+      startupMsg.textContent = 'No se pudo crear el archivo de video en la carpeta elegida. Podés volver a intentarlo desde Inicio.';
+      startupOverlay.style.display = 'flex';
+      startupBackBtn.style.display = 'inline-block';
+      cancelAnimationFrame(rafId);
+      screenStream.getTracks().forEach(t => t.stop());
+      camStream.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    let mimeType = 'video/webm;codecs=vp9,opus';
+    if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+    recorder = new MediaRecorder(mixedStream, {mimeType, videoBitsPerSecond: qualityPreset.videoBitsPerSecond});
+    recorder.ondataavailable = async (e) => {
+      if (e.data && e.data.size > 0){
+        try { await writable.write(e.data); } catch (err) { /* keep going */ }
+      }
+    };
+    let stopped = false;
+    recorder.onstop = async () => {
+      if (stopped) return;
+      stopped = true;
+      try { await writable.close(); } catch (e) {}
+      cancelAnimationFrame(rafId);
+      screenStream.getTracks().forEach(t => t.stop());
+      camStream.getTracks().forEach(t => t.stop());
+      clearInterval(timerId);
+      activeCamStream = null;
+
+      // Guardamos el journal de esta sesión YA, apenas termina de grabar —
+      // así las notas y el video quedan a salvo aunque cierres la pestaña
+      // antes de llegar a la pantalla "Cerrá el día".
+      const autoEntry = {
+        date: dateStr,
+        videoFilename: filename,
+        durationMin: Math.round((Date.now() - sessionStartedAt) / 60000),
+        photoFilename: null,
+        markers: sessionMarkers.slice(),
+        asset: (entry && entry.asset) || '',
+        account: (entry && entry.account) || '',
+        notes: notesBody.innerText || '',
+        result: null,
+        pnl: null,
+        tradesTotal: null,
+        tradesWin: null,
+        tradesLoss: null,
+        createdAt: Date.now()
+      };
+      try {
+        const journalAuto = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+        journalAuto.push(autoEntry);
+        localStorage.setItem(JOURNAL_KEY, JSON.stringify(journalAuto));
+      } catch (e) {
+        // Si esto falla, el video ya quedó guardado en la carpeta igual.
+      }
+
+      // Los videos grabados en vivo con MediaRecorder no traen la duración total
+      // en su cabecera, así que Chrome no deja adelantar/atrasar. Acá la corregimos
+      // reescribiendo el archivo ya guardado con la duración real.
+      const totalDurationMs = Date.now() - sessionStartedAt;
+      startupOverlay.style.display = 'flex';
+      startupMsg.textContent = 'Ajustando el video para que puedas adelantarlo y atrasarlo... no cierres esta pestaña.';
+      try {
+        const savedHandle = await folderHandle.getFileHandle(filename);
+        const rawBlob = await savedHandle.getFile();
+        const fixedBlob = await window.ysFixWebmDuration(rawBlob, totalDurationMs);
+        const rewrite = await savedHandle.createWritable();
+        await rewrite.write(fixedBlob);
+        await rewrite.close();
+      } catch (e) {
+        // Si esto falla, el video ya quedó guardado igual (solo que sin el arreglo de duración).
+      }
+      startupOverlay.style.display = 'none';
+
+      showPost(filename, sessionStartedAt, entry, dateStr, sessionMarkers, autoEntry.createdAt);
+    };
+
+    let sessionStartedAt = Date.now();
+    recorder.start(1000);
+    startupOverlay.style.display = 'none';
+    pauseSessionBtn.disabled = false;
+    markMomentBtn.disabled = false;
+
+    timerId = setInterval(() => {
+      if (isPaused) return;
+      const elapsed = Date.now() - sessionStartedAt;
+      sesionTimer.textContent = formatElapsed(elapsed);
+      if (elapsed >= config.durationHours * 3600 * 1000) stopSession();
+    }, 1000);
+
+    function stopSession(){
+      if (recorder.state !== 'inactive') recorder.stop();
+    }
+    endSessionBtn.onclick = stopSession;
+
+    function togglePause(){
+      if (!recorder || recorder.state === 'inactive') return;
+      if (!isPaused){
+        if (recorder.state !== 'recording') return;
+        recorder.pause();
+        isPaused = true;
+        pauseStartedAt = Date.now();
+        pauseLabel.textContent = 'Reanudar';
+        pauseSessionBtn.classList.add('active');
+        markMomentBtn.disabled = true;
+        recDot.classList.add('paused');
+      } else {
+        if (recorder.state !== 'paused') return;
+        recorder.resume();
+        sessionStartedAt += (Date.now() - pauseStartedAt);
+        isPaused = false;
+        pauseStartedAt = null;
+        pauseLabel.textContent = 'Pausar';
+        pauseSessionBtn.classList.remove('active');
+        markMomentBtn.disabled = false;
+        recDot.classList.remove('paused');
+      }
+    }
+    pauseSessionBtn.onclick = togglePause;
+
+    function markMoment(){
+      if (!recorder || recorder.state !== 'recording') return;
+      sessionMarkers.push(Date.now() - sessionStartedAt);
+      activeMarkers.push({t: performance.now()});
+      markerFlash.classList.remove('show');
+      void markerFlash.offsetWidth; // reinicia la animación si se marca varias veces seguidas
+      markerFlash.classList.add('show');
+      clearTimeout(markMoment._hideTimer);
+      markMoment._hideTimer = setTimeout(() => markerFlash.classList.remove('show'), MARKER_DURATION_MS);
+    }
+    markMomentBtn.onclick = markMoment;
+
+    screenStream.getVideoTracks()[0].onended = stopSession;
+  }
+
+  // =======================================================================
+  // POST-SESIÓN: foto de operaciones + journal
+  // =======================================================================
+  const journalAssetSelect = document.getElementById('journalAsset');
+  const journalAccountSelect = document.getElementById('journalAccount');
+  const journalNotes = document.getElementById('journalNotes');
+  const journalPnl = document.getElementById('journalPnl');
+  const journalTradesTotal = document.getElementById('journalTradesTotal');
+  const journalTradesWin = document.getElementById('journalTradesWin');
+  const journalTradesLoss = document.getElementById('journalTradesLoss');
+  const resultPicker = document.getElementById('resultPicker');
+  const resultBtns = Array.from(resultPicker.querySelectorAll('.result-btn'));
+  const photoInput = document.getElementById('photoInput');
+  const photoPreview = document.getElementById('photoPreview');
+  const photoDropLabel = document.getElementById('photoDropLabel');
+  const saveJournalBtn = document.getElementById('saveJournalBtn');
+  const skipJournalBtn = document.getElementById('skipJournalBtn');
+  let pendingPhotoFile = null;
+  let pendingVideoFilename = null;
+  let pendingDateStr = null;
+  let pendingDurationMin = null;
+  let pendingMarkers = [];
+  let pendingEntryId = null;
+  let selectedResult = null;
+
+  resultBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedResult = (selectedResult === btn.dataset.value) ? null : btn.dataset.value;
+      resultBtns.forEach(b => {
+        b.classList.toggle('active', b.dataset.value === selectedResult);
+        b.classList.toggle(b.dataset.value, b.dataset.value === selectedResult);
+      });
+    });
+  });
+
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files && photoInput.files[0];
+    pendingPhotoFile = file || null;
+    if (file){
+      photoDropLabel.textContent = file.name;
+      photoPreview.src = URL.createObjectURL(file);
+      photoPreview.style.display = 'block';
+    } else {
+      photoDropLabel.textContent = 'Hacé clic para elegir una imagen';
+      photoPreview.style.display = 'none';
+    }
+  });
+
+  function showPost(filename, startedAt, entry, dateStr, markers, autoEntryId){
+    pendingVideoFilename = filename;
+    pendingDateStr = dateStr;
+    pendingMarkers = Array.isArray(markers) ? markers : [];
+    pendingEntryId = (typeof autoEntryId === 'number') ? autoEntryId : null;
+    pendingPhotoFile = null;
+    photoInput.value = '';
+    photoDropLabel.textContent = 'Hacé clic para elegir una imagen';
+    photoPreview.style.display = 'none';
+
+    const mins = Math.round((Date.now() - startedAt) / 60000);
+    pendingDurationMin = mins;
+    document.getElementById('postSummary').textContent =
+      'Guardamos ' + filename + ' (' + mins + ' min) en tu carpeta. Contanos cómo te fue hoy.';
+
+    journalAssetSelect.innerHTML = '';
+    config.assets.forEach(a => {
+      const opt = document.createElement('option'); opt.value = a; opt.textContent = a;
+      journalAssetSelect.appendChild(opt);
+    });
+    journalAccountSelect.innerHTML = '';
+    config.accounts.forEach(a => {
+      const opt = document.createElement('option'); opt.value = a; opt.textContent = a;
+      journalAccountSelect.appendChild(opt);
+    });
+    if (entry && entry.asset) journalAssetSelect.value = entry.asset;
+    if (entry && entry.account) journalAccountSelect.value = entry.account;
+    journalNotes.value = notesBody.innerText || '';
+    journalPnl.value = '';
+    journalTradesTotal.value = '';
+    journalTradesWin.value = '';
+    journalTradesLoss.value = '';
+    selectedResult = null;
+    resultBtns.forEach(b => { b.classList.remove('active', 'win', 'loss', 'neutral'); });
+
+    showView('post');
+  }
+
+  async function saveJournalEntry(withPhoto){
+    let photoFilename = null;
+    if (withPhoto && pendingPhotoFile){
+      try {
+        const folderHandle = await idbGet(HANDLE_KEY);
+        const ext = (pendingPhotoFile.name.split('.').pop() || 'jpg').toLowerCase();
+        photoFilename = pendingDateStr + '_operaciones.' + ext;
+        const fh = await folderHandle.getFileHandle(photoFilename, {create:true});
+        const w = await fh.createWritable();
+        await w.write(pendingPhotoFile);
+        await w.close();
+      } catch (e) {
+        photoFilename = null;
+      }
+    }
+    const pnlRaw = journalPnl.value;
+    const updatedFields = {
+      date: pendingDateStr,
+      videoFilename: pendingVideoFilename,
+      durationMin: (typeof pendingDurationMin === 'number') ? pendingDurationMin : null,
+      photoFilename: photoFilename,
+      markers: pendingMarkers.slice(),
+      asset: journalAssetSelect.value || '',
+      account: journalAccountSelect.value || '',
+      notes: journalNotes.value || '',
+      result: selectedResult || null,
+      pnl: (pnlRaw !== '' && !isNaN(parseFloat(pnlRaw))) ? parseFloat(pnlRaw) : null,
+      tradesTotal: parseIntOrNull(journalTradesTotal.value),
+      tradesWin: parseIntOrNull(journalTradesWin.value),
+      tradesLoss: parseIntOrNull(journalTradesLoss.value)
+    };
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    const existingIdx = (pendingEntryId !== null) ? journal.findIndex(e => e.createdAt === pendingEntryId) : -1;
+    let entry;
+    if (existingIdx !== -1){
+      // Esta sesión ya se había guardado sola al terminar de grabar (para no perder
+      // notas ni video si cerrás antes de esta pantalla); acá solo la completamos.
+      entry = Object.assign(journal[existingIdx], updatedFields);
+      journal[existingIdx] = entry;
+    } else {
+      // Respaldo por si no encontramos el guardado automático de esta sesión.
+      entry = Object.assign({createdAt: Date.now()}, updatedFields);
+      journal.push(entry);
+    }
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+    return entry;
+  }
+
+  saveJournalBtn.addEventListener('click', async () => {
+    saveJournalBtn.disabled = true; saveJournalBtn.textContent = 'Guardando...';
+    const entry = await saveJournalEntry(true);
+    saveJournalBtn.disabled = false; saveJournalBtn.textContent = 'Guardar journal';
+    showFinal(entry);
+  });
+
+  skipJournalBtn.addEventListener('click', async () => {
+    const entry = await saveJournalEntry(false);
+    showFinal(entry);
+  });
+
+  function showFinal(entry){
+    let msg = 'Guardamos ' + entry.videoFilename + ' en tu carpeta.';
+    if (entry.photoFilename) msg += ' También guardamos la foto de tus operaciones (' + entry.photoFilename + ').';
+    if (entry.asset || entry.account) msg += ' Journal: ' + entry.asset + ' · ' + entry.account + '.';
+    document.getElementById('doneSummary').textContent = msg;
+    showView('done');
+  }
+  document.getElementById('doneBackBtn').addEventListener('click', () => showView('inicio'));
+
+  // =======================================================================
+  // HISTORIAL: lista las sesiones guardadas y abre video/foto desde la carpeta
+  // =======================================================================
+  const historialList = document.getElementById('historialList');
+  const historialEmpty = document.getElementById('historialEmpty');
+  const viewerModal = document.getElementById('viewerModal');
+  const viewerContent = document.getElementById('viewerContent');
+  let lastViewerUrl = null;
+
+  const filterFrom = document.getElementById('filterFrom');
+  const filterTo = document.getElementById('filterTo');
+  const filterAsset = document.getElementById('filterAsset');
+  const filterAccount = document.getElementById('filterAccount');
+  const filterResult = document.getElementById('filterResult');
+  const filterGroupBy = document.getElementById('filterGroupBy');
+  const filterClearBtn = document.getElementById('filterClearBtn');
+  const filterCount = document.getElementById('filterCount');
+
+  function populateFilterSelect(select, values, placeholder){
+    const current = select.value;
+    select.innerHTML = '<option value="">' + placeholder + '</option>';
+    values.forEach(v => {
+      const opt = document.createElement('option'); opt.value = v; opt.textContent = v;
+      select.appendChild(opt);
+    });
+    if (values.includes(current)) select.value = current;
+  }
+
+  [filterFrom, filterTo, filterAsset, filterAccount, filterResult, filterGroupBy].forEach(el => {
+    el.addEventListener('change', renderHistorial);
+  });
+  filterClearBtn.addEventListener('click', () => {
+    filterFrom.value = ''; filterTo.value = ''; filterAsset.value = '';
+    filterAccount.value = ''; filterResult.value = '';
+    renderHistorial();
+  });
+
+  const statDaysMonth = document.getElementById('statDaysMonth');
+  const statStreak = document.getElementById('statStreak');
+  const statMinutes = document.getElementById('statMinutes');
+  const statWinrate = document.getElementById('statWinrate');
+
+  function computeStats(journal){
+    const now = new Date();
+    const monthKey = now.getFullYear() + '-' + pad(now.getMonth() + 1);
+    const daysThisMonth = new Set(
+      journal.filter(e => e.date && e.date.slice(0, 7) === monthKey).map(e => e.date)
+    ).size;
+
+    function toKey(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    const recordedDates = new Set(journal.map(e => e.date).filter(Boolean));
+    let streak = 0;
+    if (recordedDates.size){
+      const cursor = new Date();
+      if (!recordedDates.has(toKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+      while (recordedDates.has(toKey(cursor))){
+        streak++;
+        cursor.setDate(cursor.getDate() - 1);
+      }
+    }
+
+    const totalMin = journal.reduce((sum, e) => sum + (typeof e.durationMin === 'number' ? e.durationMin : 0), 0);
+
+    let winsFromTrades = 0, lossesFromTrades = 0;
+    journal.forEach(e => {
+      if (typeof e.tradesWin === 'number') winsFromTrades += e.tradesWin;
+      if (typeof e.tradesLoss === 'number') lossesFromTrades += e.tradesLoss;
+    });
+    let winrate = null;
+    if (winsFromTrades + lossesFromTrades > 0){
+      winrate = Math.round((winsFromTrades / (winsFromTrades + lossesFromTrades)) * 100);
+    } else {
+      const winDays = journal.filter(e => e.result === 'win').length;
+      const lossDays = journal.filter(e => e.result === 'loss').length;
+      if (winDays + lossDays > 0) winrate = Math.round((winDays / (winDays + lossDays)) * 100);
+    }
+
+    return {daysThisMonth, streak, totalMin, winrate};
+  }
+
+  function renderStats(journal){
+    const s = computeStats(journal);
+    statDaysMonth.textContent = s.daysThisMonth;
+    statStreak.textContent = s.streak + (s.streak === 1 ? ' día' : ' días');
+    statMinutes.textContent = s.totalMin;
+    statWinrate.textContent = (s.winrate === null) ? '—' : (s.winrate + '%');
+  }
+
+  function renderHistorial(){
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    renderStats(journal);
+
+    const assetValues = Array.from(new Set(journal.map(e => e.asset).filter(Boolean))).sort();
+    const accountValues = Array.from(new Set(journal.map(e => e.account).filter(Boolean))).sort();
+    populateFilterSelect(filterAsset, assetValues, 'Todos');
+    populateFilterSelect(filterAccount, accountValues, 'Todas');
+
+    const filtered = journal.filter(e => {
+      if (filterFrom.value && (!e.date || e.date < filterFrom.value)) return false;
+      if (filterTo.value && (!e.date || e.date > filterTo.value)) return false;
+      if (filterAsset.value && e.asset !== filterAsset.value) return false;
+      if (filterAccount.value && e.account !== filterAccount.value) return false;
+      if (filterResult.value && e.result !== filterResult.value) return false;
+      return true;
+    });
+
+    const hasFilters = filterFrom.value || filterTo.value || filterAsset.value || filterAccount.value || filterResult.value;
+    filterCount.textContent = hasFilters ? (filtered.length + ' de ' + journal.length + ' sesiones') : '';
+
+    historialList.innerHTML = '';
+    if (!journal.length){
+      historialEmpty.style.display = 'block';
+      historialEmpty.textContent = 'Todavía no grabaste ninguna sesión. Cuando termines tu primera, va a aparecer acá.';
+      return;
+    }
+    if (!filtered.length){
+      historialEmpty.style.display = 'block';
+      historialEmpty.textContent = 'No hay sesiones que coincidan con estos filtros.';
+      return;
+    }
+    historialEmpty.style.display = 'none';
+
+    const ordered = filtered.slice().reverse();
+    const groupMode = filterGroupBy.value;
+
+    if (groupMode === 'none'){
+      ordered.forEach(entry => historialList.appendChild(buildHistCard(entry)));
+      return;
+    }
+
+    // Agrupa por semana (lunes a domingo) o por mes, conservando el orden
+    // más reciente primero tanto para los grupos como para las sesiones adentro.
+    const groups = [];
+    const groupsByKey = {};
+    ordered.forEach(entry => {
+      let key, title, sortKey;
+      if (entry.date){
+        if (groupMode === 'week'){
+          const start = getWeekStart(entry.date);
+          const end = new Date(start); end.setDate(end.getDate() + 6);
+          key = dateToKey(start);
+          title = 'Semana del ' + formatDayMonth(start) + ' al ' + formatDayMonth(end);
+          sortKey = key;
+        } else {
+          const d = parseDateStrLocal(entry.date);
+          key = d.getFullYear() + '-' + pad(d.getMonth() + 1);
+          title = MONTH_NAMES_ES[d.getMonth()] + ' ' + d.getFullYear();
+          sortKey = key;
+        }
+      } else {
+        key = 'sin-fecha';
+        title = 'Sin fecha';
+        sortKey = '9999-99';
+      }
+      if (!groupsByKey[key]){
+        const g = {key, title, sortKey, entries: []};
+        groupsByKey[key] = g;
+        groups.push(g);
+      }
+      groupsByKey[key].entries.push(entry);
+    });
+    groups.sort((a, b) => (a.sortKey < b.sortKey ? 1 : a.sortKey > b.sortKey ? -1 : 0));
+
+    groups.forEach(group => {
+      const header = document.createElement('div');
+      header.className = 'hist-group-header';
+      const daysInGroup = new Set(group.entries.map(e => e.date).filter(Boolean)).size;
+      const minsInGroup = group.entries.reduce((sum, e) => sum + (typeof e.durationMin === 'number' ? e.durationMin : 0), 0);
+      header.innerHTML =
+        '<span class="hist-group-title">' + escapeHtml(group.title) + '</span>' +
+        '<span class="hist-group-meta">' + group.entries.length + (group.entries.length === 1 ? ' sesión' : ' sesiones') +
+          (daysInGroup ? ' · ' + daysInGroup + (daysInGroup === 1 ? ' día' : ' días') : '') +
+          (minsInGroup ? ' · ' + minsInGroup + ' min' : '') + '</span>';
+      historialList.appendChild(header);
+      group.entries.forEach(entry => historialList.appendChild(buildHistCard(entry)));
+    });
+  }
+
+  function buildHistCard(entry){
+    const card = document.createElement('div');
+    card.className = 'hist-card';
+
+    const main = document.createElement('div');
+    main.innerHTML =
+      '<div class="hist-date">' + (entry.date || '—') + '</div>' +
+      '<div class="hist-asset">' + (entry.asset || 'Sin activo') +
+        ' <span class="acct">· ' + (entry.account || 'sin cuenta') + '</span></div>' +
+      (entry.notes ? '<div class="hist-notes">' + escapeHtml(entry.notes).slice(0, 220) + '</div>' : '') +
+      resultBadgeHtml(entry);
+    card.appendChild(main);
+
+    const actions = document.createElement('div');
+    actions.className = 'hist-actions';
+    if (entry.videoFilename){
+      const btn = document.createElement('button');
+      btn.className = 'btn secondary'; btn.type = 'button'; btn.textContent = 'Ver video';
+      btn.addEventListener('click', () => openHistorialFile(entry.videoFilename, 'video'));
+      actions.appendChild(btn);
+    }
+    if (entry.photoFilename){
+      const btn2 = document.createElement('button');
+      btn2.className = 'btn secondary'; btn2.type = 'button'; btn2.textContent = 'Ver foto';
+      btn2.addEventListener('click', () => openHistorialFile(entry.photoFilename, 'image'));
+      actions.appendChild(btn2);
+    }
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn secondary'; editBtn.type = 'button'; editBtn.textContent = 'Editar';
+    editBtn.addEventListener('click', () => openEditModal(entry));
+    actions.appendChild(editBtn);
+
+    card.appendChild(actions);
+    return card;
+  }
+
+  // =======================================================================
+  // RESUMEN SEMANAL
+  // =======================================================================
+  const resumenWeekLabel = document.getElementById('resumenWeekLabel');
+  const resumenDays = document.getElementById('resumenDays');
+  const resumenMinutes = document.getElementById('resumenMinutes');
+  const resumenWinrate = document.getElementById('resumenWinrate');
+  const resumenPnl = document.getElementById('resumenPnl');
+  const resumenEmpty = document.getElementById('resumenEmpty');
+  const resumenList = document.getElementById('resumenList');
+  const resumenPrevBtn = document.getElementById('resumenPrevBtn');
+  const resumenNextBtn = document.getElementById('resumenNextBtn');
+  const resumenTodayBtn = document.getElementById('resumenTodayBtn');
+
+  let resumenWeekStart = getWeekStart(dateToKey(new Date()));
+
+  resumenPrevBtn.addEventListener('click', () => {
+    resumenWeekStart.setDate(resumenWeekStart.getDate() - 7);
+    renderResumen();
+  });
+  resumenNextBtn.addEventListener('click', () => {
+    resumenWeekStart.setDate(resumenWeekStart.getDate() + 7);
+    renderResumen();
+  });
+  resumenTodayBtn.addEventListener('click', () => {
+    resumenWeekStart = getWeekStart(dateToKey(new Date()));
+    renderResumen();
+  });
+
+  function renderResumen(){
+    const weekStart = resumenWeekStart;
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
+    const startKey = dateToKey(weekStart);
+    const endKey = dateToKey(weekEnd);
+    resumenWeekLabel.textContent = 'Semana del ' + formatDayMonth(weekStart) + ' al ' + formatDayMonth(weekEnd);
+
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    const weekEntries = journal.filter(e => e.date && e.date >= startKey && e.date <= endKey);
+
+    const daysRecorded = new Set(weekEntries.map(e => e.date)).size;
+    const totalMin = weekEntries.reduce((sum, e) => sum + (typeof e.durationMin === 'number' ? e.durationMin : 0), 0);
+
+    let winsFromTrades = 0, lossesFromTrades = 0;
+    weekEntries.forEach(e => {
+      if (typeof e.tradesWin === 'number') winsFromTrades += e.tradesWin;
+      if (typeof e.tradesLoss === 'number') lossesFromTrades += e.tradesLoss;
+    });
+    let winrate = null;
+    if (winsFromTrades + lossesFromTrades > 0){
+      winrate = Math.round((winsFromTrades / (winsFromTrades + lossesFromTrades)) * 100);
+    } else {
+      const winDays = weekEntries.filter(e => e.result === 'win').length;
+      const lossDays = weekEntries.filter(e => e.result === 'loss').length;
+      if (winDays + lossDays > 0) winrate = Math.round((winDays / (winDays + lossDays)) * 100);
+    }
+
+    const pnlEntries = weekEntries.filter(e => typeof e.pnl === 'number');
+    const pnlSum = pnlEntries.reduce((sum, e) => sum + e.pnl, 0);
+
+    resumenDays.textContent = daysRecorded;
+    resumenMinutes.textContent = totalMin;
+    resumenWinrate.textContent = (winrate === null) ? '—' : (winrate + '%');
+    if (pnlEntries.length){
+      resumenPnl.textContent = (pnlSum >= 0 ? '+' : '') + pnlSum.toFixed(2);
+      resumenPnl.className = 'stat-value ' + (pnlSum > 0 ? 'accent' : (pnlSum < 0 ? 'negative' : ''));
+    } else {
+      resumenPnl.textContent = '—';
+      resumenPnl.className = 'stat-value';
+    }
+
+    resumenList.innerHTML = '';
+    if (!weekEntries.length){
+      resumenEmpty.style.display = 'block';
+      return;
+    }
+    resumenEmpty.style.display = 'none';
+    weekEntries.slice().reverse().forEach(entry => resumenList.appendChild(buildHistCard(entry)));
+  }
+
+  function resultBadgeHtml(entry){
+    const parts = [];
+    if (entry.result === 'win' || entry.result === 'loss' || entry.result === 'neutral'){
+      const label = entry.result === 'win' ? '▲ Ganador' : entry.result === 'loss' ? '▼ Perdedor' : '● Neutro';
+      parts.push('<span class="hist-badge ' + entry.result + '">' + label + '</span>');
+    }
+    if (typeof entry.pnl === 'number' && !isNaN(entry.pnl)){
+      const sign = entry.pnl > 0 ? '+' : '';
+      const cls = entry.pnl > 0 ? 'win' : (entry.pnl < 0 ? 'loss' : 'neutral');
+      parts.push('<span class="hist-badge ' + cls + '">' + sign + entry.pnl.toLocaleString('es-AR') + '</span>');
+    }
+    if (typeof entry.tradesTotal === 'number'){
+      let label = entry.tradesTotal + (entry.tradesTotal === 1 ? ' operación' : ' operaciones');
+      const hasWL = typeof entry.tradesWin === 'number' || typeof entry.tradesLoss === 'number';
+      if (hasWL){
+        label += ' (' + (entry.tradesWin || 0) + 'G / ' + (entry.tradesLoss || 0) + 'P)';
+      }
+      parts.push('<span class="hist-badge neutral">' + label + '</span>');
+    }
+    if (Array.isArray(entry.markers) && entry.markers.length){
+      parts.push('<span class="hist-badge neutral">🚩 ' + entry.markers.length +
+        (entry.markers.length === 1 ? ' marca' : ' marcas') + '</span>');
+    }
+    return parts.length ? '<div>' + parts.join(' ') + '</div>' : '';
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function openHistorialFile(filename, kind){
+    try {
+      const folderHandle = await idbGet(HANDLE_KEY);
+      if (!folderHandle){
+        alert('No hay ninguna carpeta de guardado configurada todavía. Andá a Configuración y elegí una.');
+        return;
+      }
+      let perm = await folderHandle.queryPermission({mode:'readwrite'});
+      if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'readwrite'});
+      if (perm !== 'granted'){
+        alert('Falta confirmar el acceso a la carpeta "' + folderHandle.name + '". Andá a Configuración y tocá "Confirmar acceso a la carpeta", después volvé a intentar.');
+        return;
+      }
+      let fh;
+      try {
+        fh = await folderHandle.getFileHandle(filename);
+      } catch (e) {
+        // Listamos lo que la app realmente ve en la carpeta conectada, para
+        // poder comparar contra lo que se ve en el Finder/Explorador.
+        let actualNames = [];
+        try {
+          for await (const entry of folderHandle.values()){
+            if (entry.kind === 'file') actualNames.push(entry.name);
+            if (actualNames.length >= 40) break;
+          }
+        } catch (listErr) { /* si esto también falla, seguimos sin la lista */ }
+        let msg = 'No encontré el archivo "' + filename + '" dentro de la carpeta "' + folderHandle.name +
+          '". Puede que se haya movido, renombrado, o que la carpeta conectada en la app no sea exactamente ' +
+          'la misma carpeta que estás mirando en el Finder (aunque se llamen igual).\n\n' +
+          'Archivos que la app SÍ ve en esa carpeta ahora mismo';
+        if (actualNames.length){
+          msg += ' (' + actualNames.length + (actualNames.length >= 40 ? '+' : '') + '):\n' + actualNames.join('\n');
+        } else {
+          msg += ': ninguno (la carpeta conectada está vacía desde la perspectiva de la app).';
+        }
+        alert(msg);
+        return;
+      }
+      const file = await fh.getFile();
+      const url = URL.createObjectURL(file);
+      showViewer(url, kind, filename);
+    } catch (e) {
+      alert('No pude abrir "' + filename + '" (' + (e && (e.name || e.message) || 'error desconocido') + '). Probá de nuevo.');
+    }
+  }
+
+  function showViewer(url, kind, filename){
+    viewerContent.innerHTML = '';
+    if (kind === 'video'){
+      const v = document.createElement('video');
+      v.src = url; v.controls = true; v.autoplay = true;
+      viewerContent.appendChild(v);
+    } else {
+      const img = document.createElement('img');
+      img.src = url;
+      viewerContent.appendChild(img);
+    }
+    const caption = document.createElement('div');
+    caption.className = 'num viewer-caption';
+    caption.textContent = filename;
+    viewerContent.appendChild(caption);
+    lastViewerUrl = url;
+    viewerModal.classList.add('show');
+  }
+
+  function closeViewer(){
+    viewerModal.classList.remove('show');
+    viewerContent.innerHTML = '';
+    if (lastViewerUrl){ URL.revokeObjectURL(lastViewerUrl); lastViewerUrl = null; }
+  }
+  document.getElementById('viewerCloseBtn').addEventListener('click', closeViewer);
+  viewerModal.addEventListener('click', (e) => { if (e.target === viewerModal) closeViewer(); });
+
+  // =======================================================================
+  // EDITAR / BORRAR UNA ENTRADA DEL JOURNAL
+  // =======================================================================
+  const editModal = document.getElementById('editModal');
+  const editDateLabel = document.getElementById('editDateLabel');
+  const editAsset = document.getElementById('editAsset');
+  const editAccount = document.getElementById('editAccount');
+  const editPnl = document.getElementById('editPnl');
+  const editTradesTotal = document.getElementById('editTradesTotal');
+  const editTradesWin = document.getElementById('editTradesWin');
+  const editTradesLoss = document.getElementById('editTradesLoss');
+  const editNotes = document.getElementById('editNotes');
+  const editResultPicker = document.getElementById('editResultPicker');
+  const editResultBtns = Array.from(editResultPicker.querySelectorAll('.result-btn'));
+  const editSaveBtn = document.getElementById('editSaveBtn');
+  const editDeleteBtn = document.getElementById('editDeleteBtn');
+  let editingEntryId = null;
+  let editingResult = null;
+
+  editResultBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      editingResult = (editingResult === btn.dataset.value) ? null : btn.dataset.value;
+      editResultBtns.forEach(b => {
+        b.classList.toggle('active', b.dataset.value === editingResult);
+        b.classList.toggle(b.dataset.value, b.dataset.value === editingResult);
+      });
+    });
+  });
+
+  function openEditModal(entry){
+    editingEntryId = entry.createdAt;
+    editDateLabel.textContent = entry.date || '—';
+
+    editAsset.innerHTML = '';
+    config.assets.forEach(a => {
+      const opt = document.createElement('option'); opt.value = a; opt.textContent = a;
+      editAsset.appendChild(opt);
+    });
+    editAccount.innerHTML = '';
+    config.accounts.forEach(a => {
+      const opt = document.createElement('option'); opt.value = a; opt.textContent = a;
+      editAccount.appendChild(opt);
+    });
+    if (entry.asset) editAsset.value = entry.asset;
+    if (entry.account) editAccount.value = entry.account;
+
+    editNotes.value = entry.notes || '';
+    editPnl.value = (typeof entry.pnl === 'number') ? entry.pnl : '';
+    editTradesTotal.value = (typeof entry.tradesTotal === 'number') ? entry.tradesTotal : '';
+    editTradesWin.value = (typeof entry.tradesWin === 'number') ? entry.tradesWin : '';
+    editTradesLoss.value = (typeof entry.tradesLoss === 'number') ? entry.tradesLoss : '';
+
+    editingResult = entry.result || null;
+    editResultBtns.forEach(b => {
+      b.classList.toggle('active', b.dataset.value === editingResult);
+      b.classList.toggle(b.dataset.value, b.dataset.value === editingResult);
+    });
+
+    editModal.classList.add('show');
+  }
+
+  function closeEditModal(){
+    editModal.classList.remove('show');
+    editingEntryId = null;
+  }
+  document.getElementById('editCloseBtn').addEventListener('click', closeEditModal);
+  editModal.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); });
+
+  editSaveBtn.addEventListener('click', () => {
+    if (editingEntryId === null) return;
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    const idx = journal.findIndex(e => e.createdAt === editingEntryId);
+    if (idx === -1) { closeEditModal(); return; }
+
+    const pnlRaw = editPnl.value;
+    journal[idx].asset = editAsset.value || '';
+    journal[idx].account = editAccount.value || '';
+    journal[idx].notes = editNotes.value || '';
+    journal[idx].result = editingResult || null;
+    journal[idx].pnl = (pnlRaw !== '' && !isNaN(parseFloat(pnlRaw))) ? parseFloat(pnlRaw) : null;
+    journal[idx].tradesTotal = parseIntOrNull(editTradesTotal.value);
+    journal[idx].tradesWin = parseIntOrNull(editTradesWin.value);
+    journal[idx].tradesLoss = parseIntOrNull(editTradesLoss.value);
+
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+    closeEditModal();
+    renderHistorial();
+  });
+
+  editDeleteBtn.addEventListener('click', () => {
+    if (editingEntryId === null) return;
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    const entry = journal.find(e => e.createdAt === editingEntryId);
+    const label = entry && entry.date ? entry.date : 'esta sesión';
+    const ok = confirm('¿Borrar la entrada de journal de ' + label + '? Esto NO borra el video ni la foto de tu carpeta, solo el registro en la app.');
+    if (!ok) return;
+    const filtered = journal.filter(e => e.createdAt !== editingEntryId);
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(filtered));
+    closeEditModal();
+    renderHistorial();
+  });
+
+  // =======================================================================
+  // AGREGAR SESIÓN MANUALMENTE (para videos "huérfanos" sin tarjeta)
+  // =======================================================================
+  const manualAddBtn = document.getElementById('manualAddBtn');
+  const manualAddModal = document.getElementById('manualAddModal');
+  const manualDate = document.getElementById('manualDate');
+  const manualFilename = document.getElementById('manualFilename');
+  const manualVerifyBtn = document.getElementById('manualVerifyBtn');
+  const manualFileStatus = document.getElementById('manualFileStatus');
+  const manualAsset = document.getElementById('manualAsset');
+  const manualAccount = document.getElementById('manualAccount');
+  const manualPnl = document.getElementById('manualPnl');
+  const manualTradesTotal = document.getElementById('manualTradesTotal');
+  const manualTradesWin = document.getElementById('manualTradesWin');
+  const manualTradesLoss = document.getElementById('manualTradesLoss');
+  const manualNotes = document.getElementById('manualNotes');
+  const manualResultPicker = document.getElementById('manualResultPicker');
+  const manualResultBtns = Array.from(manualResultPicker.querySelectorAll('.result-btn'));
+  const manualSaveBtn = document.getElementById('manualSaveBtn');
+  const manualCloseBtn = document.getElementById('manualCloseBtn');
+  let manualResult = null;
+  let manualVerifiedDurationMin = null;
+  let manualFileVerified = false;
+
+  manualResultBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      manualResult = (manualResult === btn.dataset.value) ? null : btn.dataset.value;
+      manualResultBtns.forEach(b => {
+        b.classList.toggle('active', b.dataset.value === manualResult);
+        b.classList.toggle(b.dataset.value, b.dataset.value === manualResult);
+      });
+    });
+  });
+
+  function openManualAddModal(){
+    const now = new Date();
+    manualDate.value = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate());
+    manualFilename.value = '';
+    manualFileStatus.textContent = '';
+    manualFileStatus.style.color = 'var(--text-2)';
+    manualFileVerified = false;
+    manualVerifiedDurationMin = null;
+
+    manualAsset.innerHTML = '';
+    config.assets.forEach(a => {
+      const opt = document.createElement('option'); opt.value = a; opt.textContent = a;
+      manualAsset.appendChild(opt);
+    });
+    manualAccount.innerHTML = '';
+    config.accounts.forEach(a => {
+      const opt = document.createElement('option'); opt.value = a; opt.textContent = a;
+      manualAccount.appendChild(opt);
+    });
+
+    manualPnl.value = '';
+    manualTradesTotal.value = '';
+    manualTradesWin.value = '';
+    manualTradesLoss.value = '';
+    manualNotes.value = '';
+
+    manualResult = null;
+    manualResultBtns.forEach(b => { b.classList.remove('active', 'win', 'loss', 'neutral'); });
+
+    manualAddModal.classList.add('show');
+  }
+
+  function closeManualAddModal(){
+    manualAddModal.classList.remove('show');
+  }
+
+  manualAddBtn.addEventListener('click', openManualAddModal);
+  manualCloseBtn.addEventListener('click', closeManualAddModal);
+  manualAddModal.addEventListener('click', (e) => { if (e.target === manualAddModal) closeManualAddModal(); });
+
+  manualVerifyBtn.addEventListener('click', async () => {
+    const filename = manualFilename.value.trim();
+    if (!filename){
+      manualFileStatus.style.color = '#e05c5c';
+      manualFileStatus.textContent = 'Escribí primero el nombre del archivo.';
+      return;
+    }
+    manualFileVerified = false;
+    manualVerifiedDurationMin = null;
+    manualFileStatus.style.color = 'var(--text-2)';
+    manualFileStatus.textContent = 'Buscando el archivo en tu carpeta…';
+    manualVerifyBtn.disabled = true;
+    try {
+      const folderHandle = await idbGet(HANDLE_KEY);
+      if (!folderHandle){
+        throw new Error('Todavía no elegiste una carpeta de guardado en Configuración.');
+      }
+      let perm = await folderHandle.queryPermission({mode:'read'});
+      if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'read'});
+      if (perm !== 'granted'){
+        throw new Error('Falta confirmar el acceso a la carpeta "' + folderHandle.name + '".');
+      }
+      const fileHandle = await folderHandle.getFileHandle(filename);
+      const file = await fileHandle.getFile();
+      manualFileVerified = true;
+      manualFileStatus.style.color = '#4caf82';
+      manualFileStatus.textContent = '✓ Archivo encontrado. Calculando duración…';
+      try {
+        const durationMs = await detectRealDuration(file);
+        if (durationMs && durationMs > 0){
+          manualVerifiedDurationMin = Math.max(1, Math.round(durationMs / 60000));
+          manualFileStatus.textContent = '✓ Archivo encontrado — duración detectada: ' + manualVerifiedDurationMin + ' min.';
+        } else {
+          manualFileStatus.textContent = '✓ Archivo encontrado, pero no se pudo calcular la duración exacta. Se va a guardar sin ese dato.';
+        }
+      } catch (durErr){
+        manualFileStatus.textContent = '✓ Archivo encontrado, pero no se pudo calcular la duración exacta. Se va a guardar sin ese dato.';
+      }
+    } catch (e) {
+      manualFileStatus.style.color = '#e05c5c';
+      manualFileStatus.textContent = 'No lo encontré (' + (e && e.message ? e.message : 'archivo no encontrado') + '). Revisá que el nombre sea exactamente igual al de la carpeta.';
+    }
+    manualVerifyBtn.disabled = false;
+  });
+
+  manualSaveBtn.addEventListener('click', () => {
+    const filename = manualFilename.value.trim();
+    if (!filename){
+      manualFileStatus.style.color = '#e05c5c';
+      manualFileStatus.textContent = 'Escribí el nombre del archivo antes de guardar.';
+      return;
+    }
+    if (!manualFileVerified){
+      const ok = confirm('Todavía no verificaste que este archivo exista en tu carpeta. ¿Agregar la sesión igual?');
+      if (!ok) return;
+    }
+    if (!manualDate.value){
+      alert('Elegí la fecha de la sesión.');
+      return;
+    }
+
+    const pnlRaw = manualPnl.value;
+    const entry = {
+      date: manualDate.value,
+      videoFilename: filename,
+      durationMin: manualVerifiedDurationMin,
+      markers: [],
+      asset: manualAsset.value || '',
+      account: manualAccount.value || '',
+      notes: manualNotes.value || '',
+      result: manualResult || null,
+      pnl: (pnlRaw !== '' && !isNaN(parseFloat(pnlRaw))) ? parseFloat(pnlRaw) : null,
+      tradesTotal: parseIntOrNull(manualTradesTotal.value),
+      tradesWin: parseIntOrNull(manualTradesWin.value),
+      tradesLoss: parseIntOrNull(manualTradesLoss.value),
+      createdAt: Date.now()
+    };
+
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    journal.push(entry);
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+
+    closeManualAddModal();
+    renderHistorial();
+  });
+
+  // =======================================================================
+  // REPARAR VIDEO VIEJO (grabado antes del arreglo de duración)
+  // =======================================================================
+  const repairPickBtn = document.getElementById('repairPickBtn');
+  const repairStatus = document.getElementById('repairStatus');
+
+  // Truco para "descubrir" la duración real de un webm que quedó con duración
+  // desconocida/infinita: se le pide al reproductor que salte a un tiempo
+  // absurdamente grande, y el navegador lo frena en el final real del video.
+  function detectRealDuration(file){
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      video.src = URL.createObjectURL(file);
+      video.onerror = () => { URL.revokeObjectURL(video.src); reject(new Error('No se pudo leer el video')); };
+      video.onloadedmetadata = () => {
+        if (isFinite(video.duration) && video.duration > 0){
+          const ms = Math.round(video.duration * 1000);
+          URL.revokeObjectURL(video.src);
+          resolve(ms);
+          return;
+        }
+        video.currentTime = 1e10;
+        video.ontimeupdate = () => {
+          video.ontimeupdate = null;
+          const seconds = isFinite(video.duration) ? video.duration : video.currentTime;
+          URL.revokeObjectURL(video.src);
+          resolve(Math.round(seconds * 1000));
+        };
+      };
+    });
+  }
+
+  repairPickBtn.addEventListener('click', async () => {
+    if (!window.showOpenFilePicker){
+      repairStatus.textContent = 'Tu navegador no soporta elegir un archivo para editarlo directo. Usá Chrome o Edge.';
+      return;
+    }
+    let fileHandle;
+    try {
+      [fileHandle] = await window.showOpenFilePicker({
+        types: [{ description: 'Video de TradeCam', accept: {'video/webm': ['.webm']} }],
+        excludeAcceptAllOption: false,
+        multiple: false
+      });
+    } catch (e) {
+      return; // el usuario canceló el selector
+    }
+
+    repairStatus.textContent = 'Analizando el video…';
+    repairPickBtn.disabled = true;
+    try {
+      const perm = await fileHandle.requestPermission({mode:'readwrite'});
+      if (perm !== 'granted') throw new Error('permiso denegado');
+
+      const originalFile = await fileHandle.getFile();
+      const durationMs = await detectRealDuration(originalFile);
+      if (!durationMs || durationMs <= 0) throw new Error('no se pudo calcular la duración');
+
+      repairStatus.textContent = 'Arreglando "' + originalFile.name + '"… no cierres la pestaña.';
+      const fixedBlob = await window.ysFixWebmDuration(originalFile, durationMs);
+
+      const writable = await fileHandle.createWritable();
+      await writable.write(fixedBlob);
+      await writable.close();
+
+      const mins = Math.floor(durationMs / 60000);
+      const secs = Math.round((durationMs % 60000) / 1000);
+      repairStatus.textContent = '✓ Listo — "' + originalFile.name + '" quedó arreglado (duración detectada: ' + mins + ' min ' + secs + ' s). Ya lo podés adelantar y atrasar.';
+    } catch (e) {
+      repairStatus.textContent = 'No se pudo reparar el video (' + (e && e.message ? e.message : 'error desconocido') + '). Probá de nuevo.';
+    }
+    repairPickBtn.disabled = false;
+  });
+
+  // =======================================================================
+  // BOOT
+  // =======================================================================
+  (function bootAuth(){
+    const savedUserId = localStorage.getItem(SESSION_KEY);
+    const user = savedUserId ? getUsers().find(u => u.id === savedUserId) : null;
+    if (user){
+      applyUserNamespace(user);
+      bootApp();
+    } else {
+      showAuthOverlay();
+    }
+  })();
+})();
+</script>
+</body>
+</html>

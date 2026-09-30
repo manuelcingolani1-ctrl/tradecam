@@ -1,0 +1,56 @@
+{
+  "name": "tradecam",
+  "productName": "TradeCam",
+  "version": "1.0.0",
+  "description": "Grabá tus sesiones de trading (pantalla + cámara + notas) y llevá tu journal diario.",
+  "main": "main.js",
+  "author": "Manuel Cingolani",
+  "license": "UNLICENSED",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/manuelcingolani1-ctrl/tradecam.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.manuelcingolani.tradecam",
+    "productName": "TradeCam",
+    "publish": {
+      "provider": "github",
+      "owner": "manuelcingolani1-ctrl",
+      "repo": "tradecam"
+    },
+    "files": [
+      "main.js",
+      "index.html"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": ["nsis"]
+    },
+    "mac": {
+      "target": ["dmg"],
+      "extendInfo": {
+        "NSCameraUsageDescription": "TradeCam necesita la cámara para grabarte durante tus sesiones de trading.",
+        "NSMicrophoneUsageDescription": "TradeCam necesita el micrófono para grabar audio durante tus sesiones de trading."
+      }
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Office"
+    }
+  }
+}
