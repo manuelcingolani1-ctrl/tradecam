@@ -531,6 +531,7 @@
   .viewer-box video,.viewer-box img{max-width:100%;max-height:66vh;border-radius:10px;display:block;margin:0 auto}
   .viewer-close{align-self:flex-end}
   .viewer-caption{font-size:12px;color:var(--text-2);text-align:center}
+  .viewer-box.notes-view{width:min(560px,92vw)}
 
   /* ---------- Done ---------- */
   .done-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:48px 24px}
@@ -707,7 +708,7 @@
           <div class="asset" id="planAsset" style="font-size:20px">—</div>
           <div class="meta" id="planMeta"></div>
         </div>
-        <div class="card">
+        <div class="card" style="padding:18px 22px">
           <div class="panel-title" style="margin-bottom:12px">Este mes</div>
           <div class="divider"></div>
           <div class="kv-row"><span>P&amp;L acumulado</span><span class="num" id="monthPnl">—</span></div>
@@ -975,6 +976,16 @@
       <div style="margin-top:14px">
         <label for="editNotes">Notas del día</label>
         <textarea id="editNotes"></textarea>
+      </div>
+
+      <div style="margin-top:14px">
+        <label>Foto de operaciones</label>
+        <div id="editPhotoStatus" style="font-size:13px;color:var(--text-2);margin:0 0 8px">—</div>
+        <label class="photo-drop" id="editPhotoDrop" for="editPhotoInput">
+          <span id="editPhotoDropLabel">Hacé clic para elegir una imagen</span>
+          <input type="file" id="editPhotoInput" accept="image/*">
+        </label>
+        <img id="editPhotoPreview" class="photo-preview" style="display:none">
       </div>
 
       <div class="post-actions" style="margin-top:20px">
@@ -4148,12 +4159,14 @@
     const card = document.createElement('div');
     card.className = 'hist-card';
 
+    const hasNotes = !!(entry.notes && entry.notes.trim());
+    const notesTruncated = hasNotes && entry.notes.length > 220;
     const main = document.createElement('div');
     main.innerHTML =
       '<div class="hist-date">' + (entry.date || '—') + '</div>' +
       '<div class="hist-asset">' + (entry.asset || 'Sin activo') +
         ' <span class="acct">· ' + (entry.account || 'sin cuenta') + '</span></div>' +
-      (entry.notes ? '<div class="hist-notes">' + escapeHtml(entry.notes).slice(0, 220) + '</div>' : '') +
+      (hasNotes ? '<div class="hist-notes">' + escapeHtml(entry.notes).slice(0, 220) + (notesTruncated ? '…' : '') + '</div>' : '') +
       resultBadgeHtml(entry);
     card.appendChild(main);
 
@@ -4170,6 +4183,12 @@
       btn2.className = 'btn secondary'; btn2.type = 'button'; btn2.textContent = 'Ver foto';
       btn2.addEventListener('click', () => openHistorialFile(entry.photoFilename, 'image'));
       actions.appendChild(btn2);
+    }
+    if (hasNotes){
+      const notesBtn = document.createElement('button');
+      notesBtn.className = 'btn secondary'; notesBtn.type = 'button'; notesBtn.textContent = 'Ver notas';
+      notesBtn.addEventListener('click', () => openNotesViewer(entry));
+      actions.appendChild(notesBtn);
     }
     const editBtn = document.createElement('button');
     editBtn.className = 'btn secondary'; editBtn.type = 'button'; editBtn.textContent = 'Editar';
@@ -4271,11 +4290,7 @@
       parts.push('<span class="hist-badge ' + cls + '">' + sign + entry.pnl.toLocaleString('es-AR') + '</span>');
     }
     if (typeof entry.tradesTotal === 'number'){
-      let label = entry.tradesTotal + (entry.tradesTotal === 1 ? ' operación' : ' operaciones');
-      const hasWL = typeof entry.tradesWin === 'number' || typeof entry.tradesLoss === 'number';
-      if (hasWL){
-        label += ' (' + (entry.tradesWin || 0) + 'G / ' + (entry.tradesLoss || 0) + 'P)';
-      }
+      const label = entry.tradesTotal + (entry.tradesTotal === 1 ? ' operación' : ' operaciones');
       parts.push('<span class="hist-badge neutral">' + label + '</span>');
     }
     if (Array.isArray(entry.markers) && entry.markers.length){
@@ -4359,7 +4374,25 @@
   function closeViewer(){
     viewerModal.classList.remove('show');
     viewerContent.innerHTML = '';
+    viewerModal.querySelector('.viewer-box').classList.remove('notes-view');
     if (lastViewerUrl){ URL.revokeObjectURL(lastViewerUrl); lastViewerUrl = null; }
+  }
+
+  // Muestra la nota completa de una sesión (el Historial solo adelanta los
+  // primeros 220 caracteres) reusando el mismo visor modal que el video y
+  // la foto.
+  function openNotesViewer(entry){
+    viewerContent.innerHTML = '';
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:800;font-size:15px;margin-bottom:2px';
+    title.textContent = (entry.asset || 'Sesión') + (entry.date ? ' · ' + entry.date : '');
+    const body = document.createElement('div');
+    body.style.cssText = 'white-space:pre-wrap;font-size:14px;line-height:1.6;color:var(--text)';
+    body.textContent = entry.notes || '';
+    viewerContent.appendChild(title);
+    viewerContent.appendChild(body);
+    viewerModal.querySelector('.viewer-box').classList.add('notes-view');
+    viewerModal.classList.add('show');
   }
   document.getElementById('viewerCloseBtn').addEventListener('click', closeViewer);
   viewerModal.addEventListener('click', (e) => { if (e.target === viewerModal) closeViewer(); });
@@ -4380,8 +4413,28 @@
   const editResultBtns = Array.from(editResultPicker.querySelectorAll('.result-btn'));
   const editSaveBtn = document.getElementById('editSaveBtn');
   const editDeleteBtn = document.getElementById('editDeleteBtn');
+  const editPhotoInput = document.getElementById('editPhotoInput');
+  const editPhotoPreview = document.getElementById('editPhotoPreview');
+  const editPhotoDropLabel = document.getElementById('editPhotoDropLabel');
+  const editPhotoStatus = document.getElementById('editPhotoStatus');
   let editingEntryId = null;
   let editingResult = null;
+  // Foto elegida en el modal de edición, para una sesión que ya se guardó
+  // sin foto (por ejemplo, si al terminar de grabar no se agregó ninguna).
+  let editPendingPhotoFile = null;
+
+  editPhotoInput.addEventListener('change', () => {
+    const file = editPhotoInput.files && editPhotoInput.files[0];
+    editPendingPhotoFile = file || null;
+    if (file){
+      editPhotoDropLabel.textContent = file.name;
+      editPhotoPreview.src = URL.createObjectURL(file);
+      editPhotoPreview.style.display = 'block';
+    } else {
+      editPhotoDropLabel.textContent = 'Hacé clic para elegir una imagen';
+      editPhotoPreview.style.display = 'none';
+    }
+  });
 
   editResultBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -4422,21 +4475,63 @@
       b.classList.toggle(b.dataset.value, b.dataset.value === editingResult);
     });
 
+    editPendingPhotoFile = null;
+    editPhotoInput.value = '';
+    editPhotoDropLabel.textContent = 'Hacé clic para elegir una imagen';
+    editPhotoPreview.style.display = 'none';
+    editPhotoStatus.textContent = entry.photoFilename
+      ? ('Ya tiene una foto guardada: ' + entry.photoFilename + '. Elegí otra para reemplazarla.')
+      : 'Esta sesión todavía no tiene foto de operaciones.';
+
     editModal.classList.add('show');
   }
 
   function closeEditModal(){
     editModal.classList.remove('show');
     editingEntryId = null;
+    editPendingPhotoFile = null;
   }
   document.getElementById('editCloseBtn').addEventListener('click', closeEditModal);
   editModal.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); });
 
-  editSaveBtn.addEventListener('click', () => {
+  editSaveBtn.addEventListener('click', async () => {
     if (editingEntryId === null) return;
     const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
     const idx = journal.findIndex(e => e.createdAt === editingEntryId);
     if (idx === -1) { closeEditModal(); return; }
+
+    // Si se eligió una foto nueva (la sesión no tenía, o se quiere
+    // reemplazar la que tenía), la guardamos en la misma carpeta que el
+    // video, con el mismo criterio de nombre que usa el cierre de sesión.
+    if (editPendingPhotoFile){
+      editSaveBtn.disabled = true; editSaveBtn.textContent = 'Guardando...';
+      try {
+        const folderHandle = await idbGet(HANDLE_KEY);
+        if (!folderHandle){
+          alert('No hay ninguna carpeta de guardado configurada todavía. Andá a Configuración y elegí una, después volvé a intentar.');
+          editSaveBtn.disabled = false; editSaveBtn.textContent = 'Guardar cambios';
+          return;
+        }
+        let perm = await folderHandle.queryPermission({mode:'readwrite'});
+        if (perm !== 'granted') perm = await folderHandle.requestPermission({mode:'readwrite'});
+        if (perm !== 'granted'){
+          alert('Falta confirmar el acceso a la carpeta "' + folderHandle.name + '". Andá a Configuración y tocá "Confirmar acceso a la carpeta", después volvé a intentar.');
+          editSaveBtn.disabled = false; editSaveBtn.textContent = 'Guardar cambios';
+          return;
+        }
+        const ext = (editPendingPhotoFile.name.split('.').pop() || 'jpg').toLowerCase();
+        const dateForName = journal[idx].date || new Date().toISOString().slice(0, 10);
+        const photoFilename = dateForName + '_operaciones.' + ext;
+        const fh = await folderHandle.getFileHandle(photoFilename, {create: true});
+        const w = await fh.createWritable();
+        await w.write(editPendingPhotoFile);
+        await w.close();
+        journal[idx].photoFilename = photoFilename;
+      } catch (e) {
+        alert('No se pudo guardar la foto en la carpeta (' + (e && (e.name || e.message) || 'error desconocido') + '). El resto de los cambios se guarda igual.');
+      }
+      editSaveBtn.disabled = false; editSaveBtn.textContent = 'Guardar cambios';
+    }
 
     const pnlRaw = editPnl.value;
     journal[idx].asset = editAsset.value || '';
