@@ -3137,7 +3137,23 @@
     }
     pauseSessionBtn.onclick = togglePause;
 
-    if (screenStream) screenStream.getVideoTracks()[0].onended = stopSession;
+    // Si dejás de compartir pantalla (por ej. apretás "Dejar de compartir"
+    // en el navegador) la sesión NO se corta: seguimos grabando, pero ahora
+    // se ve la cámara a pantalla completa, hasta que apretés "Detener".
+    function switchToCameraOnly(){
+      if (sessionRecordingMode === 'camera') return;
+      sessionRecordingMode = 'camera';
+      camBox.style.display = 'none';
+      screenVideo.classList.add('mirrored');
+      screenVideo.srcObject = camStream;
+      updateCamVisualState();
+      if (screenStream){
+        screenStream.getTracks().forEach(t => t.stop());
+        screenStream = null;
+      }
+    }
+
+    if (screenStream) screenStream.getVideoTracks()[0].onended = switchToCameraOnly;
     else camStream.getVideoTracks()[0].onended = stopSession;
   }
 
