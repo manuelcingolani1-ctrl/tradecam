@@ -268,9 +268,10 @@
   .notes-col{width:300px;flex:0 0 300px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;
     background:var(--surface);border-left:1px solid var(--border)}
   .notes-col.collapsed{display:none}
-  .notes-col-header{flex:none;display:flex;align-items:center;justify-content:space-between;
-    padding:14px 16px;border-bottom:1px solid var(--border)}
-  .notes-col-header span{font-family:var(--font-display);font-size:13px;font-weight:700}
+  .notes-col-header{flex:none;display:flex;align-items:flex-start;justify-content:space-between;
+    padding:14px 16px;border-bottom:1px solid var(--border);gap:10px}
+  .notes-col-header-title{font-family:var(--font-display);font-size:13px;font-weight:700;display:block}
+  .notes-col-header-sub{font-size:11px;color:var(--text-2);font-weight:500;display:block;margin-top:2px}
   .notes-col-collapse{width:26px;height:26px;flex:0 0 26px;border-radius:7px;background:none;
     border:1px solid var(--border);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center}
   .notes-col-collapse:hover{color:var(--text);background:var(--surface-2)}
@@ -1043,7 +1044,10 @@
     </div>
     <div class="notes-col" id="notesCol">
       <div class="notes-col-header">
-        <span>Notas de la sesión</span>
+        <div>
+          <span class="notes-col-header-title">Notas de la sesión</span>
+          <span class="notes-col-header-sub">Quedan con marca de tiempo automática</span>
+        </div>
         <button class="notes-col-collapse" id="notesColCollapseBtn" type="button" title="Ocultar notas">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
         </button>
