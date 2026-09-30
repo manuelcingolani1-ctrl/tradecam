@@ -1810,7 +1810,11 @@
     authFormRegister.style.display = 'block'; authFormLogin.style.display = 'none';
   });
 
-  function startSession(userId){
+  // Nombrada distinto de la función "startSession(entry)" de más abajo (arranca
+  // una grabación): antes compartían nombre y, al ser ambas "function" en el
+  // mismo scope, la segunda declaración pisaba a esta — el login nunca
+  // persistía la sesión y por eso cada recarga volvía a pedir usuario/contraseña.
+  function persistUserSession(userId){
     localStorage.setItem(SESSION_KEY, userId);
   }
 
@@ -1835,7 +1839,7 @@
       loginError.classList.add('show');
       return;
     }
-    startSession(user.id);
+    persistUserSession(user.id);
     applyUserNamespace(user);
     bootApp();
   });
@@ -1878,7 +1882,7 @@
     const users = getUsers();
     users.push(user);
     saveUsers(users);
-    startSession(user.id);
+    persistUserSession(user.id);
     applyUserNamespace(user);
     bootApp();
   });
