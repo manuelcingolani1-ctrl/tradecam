@@ -164,6 +164,17 @@
   .rec-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
   .rec-dot.paused{background:var(--text-2);box-shadow:none}
   .timer{font-size:12px;font-weight:700;letter-spacing:0.02em;color:inherit}
+  .topbar-actions{display:flex;align-items:center;gap:10px}
+  .icon-btn-top{display:flex;align-items:center;justify-content:center;gap:6px;width:38px;height:38px;
+    border-radius:10px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    cursor:pointer;font-family:var(--font-ui);flex:none}
+  .icon-btn-top:hover{background:var(--surface-3)}
+  .icon-btn-top.muted{color:var(--danger);border-color:var(--danger-soft);background:var(--danger-soft)}
+  .icon-btn-top .zicon{font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center}
+  .icon-btn-top .zicon svg{display:block}
+  .icon-btn-top-danger{width:auto;padding:0 16px;background:var(--danger);border-color:var(--danger);
+    color:#fff;font-size:12px;font-weight:700}
+  .icon-btn-top-danger:hover{background:#d33a2c}
   #stageOuter{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
   #stage{position:relative;background:#000;overflow:hidden}
   #stage video{width:100%;height:100%;object-fit:fill;display:block}
@@ -182,6 +193,29 @@
   .notes-body{padding:12px 14px;font-size:13px;line-height:1.5;color:var(--text);outline:none;
     overflow-y:auto;flex:1;min-height:0}
   .notes-body:empty:before{content:attr(data-placeholder);color:var(--text-2)}
+  .note-tags{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 0}
+  .note-tag-chip{border-radius:999px;border:1px solid var(--border);background:var(--surface-2);
+    color:var(--text-2);font-size:11px;font-weight:700;padding:5px 11px;cursor:pointer;font-family:var(--font-ui)}
+  .note-tag-chip:hover{background:var(--surface-3);color:var(--text)}
+  .note-tag-chip.active{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+  .notes-list{padding:10px 14px;font-size:13px;line-height:1.5;color:var(--text);outline:none;
+    overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .notes-list-empty{color:var(--text-2)}
+  .note-item{display:flex;flex-direction:column;gap:3px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .note-item:last-child{border-bottom:none;padding-bottom:0}
+  .note-item-meta{display:flex;align-items:center;gap:6px}
+  .note-item-time{font-family:var(--font-mono);font-size:10px;color:var(--text-2)}
+  .note-tag-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;
+    background:var(--teal-soft);color:var(--teal)}
+  .note-item-text{font-size:13px;color:var(--text);word-break:break-word}
+  .notes-input-row{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px;
+    border-top:1px solid var(--border)}
+  .notes-input{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;font-family:var(--font-ui);outline:none}
+  .notes-input:focus{border-color:var(--teal)}
+  .notes-send-btn{flex:none;width:32px;height:32px;border-radius:8px;background:var(--teal);
+    border:none;color:#08110f;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .notes-send-btn:hover{background:#3fe0c8}
   .startup-overlay{position:absolute;inset:0;background:var(--bg);display:flex;align-items:center;
     justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:24px;z-index:5}
   .startup-overlay p{color:var(--text-2);font-size:14px;max-width:360px;margin:0}
@@ -816,9 +850,20 @@
         <div class="sesion-title">Grabando sesión</div>
         <div class="info" id="sesionInfo">—</div>
       </div>
-      <div class="rec-pill" style="margin-left:auto">
-        <span class="rec-dot" id="recDot"></span>
-        <span class="timer num" id="sesionTimer">00:00:00</span>
+      <div class="topbar-actions" style="margin-left:auto">
+        <button class="icon-btn-top" id="topMicBtn" type="button" title="Silenciar micrófono">
+          <span class="zicon" id="topMicIcon"></span>
+        </button>
+        <button class="icon-btn-top" id="topCamBtn" type="button" title="Apagar cámara">
+          <span class="zicon" id="topCamIcon"></span>
+        </button>
+        <div class="rec-pill">
+          <span class="rec-dot" id="recDot"></span>
+          <span class="timer num" id="sesionTimer">00:00:00</span>
+        </div>
+        <button class="icon-btn-top icon-btn-top-danger" id="topEndBtn" type="button" title="Detener sesión">
+          Detener
+        </button>
       </div>
     </div>
     <div id="stageOuter">
@@ -833,7 +878,22 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2"><circle cx="8" cy="6" r="1"></circle><circle cx="16" cy="6" r="1"></circle><circle cx="8" cy="12" r="1"></circle><circle cx="16" cy="12" r="1"></circle><circle cx="8" cy="18" r="1"></circle><circle cx="16" cy="18" r="1"></circle></svg>
             <span>Notas de la sesión</span>
           </div>
-          <div class="notes-body" id="notesBody" contenteditable="true" data-placeholder="Escribí tu plan y lo que vayas viendo..."></div>
+          <div class="note-tags" id="noteTags">
+            <button class="note-tag-chip" data-tag="Setup" type="button">Setup</button>
+            <button class="note-tag-chip" data-tag="Entrada" type="button">Entrada</button>
+            <button class="note-tag-chip" data-tag="Gestión" type="button">Gestión</button>
+            <button class="note-tag-chip" data-tag="Error" type="button">Error</button>
+          </div>
+          <div class="notes-list" id="notesList">
+            <div class="notes-list-empty" id="notesListEmpty">Escribí tu plan y lo que vayas viendo...</div>
+          </div>
+          <div class="notes-input-row">
+            <input type="text" id="notesInput" class="notes-input" placeholder="Escribir nota..." autocomplete="off" />
+            <button class="notes-send-btn" id="notesSendBtn" type="button" title="Agregar nota">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+          <div id="notesBody" contenteditable="false" style="display:none"></div>
         </div>
         <div class="marker-flash" id="markerFlash">
           <span class="marker-flash-icon">🚩</span>
@@ -2186,6 +2246,16 @@
   const toggleNotesBtn = document.getElementById('toggleNotesBtn');
   const notesIcon = document.getElementById('notesIcon');
   const notesLabel = document.getElementById('notesLabel');
+  const topMicBtn = document.getElementById('topMicBtn');
+  const topMicIcon = document.getElementById('topMicIcon');
+  const topCamBtn = document.getElementById('topCamBtn');
+  const topCamIcon = document.getElementById('topCamIcon');
+  const topEndBtn = document.getElementById('topEndBtn');
+  const noteTags = document.getElementById('noteTags');
+  const notesList = document.getElementById('notesList');
+  const notesListEmpty = document.getElementById('notesListEmpty');
+  const notesInput = document.getElementById('notesInput');
+  const notesSendBtn = document.getElementById('notesSendBtn');
   const moreBtn = document.getElementById('moreBtn');
   const moreMenu = document.getElementById('moreMenu');
   const cycleShapeBtn = document.getElementById('cycleShapeBtn');
@@ -2224,6 +2294,9 @@
   let camEnabled = true;
   let micEnabled = true;
   let notesVisible = true;
+  let sessionNoteLog = [];
+  let selectedNoteTag = null;
+  let currentElapsedMs = 0;
   const CAM_SHAPES = ['rounded', 'circle', 'square'];
   let camShape = 'rounded';
   const MARKER_DURATION_MS = 2200;
@@ -2260,7 +2333,81 @@
 
     shapeItemIcon.innerHTML = SHAPE_ICONS[camShape];
     shapeItemLabel.textContent = 'Forma de cámara: ' + SHAPE_LABELS[camShape];
+
+    topMicBtn.classList.toggle('muted', !micEnabled);
+    topMicIcon.innerHTML = micEnabled ? ICON_MIC_ON : ICON_MIC_OFF;
+    topMicBtn.title = micEnabled ? 'Silenciar micrófono' : 'Activar micrófono';
+
+    topCamBtn.classList.toggle('muted', !camEnabled);
+    topCamIcon.innerHTML = camEnabled ? ICON_CAM_ON : ICON_CAM_OFF;
+    topCamBtn.title = camEnabled ? 'Apagar cámara' : 'Encender cámara';
   }
+
+  // ---- Notas de la sesión: chips con etiqueta + lista con hora ----
+  function syncNotesBodyText(){
+    // #notesBody sigue siendo el "transcript" plano que usan el canvas
+    // grabado, el auto-registro del journal y el formulario posterior.
+    notesBody.textContent = sessionNoteLog
+      .map(n => (n.tag ? '[' + n.tag + '] ' : '') + n.text)
+      .join('\n');
+  }
+
+  function renderNotesList(){
+    notesListEmpty.style.display = sessionNoteLog.length ? 'none' : 'block';
+    notesList.querySelectorAll('.note-item').forEach(el => el.remove());
+    sessionNoteLog.forEach(n => {
+      const item = document.createElement('div');
+      item.className = 'note-item';
+      const meta = document.createElement('div');
+      meta.className = 'note-item-meta';
+      const time = document.createElement('span');
+      time.className = 'note-item-time';
+      time.textContent = formatElapsed(n.atMs);
+      meta.appendChild(time);
+      if (n.tag){
+        const pill = document.createElement('span');
+        pill.className = 'note-tag-pill';
+        pill.textContent = n.tag;
+        meta.appendChild(pill);
+      }
+      const text = document.createElement('div');
+      text.className = 'note-item-text';
+      text.textContent = n.text;
+      item.appendChild(meta);
+      item.appendChild(text);
+      notesList.appendChild(item);
+    });
+    notesList.scrollTop = notesList.scrollHeight;
+  }
+
+  function addSessionNote(){
+    const text = notesInput.value.trim();
+    if (!text) return;
+    sessionNoteLog.push({ text, tag: selectedNoteTag, atMs: currentElapsedMs });
+    notesInput.value = '';
+    renderNotesList();
+    syncNotesBodyText();
+  }
+
+  noteTags.querySelectorAll('.note-tag-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const tag = chip.dataset.tag;
+      selectedNoteTag = (selectedNoteTag === tag) ? null : tag;
+      noteTags.querySelectorAll('.note-tag-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.tag === selectedNoteTag);
+      });
+      notesInput.focus();
+    });
+  });
+
+  notesSendBtn.addEventListener('click', addSessionNote);
+  notesInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter'){ e.preventDefault(); addSessionNote(); }
+  });
+
+  topMicBtn.addEventListener('click', () => toggleMicBtn.click());
+  topCamBtn.addEventListener('click', () => toggleCamBtn.click());
+  topEndBtn.addEventListener('click', () => endSessionBtn.click());
 
   function applyCamShape(){
     camBox.style.borderRadius = SHAPE_RADIUS_CSS[camShape];
@@ -2312,6 +2459,7 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const activeEl = document.activeElement;
     if (activeEl === notesBody || (activeEl && notesBody.contains(activeEl))) return;
+    if (activeEl === notesInput) return;
 
     if (e.code === 'Space'){ e.preventDefault(); pauseSessionBtn.click(); return; }
     const key = e.key.toLowerCase();
@@ -2422,6 +2570,12 @@
     sesionInfo.innerHTML = (entry && entry.asset ? entry.asset : 'Sesión') +
       ' <span class="acct">· ' + (entry && entry.account ? entry.account : '—') + '</span>';
     notesBody.textContent = '';
+    sessionNoteLog = [];
+    selectedNoteTag = null;
+    currentElapsedMs = 0;
+    notesInput.value = '';
+    noteTags.querySelectorAll('.note-tag-chip').forEach(c => c.classList.remove('active'));
+    renderNotesList();
     document.getElementById('sesionFolderPath').textContent = '';
 
     // reiniciar los controles tipo Zoom para esta nueva sesión
@@ -2568,7 +2722,7 @@
         ctx.fillStyle = '#F2F4F7';
         const bodySize = 13 * (w / stage.clientWidth);
         ctx.font = '500 ' + bodySize + 'px Manrope, sans-serif';
-        const text = notesBody.innerText || '';
+        const text = notesBody.textContent || '';
         const lines = wrapText(ctx, text, nw - pad14*2);
         let ly = ny + pad14*3 + headerSize + bodySize;
         const lineH = bodySize * 1.45;
@@ -2665,7 +2819,7 @@
         markers: sessionMarkers.slice(),
         asset: (entry && entry.asset) || '',
         account: (entry && entry.account) || '',
-        notes: notesBody.innerText || '',
+        notes: notesBody.textContent || '',
         result: null,
         pnl: null,
         tradesTotal: null,
@@ -2711,6 +2865,7 @@
     timerId = setInterval(() => {
       if (isPaused) return;
       const elapsed = Date.now() - sessionStartedAt;
+      currentElapsedMs = elapsed;
       sesionTimer.textContent = formatElapsed(elapsed);
       if (elapsed >= config.durationHours * 3600 * 1000) stopSession();
     }, 1000);
@@ -2835,7 +2990,7 @@
     });
     if (entry && entry.asset) journalAssetSelect.value = entry.asset;
     if (entry && entry.account) journalAccountSelect.value = entry.account;
-    journalNotes.value = notesBody.innerText || '';
+    journalNotes.value = notesBody.textContent || '';
     journalPnl.value = '';
     journalTradesTotal.value = '';
     journalTradesWin.value = '';
