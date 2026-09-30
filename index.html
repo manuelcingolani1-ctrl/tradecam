@@ -28,9 +28,19 @@
   .topnav{width:236px;flex:0 0 236px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;
     padding:22px 14px;gap:4px;border-right:1px solid var(--border);background:var(--surface);overflow-y:auto}
   .brand{display:flex;align-items:center;gap:10px;padding:4px 10px 24px 10px}
-  .brand span{font-weight:700;font-size:17px;letter-spacing:-0.1px}
+  .brand span{font-weight:700;font-size:17px;letter-spacing:-0.1px;flex:1 1 auto}
   .brand-mark{width:28px;height:28px;flex:0 0 28px;border-radius:9px;background:linear-gradient(155deg,var(--teal),#1AA898);
     display:flex;align-items:center;justify-content:center}
+  .sidebar-collapse-btn{width:26px;height:26px;flex:0 0 26px;border-radius:7px;background:none;
+    border:1px solid var(--border);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .sidebar-collapse-btn:hover{color:var(--text);background:var(--surface-2)}
+  .sidebar-expand-btn{position:fixed;top:18px;left:14px;z-index:50;width:34px;height:34px;border-radius:9px;
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);cursor:pointer;
+    display:none;align-items:center;justify-content:center}
+  .sidebar-expand-btn:hover{color:var(--text);background:var(--surface-3)}
+  .shell.sidebar-collapsed .topnav{display:none}
+  .shell.sidebar-collapsed .sidebar-expand-btn{display:flex}
+  .shell.sidebar-collapsed #view-sesion{left:0}
   .sidebar-nav{display:flex;flex-direction:column;gap:2px}
   .navlink{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font-size:13.5px;font-weight:600;
     color:var(--text-2);cursor:pointer;padding:10px 12px;border-radius:9px;background:none;border:none;
@@ -175,7 +185,8 @@
   .icon-btn-top-danger{width:auto;padding:0 16px;background:var(--danger);border-color:var(--danger);
     color:#fff;font-size:12px;font-weight:700}
   .icon-btn-top-danger:hover{background:#d33a2c}
-  #stageOuter{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
+  .sesion-body{flex:1;display:flex;min-height:0;overflow:hidden}
+  #stageOuter{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000;min-width:0}
   #stage{position:relative;background:#000;overflow:hidden}
   #stage video{width:100%;height:100%;object-fit:fill;display:block}
   .draggable{position:absolute;cursor:grab;user-select:none;touch-action:none}
@@ -186,10 +197,20 @@
   .drag-handle{position:absolute;top:6px;left:6px;display:flex;align-items:center;gap:6px;
     background:rgba(0,0,0,0.5);padding:3px 7px;border-radius:6px;font-size:10px;font-weight:700;color:#fff;
     letter-spacing:0.04em;z-index:2}
-  .notes-panel{width:280px;border-radius:14px;background:var(--surface);border:1px solid var(--border);
-    box-shadow:0 12px 32px rgba(0,0,0,0.45);display:flex;flex-direction:column}
-  .notes-header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
-  .notes-header span{font-size:12px;font-weight:700;color:var(--text-2)}
+  .notes-col{width:300px;flex:0 0 300px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;
+    background:var(--surface);border-left:1px solid var(--border)}
+  .notes-col.collapsed{display:none}
+  .notes-col-header{flex:none;display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;border-bottom:1px solid var(--border)}
+  .notes-col-header span{font-family:var(--font-display);font-size:13px;font-weight:700}
+  .notes-col-collapse{width:26px;height:26px;flex:0 0 26px;border-radius:7px;background:none;
+    border:1px solid var(--border);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .notes-col-collapse:hover{color:var(--text);background:var(--surface-2)}
+  .notes-col-expand{position:absolute;top:16px;right:16px;z-index:6;width:36px;height:36px;border-radius:10px;
+    background:rgba(18,22,29,0.9);border:1px solid var(--border);color:var(--text-2);cursor:pointer;
+    display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+  .notes-col-expand.show{display:flex}
+  .notes-col-expand:hover{color:var(--text);background:var(--surface-3)}
   .notes-body{padding:12px 14px;font-size:13px;line-height:1.5;color:var(--text);outline:none;
     overflow-y:auto;flex:1;min-height:0}
   .notes-body:empty:before{content:attr(data-placeholder);color:var(--text-2)}
@@ -391,12 +412,18 @@
   </div>
 
   <div class="shell" id="shell" style="display:none">
+  <button class="sidebar-expand-btn" id="sidebarExpandBtn" type="button" title="Mostrar menú">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
   <div class="topnav" id="topnav">
     <div class="brand">
       <div class="brand-mark">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8" stroke="#04201C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <span>TradeCam</span>
+      <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" type="button" title="Ocultar menú">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
     </div>
     <div class="sidebar-nav">
       <button class="navlink" id="navInicio" type="button">
@@ -866,34 +893,13 @@
         </button>
       </div>
     </div>
+    <div class="sesion-body" id="sesionBody">
     <div id="stageOuter">
       <div id="stage">
         <video id="screenVideo" autoplay muted playsinline></video>
         <div class="draggable cam-box" id="camBox" style="width:180px;height:180px">
           <div class="drag-handle">● REC</div>
           <video id="camVideo" autoplay muted playsinline></video>
-        </div>
-        <div class="draggable notes-panel" id="notesBox" style="width:280px;height:260px">
-          <div class="notes-header" id="notesDragHandle">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2"><circle cx="8" cy="6" r="1"></circle><circle cx="16" cy="6" r="1"></circle><circle cx="8" cy="12" r="1"></circle><circle cx="16" cy="12" r="1"></circle><circle cx="8" cy="18" r="1"></circle><circle cx="16" cy="18" r="1"></circle></svg>
-            <span>Notas de la sesión</span>
-          </div>
-          <div class="note-tags" id="noteTags">
-            <button class="note-tag-chip" data-tag="Setup" type="button">Setup</button>
-            <button class="note-tag-chip" data-tag="Entrada" type="button">Entrada</button>
-            <button class="note-tag-chip" data-tag="Gestión" type="button">Gestión</button>
-            <button class="note-tag-chip" data-tag="Error" type="button">Error</button>
-          </div>
-          <div class="notes-list" id="notesList">
-            <div class="notes-list-empty" id="notesListEmpty">Escribí tu plan y lo que vayas viendo...</div>
-          </div>
-          <div class="notes-input-row">
-            <input type="text" id="notesInput" class="notes-input" placeholder="Escribir nota..." autocomplete="off" />
-            <button class="notes-send-btn" id="notesSendBtn" type="button" title="Agregar nota">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
-          </div>
-          <div id="notesBody" contenteditable="false" style="display:none"></div>
         </div>
         <div class="marker-flash" id="markerFlash">
           <span class="marker-flash-icon">🚩</span>
@@ -967,6 +973,34 @@
           <button class="btn secondary" id="startupBackBtn" type="button" style="display:none">Volver a Inicio</button>
         </div>
       </div>
+      <button class="notes-col-expand" id="notesColExpandBtn" type="button" title="Mostrar notas">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5C4 3.7 4.7 3 5.5 3H18a2 2 0 0 1 2 2v16l-4-2-4 2-4-2-4 2z"/></svg>
+      </button>
+    </div>
+    <div class="notes-col" id="notesCol">
+      <div class="notes-col-header">
+        <span>Notas de la sesión</span>
+        <button class="notes-col-collapse" id="notesColCollapseBtn" type="button" title="Ocultar notas">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <div class="note-tags" id="noteTags">
+        <button class="note-tag-chip" data-tag="Setup" type="button">Setup</button>
+        <button class="note-tag-chip" data-tag="Entrada" type="button">Entrada</button>
+        <button class="note-tag-chip" data-tag="Gestión" type="button">Gestión</button>
+        <button class="note-tag-chip" data-tag="Error" type="button">Error</button>
+      </div>
+      <div class="notes-list" id="notesList">
+        <div class="notes-list-empty" id="notesListEmpty">Escribí tu plan y lo que vayas viendo...</div>
+      </div>
+      <div class="notes-input-row">
+        <input type="text" id="notesInput" class="notes-input" placeholder="Escribir nota..." autocomplete="off" />
+        <button class="notes-send-btn" id="notesSendBtn" type="button" title="Agregar nota">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+      <div id="notesBody" style="display:none"></div>
+    </div>
     </div>
   </div>
 
@@ -1702,6 +1736,23 @@
   const authOverlay = document.getElementById('authOverlay');
   const shell = document.getElementById('shell');
   const topnav = document.getElementById('topnav');
+  const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+  const sidebarExpandBtn = document.getElementById('sidebarExpandBtn');
+  const SIDEBAR_COLLAPSED_KEY = 'tradecam_sidebar_collapsed_v1';
+  function applySidebarCollapsed(collapsed){
+    shell.classList.toggle('sidebar-collapsed', collapsed);
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+  }
+  // Los clicks del usuario (después de que cargó todo el script) también
+  // reacomodan el video de la grabación si hay una sesión activa; el estado
+  // inicial al arrancar la app no, porque todavía no existe screenVideo.
+  function setSidebarCollapsed(collapsed){
+    applySidebarCollapsed(collapsed);
+    refitStage();
+  }
+  sidebarCollapseBtn.addEventListener('click', () => setSidebarCollapsed(true));
+  sidebarExpandBtn.addEventListener('click', () => setSidebarCollapsed(false));
+  applySidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
   const sidebarAvatar = document.getElementById('sidebarAvatar');
   const topnavUserName = document.getElementById('topnavUserName');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -2206,7 +2257,10 @@
   });
 
   navGrabacionEl.addEventListener('click', () => {
-    if (startSessionBtn.disabled){
+    if (sessionInProgress){
+      // Ya hay una grabación activa: solo mostrar la vista, no arrancar otra.
+      showView('sesion');
+    } else if (startSessionBtn.disabled){
       showView('inicio');
     } else {
       startSessionBtn.click();
@@ -2221,9 +2275,10 @@
   const screenVideo = document.getElementById('screenVideo');
   const camVideo = document.getElementById('camVideo');
   const camBox = document.getElementById('camBox');
-  const notesBox = document.getElementById('notesBox');
+  const notesCol = document.getElementById('notesCol');
+  const notesColCollapseBtn = document.getElementById('notesColCollapseBtn');
+  const notesColExpandBtn = document.getElementById('notesColExpandBtn');
   const notesBody = document.getElementById('notesBody');
-  const notesDragHandle = document.getElementById('notesDragHandle');
   const sesionInfo = document.getElementById('sesionInfo');
   const sesionTimer = document.getElementById('sesionTimer');
   const recDot = document.getElementById('recDot');
@@ -2288,6 +2343,10 @@
   });
 
   let recState = null; // holds everything about the active recording
+  // true entre el momento en que arranca la grabación real (recorder.start)
+  // y el momento en que termina (recorder.onstop) — evita que navegar a
+  // "Grabación" mientras ya estás grabando arranque una sesión nueva encima.
+  let sessionInProgress = false;
 
   // ---- estado de los controles tipo Zoom durante la sesión en vivo ----
   let activeCamStream = null;
@@ -2428,11 +2487,16 @@
     updateSessionControlsUI();
   });
 
-  toggleNotesBtn.addEventListener('click', () => {
-    notesVisible = !notesVisible;
-    notesBox.style.display = notesVisible ? 'flex' : 'none';
+  function setNotesColCollapsed(collapsed){
+    notesVisible = !collapsed;
+    notesCol.classList.toggle('collapsed', collapsed);
+    notesColExpandBtn.classList.toggle('show', collapsed);
     updateSessionControlsUI();
-  });
+    refitStage();
+  }
+  toggleNotesBtn.addEventListener('click', () => setNotesColCollapsed(notesVisible));
+  notesColCollapseBtn.addEventListener('click', () => setNotesColCollapsed(true));
+  notesColExpandBtn.addEventListener('click', () => setNotesColCollapsed(false));
 
   cycleShapeBtn.addEventListener('click', () => {
     const idx = CAM_SHAPES.indexOf(camShape);
@@ -2536,6 +2600,13 @@
     stage.style.height = Math.round(h) + 'px';
   }
 
+  // Recalcula el tamaño del stage cuando cambia el espacio disponible
+  // (se colapsa el menú lateral o la columna de notas) mientras hay una
+  // sesión activa — si no hay video cargado todavía, no hace nada.
+  function refitStage(){
+    if (screenVideo && screenVideo.videoWidth) fitStageToVideo(screenVideo.videoWidth, screenVideo.videoHeight);
+  }
+
   function drawRoundedClip(ctx, x, y, w, h, r){
     if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
     else {
@@ -2582,7 +2653,8 @@
     activeCamStream = null;
     camEnabled = true; micEnabled = true; notesVisible = true; camShape = 'rounded';
     camBox.style.display = 'block';
-    notesBox.style.display = 'flex';
+    notesCol.classList.remove('collapsed');
+    notesColExpandBtn.classList.remove('show');
     applyCamShape();
     updateSessionControlsUI();
 
@@ -2595,7 +2667,7 @@
     moreMenu.classList.remove('show');
     markerFlash.classList.remove('show');
 
-    let screenStream, camStream, folderHandle, fileHandle, writable, recorder, canvas, ctx, rafId, timerId, camPos, notesPos;
+    let screenStream, camStream, folderHandle, fileHandle, writable, recorder, canvas, ctx, rafId, timerId, camPos;
     let isPaused = false, pauseStartedAt = null;
     let sessionMarkers = [];
     let activeMarkers = [];
@@ -2661,7 +2733,6 @@
     window.addEventListener('resize', () => fitStageToVideo(screenVideo.videoWidth, screenVideo.videoHeight));
 
     camPos = makeDraggable(camBox, camBox, {x:0.02, y:0.06});
-    notesPos = makeDraggable(notesBox, notesDragHandle, {x:0.7, y:0.1});
 
     canvas = document.createElement('canvas');
     canvas.width = screenVideo.videoWidth;
@@ -2696,41 +2767,9 @@
         ctx.restore();
       }
 
-      if (notesVisible){
-        const np = notesPos.getPos();
-        const nw = notesBox.offsetWidth / stage.clientWidth * w;
-        const nh = notesBox.offsetHeight / stage.clientHeight * h;
-        const nx = np.x * w, ny = np.y * h;
-        const nr = 14 * (w / stage.clientWidth);
-        ctx.save();
-        ctx.fillStyle = 'rgba(17,22,29,0.94)';
-        drawRoundedClip(ctx, nx, ny, nw, nh, nr);
-        ctx.fill();
-        ctx.strokeStyle = '#242C3B';
-        ctx.lineWidth = 1 * (w / stage.clientWidth);
-        ctx.stroke();
-        const pad14 = 14 * (w / stage.clientWidth);
-        ctx.fillStyle = '#8B93A7';
-        const headerSize = 12 * (w / stage.clientWidth);
-        ctx.font = '700 ' + headerSize + 'px Manrope, sans-serif';
-        ctx.fillText('Notas de la sesión', nx + pad14, ny + pad14 + headerSize);
-        ctx.strokeStyle = '#242C3B';
-        ctx.beginPath();
-        ctx.moveTo(nx, ny + pad14*2 + headerSize);
-        ctx.lineTo(nx + nw, ny + pad14*2 + headerSize);
-        ctx.stroke();
-        ctx.fillStyle = '#F2F4F7';
-        const bodySize = 13 * (w / stage.clientWidth);
-        ctx.font = '500 ' + bodySize + 'px Manrope, sans-serif';
-        const text = notesBody.textContent || '';
-        const lines = wrapText(ctx, text, nw - pad14*2);
-        let ly = ny + pad14*3 + headerSize + bodySize;
-        const lineH = bodySize * 1.45;
-        lines.forEach(line => {
-          if (ly < ny + nh - 6){ ctx.fillText(line, nx + pad14, ly); ly += lineH; }
-        });
-        ctx.restore();
-      }
+      // Las notas ya no se dibujan en el video: ahora son una columna fija
+      // de la app (fuera de la pantalla compartida), no un panel arrastrable
+      // encima de la grabación — el video queda igual que pantalla + cámara.
 
       if (activeMarkers.length){
         const now2 = performance.now();
@@ -2852,12 +2891,14 @@
         // Si esto falla, el video ya quedó guardado igual (solo que sin el arreglo de duración).
       }
       startupOverlay.style.display = 'none';
+      sessionInProgress = false;
 
       showPost(filename, sessionStartedAt, entry, dateStr, sessionMarkers, autoEntry.createdAt);
     };
 
     let sessionStartedAt = Date.now();
     recorder.start(1000);
+    sessionInProgress = true;
     startupOverlay.style.display = 'none';
     pauseSessionBtn.disabled = false;
     markMomentBtn.disabled = false;
