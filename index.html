@@ -51,7 +51,13 @@
   .navlink.active{color:var(--teal);background:var(--teal-soft)}
   .topnav .userchip{margin-top:auto;position:relative;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-2);
     padding:14px 10px 4px;border-top:1px solid var(--border)}
-  .topnav .userchip .name{color:var(--text);font-weight:700;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .userchip-info{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .topnav .userchip .name{color:var(--text);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trader-type-select{appearance:none;-webkit-appearance:none;background:none;border:none;outline:none;
+    color:var(--text-2);font-family:var(--font-ui);font-size:11px;font-weight:600;padding:0;margin:0;
+    cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .trader-type-select:hover{color:var(--teal)}
+  .trader-type-select option{background:var(--surface-2);color:var(--text)}
   .sidebar-avatar{width:30px;height:30px;flex:0 0 30px;border-radius:50%;background:var(--surface-3);
     display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;
     font-size:12px;color:var(--teal);overflow:hidden}
@@ -725,7 +731,10 @@
     </div>
     <div class="userchip" id="userchip">
       <div class="sidebar-avatar" id="sidebarAvatar">—</div>
-      <span class="name" id="topnavUserName">—</span>
+      <div class="userchip-info">
+        <span class="name" id="topnavUserName">—</span>
+        <select class="trader-type-select" id="traderTypeSelect" title="Tipo de trader"></select>
+      </div>
       <button class="navlink settings-trigger" id="settingsMenuBtn" type="button" title="Ajustes">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
@@ -2194,6 +2203,7 @@
     accountMenuName.textContent = currentUser.name || currentUser.email;
     accountMenuEmail.textContent = currentUser.email || '';
     applyAvatarToUI(loadAvatarDataUrl());
+    applyTraderTypeToUI();
     authOverlay.classList.remove('show');
     renderConfigView();
     checkExistingFolder();
@@ -2251,6 +2261,7 @@
   applySidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
   const sidebarAvatar = document.getElementById('sidebarAvatar');
   const topnavUserName = document.getElementById('topnavUserName');
+  const traderTypeSelect = document.getElementById('traderTypeSelect');
   const userchip = document.getElementById('userchip');
   const settingsMenuBtn = document.getElementById('settingsMenuBtn');
   const accountMenu = document.getElementById('accountMenu');
@@ -2378,6 +2389,43 @@
   // suelto que había antes. Junta lo típico de una app de journaling:
   // foto de perfil, acceso rápido a Configuración, exportar y cerrar sesión.
   // =======================================================================
+  // ---- tipo de trader (chip debajo del nombre, editable ahí mismo) ----
+  const TRADER_TYPE_PRESETS = ['Trader Intradiario', 'Swing Trader', 'Scalper', 'Trader Posicional', 'Trader Algorítmico'];
+  function traderTypeKey(){ return 'tradecam_trader_type_v1::' + (currentUser ? currentUser.id : ''); }
+  function loadTraderType(){
+    try { return localStorage.getItem(traderTypeKey()) || 'Trader Intradiario'; }
+    catch (e) { return 'Trader Intradiario'; }
+  }
+  function populateTraderTypeSelect(value){
+    traderTypeSelect.innerHTML = '';
+    const opts = TRADER_TYPE_PRESETS.slice();
+    if (value && !opts.includes(value)) opts.push(value);
+    opts.forEach(v => {
+      const o = document.createElement('option'); o.value = v; o.textContent = v;
+      traderTypeSelect.appendChild(o);
+    });
+    const otro = document.createElement('option'); otro.value = '__otro__'; otro.textContent = 'Otro...';
+    traderTypeSelect.appendChild(otro);
+    traderTypeSelect.value = value;
+  }
+  function applyTraderTypeToUI(){ populateTraderTypeSelect(loadTraderType()); }
+  // Evita que un click en el selector cierre el menú de cuenta (el listener
+  // de "click afuera" está más abajo) o dispare la navegación del sidebar.
+  traderTypeSelect.addEventListener('click', (e) => e.stopPropagation());
+  traderTypeSelect.addEventListener('change', () => {
+    if (traderTypeSelect.value === '__otro__'){
+      const custom = (prompt('¿Cómo describirías tu forma de operar?', '') || '').trim();
+      if (custom){
+        try { localStorage.setItem(traderTypeKey(), custom); } catch (e) {}
+        populateTraderTypeSelect(custom);
+      } else {
+        populateTraderTypeSelect(loadTraderType());
+      }
+      return;
+    }
+    try { localStorage.setItem(traderTypeKey(), traderTypeSelect.value); } catch (e) {}
+  });
+
   function avatarKey(){ return 'tradecam_avatar_v1::' + (currentUser ? currentUser.id : ''); }
   function loadAvatarDataUrl(){
     try { return localStorage.getItem(avatarKey()); } catch (e) { return null; }
