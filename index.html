@@ -146,6 +146,22 @@
   }
   input:focus,select:focus{border-color:var(--teal)}
 
+  /* ---------- Stepper propio para los input[type=number] ----------
+     El de arriba/abajo que pone el navegador por default no respeta el
+     tema oscuro (se ve blanco/plateado, desentona). Se oculta el nativo
+     y se arma uno chico a medida, en el mismo estilo que el resto de la UI. */
+  .number-field{position:relative;display:block}
+  .number-field input[type=number]{-moz-appearance:textfield;padding-right:34px}
+  .number-field input[type=number]::-webkit-outer-spin-button,
+  .number-field input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .number-stepper{position:absolute;top:1px;right:1px;bottom:1px;width:27px;display:flex;flex-direction:column;
+    border-left:1px solid var(--border);border-radius:0 9px 9px 0;overflow:hidden}
+  .number-stepper button{flex:1;background:var(--surface-3);border:none;color:var(--text-2);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0;transition:background .15s,color .15s}
+  .number-stepper button:first-child{border-bottom:1px solid var(--border)}
+  .number-stepper button:hover{background:var(--teal-soft);color:var(--teal)}
+  .number-stepper button:active{background:var(--teal);color:#04201C}
+
   /* Autocompletado del navegador (Chrome/Safari pintan el fondo blanco por defecto):
      forzamos el mismo fondo oscuro y color de texto del resto del formulario. */
   input:-webkit-autofill,
@@ -605,7 +621,6 @@
   .hist-date{font-family:var(--font-mono);font-size:12px;color:var(--text-2);margin-bottom:4px}
   .hist-asset{font-size:16px;font-weight:700;font-family:var(--font-display)}
   .hist-asset .acct{color:var(--text-2);font-weight:600;font-size:13px;font-family:var(--font-ui)}
-  .hist-notes{color:var(--text-2);font-size:13px;margin-top:6px;max-width:480px}
   .hist-actions{display:flex;gap:8px;flex:none}
   .hist-group-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
     margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
@@ -633,7 +648,6 @@
   .viewer-box video,.viewer-box img{max-width:100%;max-height:66vh;border-radius:10px;display:block;margin:0 auto}
   .viewer-close{align-self:flex-end}
   .viewer-caption{font-size:12px;color:var(--text-2);text-align:center}
-  .viewer-box.notes-view{width:min(560px,92vw)}
 
   /* ---------- Done ---------- */
   .done-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:48px 24px}
@@ -1503,6 +1517,31 @@
       <div style="margin-top:14px">
         <label for="journalNotes">Notas del día</label>
         <textarea id="journalNotes" placeholder="¿Cómo te fue? ¿Seguiste el plan? ¿Qué mejorarías?"></textarea>
+      </div>
+    </section>
+
+    <section>
+      <h2>Métricas de la operación</h2>
+      <p class="hint">Opcional: quedan guardadas en el detalle de la sesión, se pueden completar ahora o después.</p>
+      <div class="row">
+        <div>
+          <label for="journalEntryPrice">Entrada</label>
+          <input type="text" id="journalEntryPrice" inputmode="decimal" placeholder="Precio de entrada">
+        </div>
+        <div>
+          <label for="journalExitPrice">Salida</label>
+          <input type="text" id="journalExitPrice" inputmode="decimal" placeholder="Precio de salida">
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="journalRiskReward">Riesgo:beneficio</label>
+          <input type="text" id="journalRiskReward" placeholder="Ej. 1:2">
+        </div>
+        <div>
+          <label for="journalCommissions">Comisiones</label>
+          <input type="text" id="journalCommissions" inputmode="decimal" placeholder="Ej. 4.50">
+        </div>
       </div>
     </section>
 
@@ -3670,6 +3709,15 @@
     const n = parseInt(str, 10);
     return isNaN(n) ? null : n;
   }
+  // Para precios/comisiones: si es un número lo convierte, si no, guarda el
+  // texto tal cual (por si alguien escribe algo no numérico a propósito).
+  function parseNumOrText(str){
+    if (str === '' || str === null || str === undefined) return null;
+    const s = String(str).trim();
+    if (s === '') return null;
+    const n = parseFloat(s.replace(',', '.'));
+    return isNaN(n) ? s : n;
+  }
   function formatElapsed(ms){
     const s = Math.floor(ms / 1000);
     return pad(Math.floor(s/3600)) + ':' + pad(Math.floor(s/60)%60) + ':' + pad(s%60);
@@ -4227,6 +4275,10 @@
   const journalTradesTotal = document.getElementById('journalTradesTotal');
   const journalTradesWin = document.getElementById('journalTradesWin');
   const journalTradesLoss = document.getElementById('journalTradesLoss');
+  const journalEntryPrice = document.getElementById('journalEntryPrice');
+  const journalExitPrice = document.getElementById('journalExitPrice');
+  const journalRiskReward = document.getElementById('journalRiskReward');
+  const journalCommissions = document.getElementById('journalCommissions');
   const resultPicker = document.getElementById('resultPicker');
   const resultBtns = Array.from(resultPicker.querySelectorAll('.result-btn'));
   const photoInput = document.getElementById('photoInput');
@@ -4297,6 +4349,10 @@
     journalTradesTotal.value = '';
     journalTradesWin.value = '';
     journalTradesLoss.value = '';
+    journalEntryPrice.value = '';
+    journalExitPrice.value = '';
+    journalRiskReward.value = '';
+    journalCommissions.value = '';
     selectedResult = null;
     resultBtns.forEach(b => { b.classList.remove('active', 'win', 'loss', 'neutral'); });
 
@@ -4332,7 +4388,11 @@
       pnl: (pnlRaw !== '' && !isNaN(parseFloat(pnlRaw))) ? parseFloat(pnlRaw) : null,
       tradesTotal: parseIntOrNull(journalTradesTotal.value),
       tradesWin: parseIntOrNull(journalTradesWin.value),
-      tradesLoss: parseIntOrNull(journalTradesLoss.value)
+      tradesLoss: parseIntOrNull(journalTradesLoss.value),
+      entryPrice: parseNumOrText(journalEntryPrice.value),
+      exitPrice: parseNumOrText(journalExitPrice.value),
+      riskReward: journalRiskReward.value.trim() || null,
+      commissions: parseNumOrText(journalCommissions.value)
     };
     const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
     const existingIdx = (pendingEntryId !== null) ? journal.findIndex(e => e.createdAt === pendingEntryId) : -1;
@@ -4573,14 +4633,11 @@
     const card = document.createElement('div');
     card.className = 'hist-card';
 
-    const hasNotes = !!(entry.notes && entry.notes.trim());
-    const notesTruncated = hasNotes && entry.notes.length > 220;
     const main = document.createElement('div');
     main.innerHTML =
       '<div class="hist-date">' + (entry.date || '—') + '</div>' +
       '<div class="hist-asset">' + (entry.asset || 'Sin activo') +
         ' <span class="acct">· ' + (entry.account || 'sin cuenta') + '</span></div>' +
-      (hasNotes ? '<div class="hist-notes">' + escapeHtml(entry.notes).slice(0, 220) + (notesTruncated ? '…' : '') + '</div>' : '') +
       resultBadgeHtml(entry);
     card.appendChild(main);
 
@@ -4601,12 +4658,6 @@
       btn2.className = 'btn secondary'; btn2.type = 'button'; btn2.textContent = 'Ver foto';
       btn2.addEventListener('click', () => openHistorialFile(entry.photoFilename, 'image'));
       actions.appendChild(btn2);
-    }
-    if (hasNotes){
-      const notesBtn = document.createElement('button');
-      notesBtn.className = 'btn secondary'; notesBtn.type = 'button'; notesBtn.textContent = 'Ver notas';
-      notesBtn.addEventListener('click', () => openNotesViewer(entry));
-      actions.appendChild(notesBtn);
     }
     const editBtn = document.createElement('button');
     editBtn.className = 'btn secondary'; editBtn.type = 'button'; editBtn.textContent = 'Editar';
@@ -4711,10 +4762,6 @@
       const label = entry.tradesTotal + (entry.tradesTotal === 1 ? ' operación' : ' operaciones');
       parts.push('<span class="hist-badge neutral">' + label + '</span>');
     }
-    if (Array.isArray(entry.markers) && entry.markers.length){
-      parts.push('<span class="hist-badge neutral">🚩 ' + entry.markers.length +
-        (entry.markers.length === 1 ? ' marca' : ' marcas') + '</span>');
-    }
     return parts.length ? '<div>' + parts.join(' ') + '</div>' : '';
   }
 
@@ -4792,25 +4839,7 @@
   function closeViewer(){
     viewerModal.classList.remove('show');
     viewerContent.innerHTML = '';
-    viewerModal.querySelector('.viewer-box').classList.remove('notes-view');
     if (lastViewerUrl){ URL.revokeObjectURL(lastViewerUrl); lastViewerUrl = null; }
-  }
-
-  // Muestra la nota completa de una sesión (el Historial solo adelanta los
-  // primeros 220 caracteres) reusando el mismo visor modal que el video y
-  // la foto.
-  function openNotesViewer(entry){
-    viewerContent.innerHTML = '';
-    const title = document.createElement('div');
-    title.style.cssText = 'font-weight:800;font-size:15px;margin-bottom:2px';
-    title.textContent = (entry.asset || 'Sesión') + (entry.date ? ' · ' + entry.date : '');
-    const body = document.createElement('div');
-    body.style.cssText = 'white-space:pre-wrap;font-size:14px;line-height:1.6;color:var(--text)';
-    body.textContent = entry.notes || '';
-    viewerContent.appendChild(title);
-    viewerContent.appendChild(body);
-    viewerModal.querySelector('.viewer-box').classList.add('notes-view');
-    viewerModal.classList.add('show');
   }
   document.getElementById('viewerCloseBtn').addEventListener('click', closeViewer);
   viewerModal.addEventListener('click', (e) => { if (e.target === viewerModal) closeViewer(); });
@@ -5074,7 +5103,6 @@
       localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
     };
   }
-  const parseNumOrText = (s) => { const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? s : n; };
   detalleEntryPrice.addEventListener('change', saveDetalleField('entryPrice', parseNumOrText));
   detalleExitPrice.addEventListener('change', saveDetalleField('exitPrice', parseNumOrText));
   detalleRiskReward.addEventListener('change', saveDetalleField('riskReward', null));
@@ -5519,6 +5547,41 @@
     }
     repairPickBtn.disabled = false;
   });
+
+  // =======================================================================
+  // STEPPER PARA INPUTS NUMÉRICOS (reemplaza las flechitas nativas)
+  // =======================================================================
+  function enhanceNumberInputs(){
+    document.querySelectorAll('input[type=number]').forEach(input => {
+      if (input.closest('.number-field')) return; // ya envuelto
+      const wrap = document.createElement('span');
+      wrap.className = 'number-field';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+
+      const stepper = document.createElement('span');
+      stepper.className = 'number-stepper';
+      const up = document.createElement('button');
+      up.type = 'button'; up.tabIndex = -1; up.title = 'Sumar';
+      up.innerHTML = '<svg width="9" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5l4-4 4 4"/></svg>';
+      const down = document.createElement('button');
+      down.type = 'button'; down.tabIndex = -1; down.title = 'Restar';
+      down.innerHTML = '<svg width="9" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg>';
+
+      function step(dir){
+        if (input.disabled) return;
+        if (dir > 0) input.stepUp(); else input.stepDown();
+        input.dispatchEvent(new Event('input', {bubbles: true}));
+        input.dispatchEvent(new Event('change', {bubbles: true}));
+        input.focus();
+      }
+      up.addEventListener('click', () => step(1));
+      down.addEventListener('click', () => step(-1));
+      stepper.appendChild(up); stepper.appendChild(down);
+      wrap.appendChild(stepper);
+    });
+  }
+  enhanceNumberInputs();
 
   // =======================================================================
   // BOOT
