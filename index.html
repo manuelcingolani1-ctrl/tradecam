@@ -114,6 +114,39 @@
     color:var(--text);font-family:var(--font-ui);font-size:14px;padding:10px 12px;outline:none;transition:border-color .15s
   }
   input:focus,select:focus{border-color:var(--teal)}
+
+  /* ---------- Selector de fecha a medida (reemplaza el date picker nativo) ---------- */
+  .datepicker{position:relative}
+  .datepicker-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:10px;color:var(--text);
+    font-family:var(--font-ui);font-size:14px;padding:10px 12px;cursor:pointer;text-align:left}
+  .datepicker-trigger:hover{border-color:var(--teal)}
+  .datepicker-trigger.open{border-color:var(--teal)}
+  .dp-trigger-text.placeholder{color:var(--text-2)}
+  .dp-trigger-icon{flex:0 0 16px;color:var(--text-2)}
+  .datepicker-pop{position:fixed;z-index:100;width:280px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:14px;
+    box-shadow:0 16px 40px rgba(0,0,0,0.5);display:none}
+  .datepicker-pop.show{display:block}
+  .dp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .dp-month{font-family:var(--font-display);font-weight:700;font-size:13px;text-transform:capitalize}
+  .dp-nav{width:26px;height:26px;border-radius:7px;background:none;border:1px solid var(--border);
+    color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px}
+  .dp-nav:hover{color:var(--text);background:var(--surface-3)}
+  .dp-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+  .dp-weekdays span{text-align:center;font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase}
+  .dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .dp-day{aspect-ratio:1;border:none;background:none;border-radius:8px;color:var(--text);font-size:12.5px;
+    font-family:var(--font-mono);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .dp-day:hover:not(:disabled){background:var(--surface-3)}
+  .dp-day.muted{color:var(--text-2);opacity:0.35;cursor:default}
+  .dp-day.today{color:var(--teal);font-weight:700}
+  .dp-day.selected{background:var(--teal);color:#04201C;font-weight:700}
+  .dp-footer{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+  .dp-link{background:none;border:none;color:var(--teal);font-size:12px;font-weight:700;cursor:pointer;
+    font-family:var(--font-ui);padding:4px}
+  .dp-link:hover{text-decoration:underline}
+
   .row{display:flex;gap:12px}
   .row > *{flex:1;min-width:0}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
@@ -2452,6 +2485,143 @@
     return d;
   }
   function formatDayMonth(d){ return d.getDate() + ' de ' + MONTH_NAMES_ES[d.getMonth()]; }
+
+  // ---- Selector de fecha a medida: reemplaza visualmente el <input type="date">
+  // nativo (que trae su propio calendario del sistema, sin poder cambiarle el
+  // estilo) por un botón + calendario desplegable con la estética de la app.
+  // El <input> original sigue existiendo (oculto) y es la fuente de verdad:
+  // todo el resto del código sigue leyendo/escribiendo su .value como siempre.
+  function createDatePicker(inputId){
+    const input = document.getElementById(inputId);
+    if (!input) return null;
+    input.style.display = 'none';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'datepicker';
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'datepicker-trigger';
+    trigger.innerHTML = '<span class="dp-trigger-text placeholder">dd/mm/aaaa</span>' +
+      '<svg class="dp-trigger-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>';
+    const pop = document.createElement('div');
+    pop.className = 'datepicker-pop';
+    wrap.appendChild(trigger);
+    input.insertAdjacentElement('afterend', wrap);
+    // El calendario se cuelga directo del <body> (no adentro de "wrap") para
+    // que nunca quede recortado por el overflow:auto de un modal (por ej. el
+    // de "Agregar sesión manualmente"). Se posiciona a mano con JS.
+    document.body.appendChild(pop);
+
+    const triggerText = trigger.querySelector('.dp-trigger-text');
+    let viewYear, viewMonth;
+
+    function sync(){
+      if (input.value){
+        const [y, m, d] = input.value.split('-');
+        triggerText.textContent = d + '/' + m + '/' + y;
+        triggerText.classList.remove('placeholder');
+      } else {
+        triggerText.textContent = 'dd/mm/aaaa';
+        triggerText.classList.add('placeholder');
+      }
+    }
+
+    function setValue(dateStr){
+      input.value = dateStr;
+      sync();
+      input.dispatchEvent(new Event('change', {bubbles: true}));
+    }
+
+    function render(){
+      const todayKey = dateToKey(new Date());
+      const selKey = input.value || '';
+      const first = new Date(viewYear, viewMonth, 1);
+      const startDow = (first.getDay() + 6) % 7; // lunes = 0
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+
+      let cells = '';
+      for (let i = startDow - 1; i >= 0; i--){
+        cells += '<button type="button" class="dp-day muted" disabled>' + (daysInPrevMonth - i) + '</button>';
+      }
+      for (let d = 1; d <= daysInMonth; d++){
+        const key = viewYear + '-' + pad(viewMonth + 1) + '-' + pad(d);
+        let cls = 'dp-day';
+        if (key === todayKey) cls += ' today';
+        if (key === selKey) cls += ' selected';
+        cells += '<button type="button" class="' + cls + '" data-date="' + key + '">' + d + '</button>';
+      }
+      const trailing = (7 - ((startDow + daysInMonth) % 7)) % 7;
+      for (let d = 1; d <= trailing; d++){
+        cells += '<button type="button" class="dp-day muted" disabled>' + d + '</button>';
+      }
+
+      pop.innerHTML =
+        '<div class="dp-header">' +
+          '<button type="button" class="dp-nav" data-nav="-1">‹</button>' +
+          '<div class="dp-month">' + MONTH_NAMES_ES[viewMonth] + ' ' + viewYear + '</div>' +
+          '<button type="button" class="dp-nav" data-nav="1">›</button>' +
+        '</div>' +
+        '<div class="dp-weekdays"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>' +
+        '<div class="dp-grid">' + cells + '</div>' +
+        '<div class="dp-footer"><button type="button" class="dp-link" data-action="clear">Borrar</button><button type="button" class="dp-link" data-action="today">Hoy</button></div>';
+
+      pop.querySelectorAll('.dp-nav').forEach(btn => {
+        btn.addEventListener('click', () => {
+          viewMonth += parseInt(btn.dataset.nav, 10);
+          if (viewMonth < 0){ viewMonth = 11; viewYear--; }
+          if (viewMonth > 11){ viewMonth = 0; viewYear++; }
+          render();
+          position();
+        });
+      });
+      pop.querySelectorAll('.dp-day[data-date]').forEach(btn => {
+        btn.addEventListener('click', () => { setValue(btn.dataset.date); close(); });
+      });
+      pop.querySelector('[data-action="clear"]').addEventListener('click', () => { setValue(''); close(); });
+      pop.querySelector('[data-action="today"]').addEventListener('click', () => { setValue(dateToKey(new Date())); close(); });
+    }
+
+    function position(){
+      const r = trigger.getBoundingClientRect();
+      const popH = pop.offsetHeight, popW = pop.offsetWidth;
+      let top = r.bottom + 6;
+      if (top + popH > window.innerHeight - 8) top = Math.max(8, r.top - popH - 6);
+      let left = r.left;
+      if (left + popW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - popW - 8);
+      pop.style.top = top + 'px';
+      pop.style.left = left + 'px';
+    }
+    function onScrollOrResize(){ close(); }
+    function open(){
+      const base = input.value ? parseDateStrLocal(input.value) : new Date();
+      viewYear = base.getFullYear();
+      viewMonth = base.getMonth();
+      render();
+      pop.classList.add('show');
+      trigger.classList.add('open');
+      position();
+      window.addEventListener('scroll', onScrollOrResize, true);
+      window.addEventListener('resize', onScrollOrResize);
+    }
+    function close(){
+      pop.classList.remove('show');
+      trigger.classList.remove('open');
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    }
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (pop.classList.contains('show')) close(); else open();
+    });
+    document.addEventListener('click', (e) => {
+      if (!wrap.contains(e.target) && !pop.contains(e.target)) close();
+    });
+
+    sync();
+    return {sync};
+  }
+
   function parseIntOrNull(str){
     if (str === '' || str === null || str === undefined) return null;
     const n = parseInt(str, 10);
@@ -3013,6 +3183,8 @@
   const filterGroupBy = document.getElementById('filterGroupBy');
   const filterClearBtn = document.getElementById('filterClearBtn');
   const filterCount = document.getElementById('filterCount');
+  const filterFromPicker = createDatePicker('filterFrom');
+  const filterToPicker = createDatePicker('filterTo');
 
   function populateFilterSelect(select, values, placeholder){
     const current = select.value;
@@ -3030,6 +3202,7 @@
   filterClearBtn.addEventListener('click', () => {
     filterFrom.value = ''; filterTo.value = ''; filterAsset.value = '';
     filterAccount.value = ''; filterResult.value = '';
+    filterFromPicker.sync(); filterToPicker.sync();
     renderHistorial();
   });
 
@@ -3513,6 +3686,7 @@
   const manualAddBtn = document.getElementById('manualAddBtn');
   const manualAddModal = document.getElementById('manualAddModal');
   const manualDate = document.getElementById('manualDate');
+  const manualDatePicker = createDatePicker('manualDate');
   const manualFilename = document.getElementById('manualFilename');
   const manualVerifyBtn = document.getElementById('manualVerifyBtn');
   const manualFileStatus = document.getElementById('manualFileStatus');
@@ -3544,6 +3718,7 @@
   function openManualAddModal(){
     const now = new Date();
     manualDate.value = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate());
+    manualDatePicker.sync();
     manualFilename.value = '';
     manualFileStatus.textContent = '';
     manualFileStatus.style.color = 'var(--text-2)';
