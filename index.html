@@ -185,6 +185,10 @@
   .icon-btn-top-danger{width:auto;padding:0 16px;background:var(--danger);border-color:var(--danger);
     color:#fff;font-size:12px;font-weight:700}
   .icon-btn-top-danger:hover{background:#d33a2c}
+  .icon-btn-top-wide{width:auto;padding:0 14px;gap:7px;font-size:12px;font-weight:700}
+  .icon-btn-top-wide .zicon{font-size:14px}
+  .icon-btn-top.active{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+  .icon-btn-top:disabled{opacity:0.4;cursor:not-allowed}
   .sesion-body{flex:1;display:flex;min-height:0;overflow:hidden}
   #stageOuter{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000;min-width:0}
   #stage{position:relative;background:#000;overflow:hidden}
@@ -876,19 +880,24 @@
       <div>
         <div class="sesion-title">Grabando sesión</div>
         <div class="info" id="sesionInfo">—</div>
+        <span class="folder-path-tag mono" id="sesionFolderPath"></span>
       </div>
       <div class="topbar-actions" style="margin-left:auto">
-        <button class="icon-btn-top" id="topMicBtn" type="button" title="Silenciar micrófono">
-          <span class="zicon" id="topMicIcon"></span>
+        <button class="icon-btn-top" id="toggleMicBtn" type="button" title="Silenciar micrófono">
+          <span class="zicon" id="micIcon"></span>
         </button>
-        <button class="icon-btn-top" id="topCamBtn" type="button" title="Apagar cámara">
-          <span class="zicon" id="topCamIcon"></span>
+        <button class="icon-btn-top" id="toggleCamBtn" type="button" title="Apagar cámara">
+          <span class="zicon" id="camIcon"></span>
+        </button>
+        <button class="icon-btn-top icon-btn-top-wide" id="pauseSessionBtn" type="button" title="Pausar grabación" disabled>
+          <span class="zicon" id="pauseIcon">⏸</span>
+          <span id="pauseLabel">Pausar</span>
         </button>
         <div class="rec-pill">
           <span class="rec-dot" id="recDot"></span>
           <span class="timer num" id="sesionTimer">00:00:00</span>
         </div>
-        <button class="icon-btn-top icon-btn-top-danger" id="topEndBtn" type="button" title="Detener sesión">
+        <button class="icon-btn-top icon-btn-top-danger" id="endSessionBtn" type="button" title="Finalizar sesión">
           Detener
         </button>
       </div>
@@ -901,54 +910,6 @@
           <div class="drag-handle">● REC</div>
           <video id="camVideo" autoplay muted playsinline></video>
         </div>
-        <div class="marker-flash" id="markerFlash">
-          <span class="marker-flash-icon">🚩</span>
-          <span class="marker-flash-text">Operación marcada</span>
-        </div>
-      </div>
-      <div class="zoom-bar" id="zoomBar">
-        <button class="zoom-btn" id="toggleMicBtn" type="button" title="Silenciar micrófono">
-          <span class="zicon" id="micIcon"></span>
-          <span class="zlabel" id="micLabel">Silenciar</span>
-        </button>
-        <button class="zoom-btn" id="toggleCamBtn" type="button" title="Apagar cámara">
-          <span class="zicon" id="camIcon"></span>
-          <span class="zlabel" id="camLabel">Detener video</span>
-        </button>
-        <button class="zoom-btn" id="toggleNotesBtn" type="button" title="Ocultar notas">
-          <span class="zicon" id="notesIcon"></span>
-          <span class="zlabel" id="notesLabel">Notas</span>
-        </button>
-        <button class="zoom-btn" id="markMomentBtn" type="button" title="Marcar este momento en el video">
-          <span class="zicon">🚩</span>
-          <span class="zlabel">Marcar</span>
-        </button>
-        <div class="zoom-more-wrap">
-          <button class="zoom-btn" id="moreBtn" type="button" title="Más opciones">
-            <span class="zicon">⋯</span>
-            <span class="zlabel">Más</span>
-          </button>
-          <div class="zoom-more-menu" id="moreMenu">
-            <button type="button" class="more-item" id="cycleShapeBtn">
-              <span id="shapeItemIcon"></span>
-              <span id="shapeItemLabel">Forma de cámara: Redondeada</span>
-            </button>
-            <div class="more-item more-info" id="qualityInfoItem">Calidad de hoy: —</div>
-            <div class="more-item more-info" style="white-space:normal;line-height:1.6;font-size:12px">
-              Atajos de teclado: <b>M</b> mic · <b>V</b> cámara · <b>N</b> notas · <b>Espacio</b> pausar · <b>F</b> marcar
-            </div>
-          </div>
-        </div>
-        <div class="zoom-bar-spacer"></div>
-        <span class="folder-path-tag mono" id="sesionFolderPath"></span>
-        <button class="zoom-btn" id="pauseSessionBtn" type="button" title="Pausar grabación">
-          <span class="zicon" id="pauseIcon">⏸</span>
-          <span class="zlabel" id="pauseLabel">Pausar</span>
-        </button>
-        <button class="zoom-btn zoom-end" id="endSessionBtn" type="button" title="Finalizar sesión">
-          <span class="zicon">✕</span>
-          <span class="zlabel">Fin</span>
-        </button>
       </div>
       <div class="startup-overlay" id="startupOverlay">
         <div class="quality-step" id="qualityStep">
@@ -2294,31 +2255,13 @@
   const qualityStartBtn = document.getElementById('qualityStartBtn');
   const toggleMicBtn = document.getElementById('toggleMicBtn');
   const micIcon = document.getElementById('micIcon');
-  const micLabel = document.getElementById('micLabel');
   const toggleCamBtn = document.getElementById('toggleCamBtn');
   const camIcon = document.getElementById('camIcon');
-  const camLabel = document.getElementById('camLabel');
-  const toggleNotesBtn = document.getElementById('toggleNotesBtn');
-  const notesIcon = document.getElementById('notesIcon');
-  const notesLabel = document.getElementById('notesLabel');
-  const topMicBtn = document.getElementById('topMicBtn');
-  const topMicIcon = document.getElementById('topMicIcon');
-  const topCamBtn = document.getElementById('topCamBtn');
-  const topCamIcon = document.getElementById('topCamIcon');
-  const topEndBtn = document.getElementById('topEndBtn');
   const noteTags = document.getElementById('noteTags');
   const notesList = document.getElementById('notesList');
   const notesListEmpty = document.getElementById('notesListEmpty');
   const notesInput = document.getElementById('notesInput');
   const notesSendBtn = document.getElementById('notesSendBtn');
-  const moreBtn = document.getElementById('moreBtn');
-  const moreMenu = document.getElementById('moreMenu');
-  const cycleShapeBtn = document.getElementById('cycleShapeBtn');
-  const shapeItemIcon = document.getElementById('shapeItemIcon');
-  const shapeItemLabel = document.getElementById('shapeItemLabel');
-  const qualityInfoItem = document.getElementById('qualityInfoItem');
-  const markMomentBtn = document.getElementById('markMomentBtn');
-  const markerFlash = document.getElementById('markerFlash');
   const pauseIcon = document.getElementById('pauseIcon');
   const pauseLabel = document.getElementById('pauseLabel');
 
@@ -2375,31 +2318,13 @@
   const SHAPE_RADIUS_CSS = {rounded: '14px', circle: '50%', square: '4px'};
 
   function updateSessionControlsUI(){
-    toggleMicBtn.classList.toggle('off', !micEnabled);
+    toggleMicBtn.classList.toggle('muted', !micEnabled);
     micIcon.innerHTML = micEnabled ? ICON_MIC_ON : ICON_MIC_OFF;
-    micLabel.textContent = micEnabled ? 'Silenciar' : 'Activar mic';
     toggleMicBtn.title = micEnabled ? 'Silenciar micrófono' : 'Activar micrófono';
 
-    toggleCamBtn.classList.toggle('off', !camEnabled);
+    toggleCamBtn.classList.toggle('muted', !camEnabled);
     camIcon.innerHTML = camEnabled ? ICON_CAM_ON : ICON_CAM_OFF;
-    camLabel.textContent = camEnabled ? 'Detener video' : 'Iniciar video';
     toggleCamBtn.title = camEnabled ? 'Apagar cámara' : 'Encender cámara';
-
-    toggleNotesBtn.classList.toggle('off', !notesVisible);
-    notesIcon.innerHTML = notesVisible ? ICON_EYE_ON : ICON_EYE_OFF;
-    notesLabel.textContent = notesVisible ? 'Notas' : 'Notas ocultas';
-    toggleNotesBtn.title = notesVisible ? 'Ocultar notas' : 'Mostrar notas';
-
-    shapeItemIcon.innerHTML = SHAPE_ICONS[camShape];
-    shapeItemLabel.textContent = 'Forma de cámara: ' + SHAPE_LABELS[camShape];
-
-    topMicBtn.classList.toggle('muted', !micEnabled);
-    topMicIcon.innerHTML = micEnabled ? ICON_MIC_ON : ICON_MIC_OFF;
-    topMicBtn.title = micEnabled ? 'Silenciar micrófono' : 'Activar micrófono';
-
-    topCamBtn.classList.toggle('muted', !camEnabled);
-    topCamIcon.innerHTML = camEnabled ? ICON_CAM_ON : ICON_CAM_OFF;
-    topCamBtn.title = camEnabled ? 'Apagar cámara' : 'Encender cámara';
   }
 
   // ---- Notas de la sesión: chips con etiqueta + lista con hora ----
@@ -2464,10 +2389,6 @@
     if (e.key === 'Enter'){ e.preventDefault(); addSessionNote(); }
   });
 
-  topMicBtn.addEventListener('click', () => toggleMicBtn.click());
-  topCamBtn.addEventListener('click', () => toggleCamBtn.click());
-  topEndBtn.addEventListener('click', () => endSessionBtn.click());
-
   function applyCamShape(){
     camBox.style.borderRadius = SHAPE_RADIUS_CSS[camShape];
   }
@@ -2491,30 +2412,10 @@
     notesVisible = !collapsed;
     notesCol.classList.toggle('collapsed', collapsed);
     notesColExpandBtn.classList.toggle('show', collapsed);
-    updateSessionControlsUI();
     refitStage();
   }
-  toggleNotesBtn.addEventListener('click', () => setNotesColCollapsed(notesVisible));
   notesColCollapseBtn.addEventListener('click', () => setNotesColCollapsed(true));
   notesColExpandBtn.addEventListener('click', () => setNotesColCollapsed(false));
-
-  cycleShapeBtn.addEventListener('click', () => {
-    const idx = CAM_SHAPES.indexOf(camShape);
-    camShape = CAM_SHAPES[(idx + 1) % CAM_SHAPES.length];
-    applyCamShape();
-    updateSessionControlsUI();
-  });
-
-  // ---- menú "Más": forma de cámara + info de calidad, estilo Zoom ----
-  moreBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    moreMenu.classList.toggle('show');
-  });
-  document.addEventListener('click', (e) => {
-    if (moreMenu.classList.contains('show') && !moreMenu.contains(e.target) && e.target !== moreBtn){
-      moreMenu.classList.remove('show');
-    }
-  });
 
   // ---- atajos de teclado durante la sesión en vivo ----
   // Se desactivan solos mientras estás escribiendo en el cuadro de notas.
@@ -2529,8 +2430,7 @@
     const key = e.key.toLowerCase();
     if (key === 'm'){ toggleMicBtn.click(); return; }
     if (key === 'v'){ toggleCamBtn.click(); return; }
-    if (key === 'n'){ toggleNotesBtn.click(); return; }
-    if (key === 'f'){ markMomentBtn.click(); return; }
+    if (key === 'n'){ setNotesColCollapsed(notesVisible); return; }
   });
 
   startupBackBtn.addEventListener('click', () => {
@@ -2640,6 +2540,10 @@
     startupBackBtn.style.display = 'none';
     sesionInfo.innerHTML = (entry && entry.asset ? entry.asset : 'Sesión') +
       ' <span class="acct">· ' + (entry && entry.account ? entry.account : '—') + '</span>';
+    // Reiniciar el cronómetro en pantalla: si no, mientras se elige la
+    // calidad y se piden permisos, se ve la duración de la grabación
+    // anterior en vez de arrancar en cero.
+    sesionTimer.textContent = '00:00:00';
     notesBody.textContent = '';
     sessionNoteLog = [];
     selectedNoteTag = null;
@@ -2663,9 +2567,6 @@
     pauseSessionBtn.classList.remove('active');
     pauseLabel.textContent = 'Pausar';
     pauseSessionBtn.disabled = true;
-    markMomentBtn.disabled = true;
-    moreMenu.classList.remove('show');
-    markerFlash.classList.remove('show');
 
     let screenStream, camStream, folderHandle, fileHandle, writable, recorder, canvas, ctx, rafId, timerId, camPos;
     let isPaused = false, pauseStartedAt = null;
@@ -2680,7 +2581,6 @@
       qualityStartBtn.onclick = () => resolve(selectedQuality);
     });
     const qualityPreset = QUALITY_PRESETS[chosenQuality] || QUALITY_PRESETS.media;
-    qualityInfoItem.textContent = 'Calidad de hoy: ' + qualityPreset.label;
     qualityStep.style.display = 'none';
     permissionStep.style.display = 'flex';
     startupMsg.textContent = 'Te vamos a pedir permiso para compartir la pantalla y usar la cámara.';
@@ -2901,7 +2801,6 @@
     sessionInProgress = true;
     startupOverlay.style.display = 'none';
     pauseSessionBtn.disabled = false;
-    markMomentBtn.disabled = false;
 
     timerId = setInterval(() => {
       if (isPaused) return;
@@ -2925,7 +2824,6 @@
         pauseStartedAt = Date.now();
         pauseLabel.textContent = 'Reanudar';
         pauseSessionBtn.classList.add('active');
-        markMomentBtn.disabled = true;
         recDot.classList.add('paused');
       } else {
         if (recorder.state !== 'paused') return;
@@ -2935,23 +2833,10 @@
         pauseStartedAt = null;
         pauseLabel.textContent = 'Pausar';
         pauseSessionBtn.classList.remove('active');
-        markMomentBtn.disabled = false;
         recDot.classList.remove('paused');
       }
     }
     pauseSessionBtn.onclick = togglePause;
-
-    function markMoment(){
-      if (!recorder || recorder.state !== 'recording') return;
-      sessionMarkers.push(Date.now() - sessionStartedAt);
-      activeMarkers.push({t: performance.now()});
-      markerFlash.classList.remove('show');
-      void markerFlash.offsetWidth; // reinicia la animación si se marca varias veces seguidas
-      markerFlash.classList.add('show');
-      clearTimeout(markMoment._hideTimer);
-      markMoment._hideTimer = setTimeout(() => markerFlash.classList.remove('show'), MARKER_DURATION_MS);
-    }
-    markMomentBtn.onclick = markMoment;
 
     screenStream.getVideoTracks()[0].onended = stopSession;
   }
