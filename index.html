@@ -929,6 +929,10 @@
         <button class="icon-btn-top" id="toggleCamBtn" type="button" title="Apagar cámara">
           <span class="zicon" id="camIcon"></span>
         </button>
+        <button class="icon-btn-top icon-btn-top-wide" id="shareScreenBtn" type="button" title="Compartir pantalla" style="display:none">
+          <span class="zicon">🖥️</span>
+          <span>Compartir pantalla</span>
+        </button>
         <button class="icon-btn-top icon-btn-top-wide" id="pauseSessionBtn" type="button" title="Pausar grabación" disabled>
           <span class="zicon" id="pauseIcon">⏸</span>
           <span id="pauseLabel">Pausar</span>
@@ -969,19 +973,6 @@
             </button>
           </div>
           <button class="btn big" id="qualityStartBtn" type="button" style="margin-top:0;max-width:330px">Comenzar grabación</button>
-        </div>
-        <div class="quality-step" id="sourceStep" style="display:none">
-          <div class="num" style="font-size:13px;color:var(--text-2)">Modo de grabación</div>
-          <p style="margin:0">¿Vas a compartir la pantalla o grabarte solo con la cámara?</p>
-          <div class="quality-picker" id="sourcePicker">
-            <button type="button" class="quality-btn" data-value="screen" style="width:150px">
-              <span class="qname">Pantalla + cámara</span><span class="qdesc">Compartís tu pantalla con la webcam en una esquina</span>
-            </button>
-            <button type="button" class="quality-btn" data-value="camera" style="width:150px">
-              <span class="qname">Solo cámara</span><span class="qdesc">Te grabás a pantalla completa, sin compartir pantalla</span>
-            </button>
-          </div>
-          <button class="btn big" id="sourceStartBtn" type="button" style="margin-top:0;max-width:330px">Continuar</button>
         </div>
         <div id="permissionStep" style="display:none;flex-direction:column;align-items:center;gap:16px">
           <div class="num" style="font-size:13px;color:var(--text-2)">Preparando la grabación…</div>
@@ -2304,20 +2295,17 @@
   const startupMsg = document.getElementById('startupMsg');
   const startupBackBtn = document.getElementById('startupBackBtn');
   const qualityStep = document.getElementById('qualityStep');
-  const sourceStep = document.getElementById('sourceStep');
   const permissionStep = document.getElementById('permissionStep');
   const qualityPicker = document.getElementById('qualityPicker');
   const qualityBtns = Array.from(qualityPicker.querySelectorAll('.quality-btn'));
   const qualityStartBtn = document.getElementById('qualityStartBtn');
-  const sourcePicker = document.getElementById('sourcePicker');
-  const sourceBtns = Array.from(sourcePicker.querySelectorAll('.quality-btn'));
-  const sourceStartBtn = document.getElementById('sourceStartBtn');
   const camPlaceholderPip = document.getElementById('camPlaceholderPip');
   const camPlaceholderFull = document.getElementById('camPlaceholderFull');
   const toggleMicBtn = document.getElementById('toggleMicBtn');
   const micIcon = document.getElementById('micIcon');
   const toggleCamBtn = document.getElementById('toggleCamBtn');
   const camIcon = document.getElementById('camIcon');
+  const shareScreenBtn = document.getElementById('shareScreenBtn');
   const noteTags = document.getElementById('noteTags');
   const notesList = document.getElementById('notesList');
   const notesListEmpty = document.getElementById('notesListEmpty');
@@ -2346,21 +2334,11 @@
     });
   });
 
-  // ---- Modo de grabación: pantalla + cámara (PIP) vs. solo cámara (pantalla completa) ----
-  const SOURCE_KEY = 'tradecam_source_v1';
-  let selectedSource = localStorage.getItem(SOURCE_KEY) === 'camera' ? 'camera' : 'screen';
-  function renderSourcePicker(){
-    sourceBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.value === selectedSource));
-  }
-  sourceBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedSource = btn.dataset.value;
-      localStorage.setItem(SOURCE_KEY, selectedSource);
-      renderSourcePicker();
-    });
-  });
-  // modo activo de la sesión en curso ('screen' o 'camera') — lo lee el
-  // handler de apagar/prender cámara para saber qué placeholder mostrar.
+  // ---- Modo de video activo de la sesión en curso ----
+  // 'screen' = compartiendo pantalla (cámara en un recuadro), 'camera' = sin
+  // compartir pantalla, la cámara ocupa todo el frame. Cambia solo/a durante
+  // la sesión: al dejar de compartir pantalla pasa a 'camera' sin cortar la
+  // grabación, y se puede volver a compartir pantalla en cualquier momento.
   let sessionRecordingMode = 'screen';
 
   let recState = null; // holds everything about the active recording
@@ -2811,6 +2789,7 @@
     screenVideo.classList.remove('mirrored');
     camPlaceholderPip.classList.remove('show');
     camPlaceholderFull.classList.remove('show');
+    shareScreenBtn.style.display = 'none';
     notesCol.classList.remove('collapsed');
     notesColExpandBtn.classList.remove('show');
     applyCamShape();
@@ -2841,30 +2820,20 @@
     });
     const qualityPreset = QUALITY_PRESETS[chosenQuality] || QUALITY_PRESETS.media;
     qualityStep.style.display = 'none';
-
-    // ---- Paso 2: elegir el modo — pantalla + cámara, o solo cámara ----
-    sourceStep.style.display = 'flex';
-    renderSourcePicker();
-    const chosenSource = await new Promise(resolve => {
-      sourceStartBtn.onclick = () => resolve(selectedSource);
-    });
-    sessionRecordingMode = chosenSource;
-    sourceStep.style.display = 'none';
     permissionStep.style.display = 'flex';
-    startupMsg.textContent = sessionRecordingMode === 'camera'
-      ? 'Te vamos a pedir permiso para usar la cámara y el micrófono.'
-      : 'Te vamos a pedir permiso para compartir la pantalla y usar la cámara.';
+    startupMsg.textContent = 'Te vamos a pedir permiso para compartir la pantalla y usar la cámara.';
 
-    if (sessionRecordingMode === 'screen'){
-      try {
-        screenStream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30}, audio:false});
-      } catch (e) {
-        startupMsg.textContent = 'No se pudo compartir la pantalla. Podés volver a intentarlo desde Inicio.';
-        startupBackBtn.style.display = 'inline-block';
-        return;
-      }
-    } else {
-      screenStream = null;
+    // Siempre arranca compartiendo pantalla + cámara. Si más adelante dejás
+    // de compartir pantalla, la sesión sigue con la cámara a pantalla
+    // completa (switchToCameraOnly) y podés volver a compartir cuando
+    // quieras con el botón "Compartir pantalla" (switchToScreenShare).
+    sessionRecordingMode = 'screen';
+    try {
+      screenStream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30}, audio:false});
+    } catch (e) {
+      startupMsg.textContent = 'No se pudo compartir la pantalla. Podés volver a intentarlo desde Inicio.';
+      startupBackBtn.style.display = 'inline-block';
+      return;
     }
     try {
       camStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
@@ -3140,6 +3109,7 @@
     // Si dejás de compartir pantalla (por ej. apretás "Dejar de compartir"
     // en el navegador) la sesión NO se corta: seguimos grabando, pero ahora
     // se ve la cámara a pantalla completa, hasta que apretés "Detener".
+    // Desde ahí se puede volver a compartir pantalla con el botón de arriba.
     function switchToCameraOnly(){
       if (sessionRecordingMode === 'camera') return;
       sessionRecordingMode = 'camera';
@@ -3147,11 +3117,31 @@
       screenVideo.classList.add('mirrored');
       screenVideo.srcObject = camStream;
       updateCamVisualState();
+      shareScreenBtn.style.display = 'flex';
       if (screenStream){
         screenStream.getTracks().forEach(t => t.stop());
         screenStream = null;
       }
     }
+
+    async function switchToScreenShare(){
+      if (sessionRecordingMode === 'screen') return;
+      let newScreenStream;
+      try {
+        newScreenStream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30}, audio:false});
+      } catch (e) {
+        return; // canceló el selector de pantalla: seguimos como estábamos
+      }
+      screenStream = newScreenStream;
+      sessionRecordingMode = 'screen';
+      screenVideo.classList.remove('mirrored');
+      screenVideo.srcObject = screenStream;
+      camBox.style.display = 'block';
+      updateCamVisualState();
+      shareScreenBtn.style.display = 'none';
+      screenStream.getVideoTracks()[0].onended = switchToCameraOnly;
+    }
+    shareScreenBtn.onclick = switchToScreenShare;
 
     if (screenStream) screenStream.getVideoTracks()[0].onended = switchToCameraOnly;
     else camStream.getVideoTracks()[0].onended = stopSession;
