@@ -226,14 +226,21 @@
   #stageOuter{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000;min-width:0}
   #stage{position:relative;background:#000;overflow:hidden}
   #stage video{width:100%;height:100%;object-fit:fill;display:block}
+  #stage video.mirrored{transform:scaleX(-1)}
   .draggable{position:absolute;cursor:grab;user-select:none;touch-action:none}
   .draggable.dragging{cursor:grabbing}
-  .cam-box{border-radius:16px;border:2px solid var(--teal);overflow:hidden;background:#1a2029;
+  .cam-box{border-radius:14px;border:2px solid var(--teal);overflow:hidden;background:#1a2029;
     box-shadow:0 8px 24px rgba(0,0,0,0.4)}
   .cam-box video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
   .drag-handle{position:absolute;top:6px;left:6px;display:flex;align-items:center;gap:6px;
     background:rgba(0,0,0,0.5);padding:3px 7px;border-radius:6px;font-size:10px;font-weight:700;color:#fff;
     letter-spacing:0.04em;z-index:2}
+  .cam-placeholder{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#1b2530,#222c38);font-family:var(--font-display);font-weight:800;
+    color:var(--teal);z-index:1;user-select:none}
+  .cam-placeholder.show{display:flex}
+  .cam-box .cam-placeholder{font-size:32px}
+  .cam-placeholder-full{font-size:120px}
   .notes-col{width:300px;flex:0 0 300px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;
     background:var(--surface);border-left:1px solid var(--border)}
   .notes-col.collapsed{display:none}
@@ -939,9 +946,11 @@
     <div id="stageOuter">
       <div id="stage">
         <video id="screenVideo" autoplay muted playsinline></video>
-        <div class="draggable cam-box" id="camBox" style="width:180px;height:180px">
+        <div class="cam-placeholder cam-placeholder-full" id="camPlaceholderFull"></div>
+        <div class="draggable cam-box" id="camBox" style="width:200px;height:120px">
           <div class="drag-handle">● REC</div>
           <video id="camVideo" autoplay muted playsinline></video>
+          <div class="cam-placeholder" id="camPlaceholderPip"></div>
         </div>
       </div>
       <div class="startup-overlay" id="startupOverlay">
@@ -960,6 +969,19 @@
             </button>
           </div>
           <button class="btn big" id="qualityStartBtn" type="button" style="margin-top:0;max-width:330px">Comenzar grabación</button>
+        </div>
+        <div class="quality-step" id="sourceStep" style="display:none">
+          <div class="num" style="font-size:13px;color:var(--text-2)">Modo de grabación</div>
+          <p style="margin:0">¿Vas a compartir la pantalla o grabarte solo con la cámara?</p>
+          <div class="quality-picker" id="sourcePicker">
+            <button type="button" class="quality-btn" data-value="screen" style="width:150px">
+              <span class="qname">Pantalla + cámara</span><span class="qdesc">Compartís tu pantalla con la webcam en una esquina</span>
+            </button>
+            <button type="button" class="quality-btn" data-value="camera" style="width:150px">
+              <span class="qname">Solo cámara</span><span class="qdesc">Te grabás a pantalla completa, sin compartir pantalla</span>
+            </button>
+          </div>
+          <button class="btn big" id="sourceStartBtn" type="button" style="margin-top:0;max-width:330px">Continuar</button>
         </div>
         <div id="permissionStep" style="display:none;flex-direction:column;align-items:center;gap:16px">
           <div class="num" style="font-size:13px;color:var(--text-2)">Preparando la grabación…</div>
@@ -2282,10 +2304,16 @@
   const startupMsg = document.getElementById('startupMsg');
   const startupBackBtn = document.getElementById('startupBackBtn');
   const qualityStep = document.getElementById('qualityStep');
+  const sourceStep = document.getElementById('sourceStep');
   const permissionStep = document.getElementById('permissionStep');
   const qualityPicker = document.getElementById('qualityPicker');
   const qualityBtns = Array.from(qualityPicker.querySelectorAll('.quality-btn'));
   const qualityStartBtn = document.getElementById('qualityStartBtn');
+  const sourcePicker = document.getElementById('sourcePicker');
+  const sourceBtns = Array.from(sourcePicker.querySelectorAll('.quality-btn'));
+  const sourceStartBtn = document.getElementById('sourceStartBtn');
+  const camPlaceholderPip = document.getElementById('camPlaceholderPip');
+  const camPlaceholderFull = document.getElementById('camPlaceholderFull');
   const toggleMicBtn = document.getElementById('toggleMicBtn');
   const micIcon = document.getElementById('micIcon');
   const toggleCamBtn = document.getElementById('toggleCamBtn');
@@ -2317,6 +2345,23 @@
       renderQualityPicker();
     });
   });
+
+  // ---- Modo de grabación: pantalla + cámara (PIP) vs. solo cámara (pantalla completa) ----
+  const SOURCE_KEY = 'tradecam_source_v1';
+  let selectedSource = localStorage.getItem(SOURCE_KEY) === 'camera' ? 'camera' : 'screen';
+  function renderSourcePicker(){
+    sourceBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.value === selectedSource));
+  }
+  sourceBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedSource = btn.dataset.value;
+      localStorage.setItem(SOURCE_KEY, selectedSource);
+      renderSourcePicker();
+    });
+  });
+  // modo activo de la sesión en curso ('screen' o 'camera') — lo lee el
+  // handler de apagar/prender cámara para saber qué placeholder mostrar.
+  let sessionRecordingMode = 'screen';
 
   let recState = null; // holds everything about the active recording
   // true entre el momento en que arranca la grabación real (recorder.start)
@@ -2433,11 +2478,24 @@
     updateSessionControlsUI();
   });
 
+  // Cuando se apaga la cámara, en vez de que el video desaparezca sin más,
+  // mostramos un placeholder tipo Zoom con la inicial del usuario — tanto en
+  // la vista previa en vivo (acá abajo) como en el video grabado (renderFrame).
+  function updateCamVisualState(){
+    if (sessionRecordingMode === 'camera'){
+      screenVideo.style.visibility = camEnabled ? 'visible' : 'hidden';
+      camPlaceholderFull.classList.toggle('show', !camEnabled);
+    } else {
+      camVideo.style.visibility = camEnabled ? 'visible' : 'hidden';
+      camPlaceholderPip.classList.toggle('show', !camEnabled);
+    }
+  }
+
   toggleCamBtn.addEventListener('click', () => {
     if (!activeCamStream) return;
     camEnabled = !camEnabled;
     activeCamStream.getVideoTracks().forEach(t => { t.enabled = camEnabled; });
-    camBox.style.display = camEnabled ? 'block' : 'none';
+    updateCamVisualState();
     updateSessionControlsUI();
   });
 
@@ -2690,6 +2748,26 @@
     }
   }
 
+  // Dibuja el placeholder de "cámara apagada" en el video grabado — un
+  // fondo oscuro con la inicial del usuario en grande, igual que en Zoom.
+  function drawAvatarPlaceholder(ctx, x, y, w, h, letter){
+    ctx.save();
+    const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+    grad.addColorStop(0, '#1b2530');
+    grad.addColorStop(1, '#222c38');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#2DD4BF';
+    const size = Math.round(Math.min(w, h) * 0.5);
+    ctx.font = '800 ' + size + 'px "Space Grotesk", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(letter || '?', x + w / 2, y + h / 2 + size * 0.04);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.restore();
+  }
+
   function wrapText(ctx, text, maxWidth){
     const words = text.split(/\s+/);
     const lines = [];
@@ -2726,11 +2804,22 @@
     // reiniciar los controles tipo Zoom para esta nueva sesión
     activeCamStream = null;
     camEnabled = true; micEnabled = true; notesVisible = true; camShape = 'rounded';
+    sessionRecordingMode = 'screen';
     camBox.style.display = 'block';
+    camVideo.style.visibility = 'visible';
+    screenVideo.style.visibility = 'visible';
+    screenVideo.classList.remove('mirrored');
+    camPlaceholderPip.classList.remove('show');
+    camPlaceholderFull.classList.remove('show');
     notesCol.classList.remove('collapsed');
     notesColExpandBtn.classList.remove('show');
     applyCamShape();
     updateSessionControlsUI();
+
+    // inicial del usuario para el placeholder de "cámara apagada" (ej. "M")
+    const userInitial = ((currentUser && (currentUser.name || currentUser.email)) || '?').trim().charAt(0).toUpperCase();
+    camPlaceholderPip.textContent = userInitial;
+    camPlaceholderFull.textContent = userInitial;
 
     // reiniciar el estado de pausa para esta nueva sesión
     recDot.classList.remove('paused');
@@ -2752,22 +2841,37 @@
     });
     const qualityPreset = QUALITY_PRESETS[chosenQuality] || QUALITY_PRESETS.media;
     qualityStep.style.display = 'none';
-    permissionStep.style.display = 'flex';
-    startupMsg.textContent = 'Te vamos a pedir permiso para compartir la pantalla y usar la cámara.';
 
-    try {
-      screenStream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30}, audio:false});
-    } catch (e) {
-      startupMsg.textContent = 'No se pudo compartir la pantalla. Podés volver a intentarlo desde Inicio.';
-      startupBackBtn.style.display = 'inline-block';
-      return;
+    // ---- Paso 2: elegir el modo — pantalla + cámara, o solo cámara ----
+    sourceStep.style.display = 'flex';
+    renderSourcePicker();
+    const chosenSource = await new Promise(resolve => {
+      sourceStartBtn.onclick = () => resolve(selectedSource);
+    });
+    sessionRecordingMode = chosenSource;
+    sourceStep.style.display = 'none';
+    permissionStep.style.display = 'flex';
+    startupMsg.textContent = sessionRecordingMode === 'camera'
+      ? 'Te vamos a pedir permiso para usar la cámara y el micrófono.'
+      : 'Te vamos a pedir permiso para compartir la pantalla y usar la cámara.';
+
+    if (sessionRecordingMode === 'screen'){
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30}, audio:false});
+      } catch (e) {
+        startupMsg.textContent = 'No se pudo compartir la pantalla. Podés volver a intentarlo desde Inicio.';
+        startupBackBtn.style.display = 'inline-block';
+        return;
+      }
+    } else {
+      screenStream = null;
     }
     try {
       camStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
     } catch (e) {
       startupMsg.textContent = 'No se pudo acceder a la cámara/micrófono. Podés volver a intentarlo desde Inicio.';
       startupBackBtn.style.display = 'inline-block';
-      screenStream.getTracks().forEach(t => t.stop());
+      if (screenStream) screenStream.getTracks().forEach(t => t.stop());
       return;
     }
     activeCamStream = camStream;
@@ -2777,7 +2881,7 @@
     if (!folderHandle){
       startupMsg.textContent = 'No hay carpeta de guardado configurada. Andá a Configuración.';
       startupBackBtn.style.display = 'inline-block';
-      screenStream.getTracks().forEach(t => t.stop());
+      if (screenStream) screenStream.getTracks().forEach(t => t.stop());
       camStream.getTracks().forEach(t => t.stop());
       return;
     }
@@ -2789,20 +2893,28 @@
     } catch (e) {
       startupMsg.textContent = 'Falta confirmar el acceso a la carpeta de guardado. Andá a Configuración y tocá "Confirmar acceso a la carpeta", después volvé a intentar.';
       startupBackBtn.style.display = 'inline-block';
-      screenStream.getTracks().forEach(t => t.stop());
+      if (screenStream) screenStream.getTracks().forEach(t => t.stop());
       camStream.getTracks().forEach(t => t.stop());
       return;
     }
 
-    screenVideo.srcObject = screenStream;
-    camVideo.srcObject = camStream;
-    await new Promise(r => { screenVideo.onloadedmetadata = r; });
-    await new Promise(r => { camVideo.onloadedmetadata = r; });
+    if (sessionRecordingMode === 'screen'){
+      camBox.style.display = 'block';
+      screenVideo.srcObject = screenStream;
+      camVideo.srcObject = camStream;
+      await new Promise(r => { screenVideo.onloadedmetadata = r; });
+      await new Promise(r => { camVideo.onloadedmetadata = r; });
+      camPos = makeDraggable(camBox, camBox, {x:0.02, y:0.06});
+    } else {
+      camBox.style.display = 'none';
+      screenVideo.classList.add('mirrored');
+      screenVideo.srcObject = camStream;
+      await new Promise(r => { screenVideo.onloadedmetadata = r; });
+    }
+    updateCamVisualState();
 
     fitStageToVideo(screenVideo.videoWidth, screenVideo.videoHeight);
     window.addEventListener('resize', () => fitStageToVideo(screenVideo.videoWidth, screenVideo.videoHeight));
-
-    camPos = makeDraggable(camBox, camBox, {x:0.02, y:0.06});
 
     canvas = document.createElement('canvas');
     canvas.width = screenVideo.videoWidth;
@@ -2811,9 +2923,22 @@
 
     function renderFrame(){
       const w = canvas.width, h = canvas.height;
-      ctx.drawImage(screenVideo, 0, 0, w, h);
 
-      if (camEnabled){
+      if (sessionRecordingMode === 'camera'){
+        // Modo "solo cámara": la webcam ocupa todo el frame grabado,
+        // en espejo (como una selfie), o el placeholder si está apagada.
+        if (camEnabled){
+          ctx.save();
+          ctx.translate(w, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(screenVideo, 0, 0, w, h);
+          ctx.restore();
+        } else {
+          drawAvatarPlaceholder(ctx, 0, 0, w, h, userInitial);
+        }
+      } else {
+        ctx.drawImage(screenVideo, 0, 0, w, h);
+
         const cp = camPos.getPos();
         const cw = camBox.offsetWidth / stage.clientWidth * w;
         const ch = camBox.offsetHeight / stage.clientHeight * h;
@@ -2823,11 +2948,15 @@
         ctx.save();
         drawRoundedClip(ctx, cx, cy, cw, ch, r);
         ctx.clip();
-        ctx.save();
-        ctx.translate(cx + cw, cy);
-        ctx.scale(-1, 1);
-        ctx.drawImage(camVideo, 0, 0, cw, ch);
-        ctx.restore();
+        if (camEnabled){
+          ctx.save();
+          ctx.translate(cx + cw, cy);
+          ctx.scale(-1, 1);
+          ctx.drawImage(camVideo, 0, 0, cw, ch);
+          ctx.restore();
+        } else {
+          drawAvatarPlaceholder(ctx, cx, cy, cw, ch, userInitial);
+        }
         ctx.restore();
         ctx.save();
         ctx.strokeStyle = '#2DD4BF';
@@ -2893,7 +3022,7 @@
       startupOverlay.style.display = 'flex';
       startupBackBtn.style.display = 'inline-block';
       cancelAnimationFrame(rafId);
-      screenStream.getTracks().forEach(t => t.stop());
+      if (screenStream) screenStream.getTracks().forEach(t => t.stop());
       camStream.getTracks().forEach(t => t.stop());
       return;
     }
@@ -2912,7 +3041,7 @@
       stopped = true;
       try { await writable.close(); } catch (e) {}
       cancelAnimationFrame(rafId);
-      screenStream.getTracks().forEach(t => t.stop());
+      if (screenStream) screenStream.getTracks().forEach(t => t.stop());
       camStream.getTracks().forEach(t => t.stop());
       clearInterval(timerId);
       activeCamStream = null;
@@ -3008,7 +3137,8 @@
     }
     pauseSessionBtn.onclick = togglePause;
 
-    screenStream.getVideoTracks()[0].onended = stopSession;
+    if (screenStream) screenStream.getVideoTracks()[0].onended = stopSession;
+    else camStream.getVideoTracks()[0].onended = stopSession;
   }
 
   // =======================================================================
