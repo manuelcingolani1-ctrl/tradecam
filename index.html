@@ -2500,7 +2500,7 @@
       meta.className = 'note-item-meta';
       const time = document.createElement('span');
       time.className = 'note-item-time';
-      time.textContent = formatElapsed(n.atMs);
+      time.textContent = formatClockTime(n.at);
       meta.appendChild(time);
       if (n.tag){
         const pill = document.createElement('span');
@@ -2522,7 +2522,7 @@
   function addSessionNote(){
     const text = notesInput.value.trim();
     if (!text) return;
-    sessionNoteLog.push({ text, tag: selectedNoteTag, atMs: currentElapsedMs });
+    sessionNoteLog.push({ text, tag: selectedNoteTag, atMs: currentElapsedMs, at: Date.now() });
     notesInput.value = '';
     renderNotesList();
     syncNotesBodyText();
@@ -2765,6 +2765,12 @@
   function formatElapsed(ms){
     const s = Math.floor(ms / 1000);
     return pad(Math.floor(s/3600)) + ':' + pad(Math.floor(s/60)%60) + ':' + pad(s%60);
+  }
+  // Hora de reloj común (la del sistema, no el tiempo transcurrido de
+  // grabación) para mostrar cuándo se cargó cada nota de la sesión.
+  function formatClockTime(ts){
+    const d = new Date(ts);
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
   }
 
   // ---- draggable elements: position kept as fractions of the stage size ----
