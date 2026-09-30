@@ -12,6 +12,7 @@
     --text:#F2F4F7; --text-2:#8B93A7; --accent:#22C55E; --accent-soft:rgba(34,197,94,0.14);
     --teal:#2DD4BF; --teal-soft:rgba(45,212,191,0.14);
     --danger:#F04438; --danger-soft:rgba(240,68,56,0.14);
+    --info:#60A5FA; --info-soft:rgba(96,165,250,0.14);
     --font-ui:'Manrope',system-ui,sans-serif; --font-display:'Space Grotesk','Manrope',system-ui,sans-serif;
     --font-mono:'IBM Plex Mono',ui-monospace,monospace;
   }
@@ -283,18 +284,45 @@
   .notes-body:empty:before{content:attr(data-placeholder);color:var(--text-2)}
   .note-tags{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 0}
   .note-tag-chip{border-radius:999px;border:1px solid var(--border);background:var(--surface-2);
-    color:var(--text-2);font-size:11px;font-weight:700;padding:5px 11px;cursor:pointer;font-family:var(--font-ui)}
+    color:var(--text-2);font-size:11px;font-weight:700;padding:5px 11px;cursor:pointer;font-family:var(--font-ui);
+    transition:background .15s,border-color .15s,color .15s}
   .note-tag-chip:hover{background:var(--surface-3);color:var(--text)}
-  .note-tag-chip.active{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
-  .notes-list{padding:10px 14px;font-size:13px;line-height:1.5;color:var(--text);outline:none;
-    overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+  /* "Error" se ve roja siempre (aviso), esté seleccionada o no. Las demás
+     etiquetas quedan neutras hasta que se seleccionan, y ahí toman el mismo
+     color que después va a tener la nota en la lista de abajo. */
+  .note-tag-chip[data-tag="Error"]{border-color:rgba(240,68,56,0.4);color:var(--danger)}
+  .note-tag-chip[data-tag="Error"]:hover{background:var(--danger-soft);color:var(--danger)}
+  .note-tag-chip.active[data-tag="Setup"]{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+  .note-tag-chip.active[data-tag="Entrada"]{background:var(--info-soft);border-color:var(--info);color:var(--info)}
+  .note-tag-chip.active[data-tag="Gestión"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .note-tag-chip.active[data-tag="Error"]{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  .notes-list{padding:10px 14px 10px 32px;font-size:13px;line-height:1.5;color:var(--text);outline:none;
+    overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;position:relative}
   .notes-list-empty{color:var(--text-2)}
-  .note-item{display:flex;flex-direction:column;gap:3px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-  .note-item:last-child{border-bottom:none;padding-bottom:0}
+  /* Línea vertical que conecta los puntos de cada nota, tipo línea de tiempo */
+  .notes-list.has-notes::before{content:'';position:absolute;left:19px;top:5px;bottom:5px;width:2px;background:var(--border)}
+  .note-item{display:flex;flex-direction:column;gap:3px;position:relative}
   .note-item-meta{display:flex;align-items:center;gap:6px}
+  /* Punto de la línea de tiempo: color según la etiqueta de la nota; la nota
+     más reciente queda rellena, las anteriores huecas. */
+  .note-item-dot{position:absolute;left:-19px;top:3px;width:11px;height:11px;border-radius:50%;
+    background:var(--surface);border:2px solid var(--text-2);z-index:1;box-sizing:border-box}
+  .note-item-dot.tag-setup{border-color:var(--teal)}
+  .note-item-dot.tag-entrada{border-color:var(--info)}
+  .note-item-dot.tag-gestion{border-color:var(--accent)}
+  .note-item-dot.tag-error{border-color:var(--danger)}
+  .note-item-dot.latest{background:var(--text-2)}
+  .note-item-dot.tag-setup.latest{background:var(--teal)}
+  .note-item-dot.tag-entrada.latest{background:var(--info)}
+  .note-item-dot.tag-gestion.latest{background:var(--accent)}
+  .note-item-dot.tag-error.latest{background:var(--danger)}
   .note-item-time{font-family:var(--font-mono);font-size:10px;color:var(--text-2)}
   .note-tag-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;
-    background:var(--teal-soft);color:var(--teal)}
+    background:var(--surface-3);color:var(--text-2)}
+  .note-tag-pill.tag-setup{background:var(--teal-soft);color:var(--teal)}
+  .note-tag-pill.tag-entrada{background:var(--info-soft);color:var(--info)}
+  .note-tag-pill.tag-gestion{background:var(--accent-soft);color:var(--accent)}
+  .note-tag-pill.tag-error{background:var(--danger-soft);color:var(--danger)}
   .note-item-text{font-size:13px;color:var(--text);word-break:break-word}
   .notes-input-row{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px;
     border-top:1px solid var(--border)}
@@ -1752,18 +1780,26 @@
     authOverlay.classList.remove('show');
     renderConfigView();
     checkExistingFolder();
+
     const hasBasics = config.accounts.length > 0 && config.assets.length > 0;
-    // Si tiene lo básico configurado, volvemos a la última vista en la que
-    // estaba antes de recargar (Dashboard, Config, Journal o Resumen). La
-    // vista "Grabación" no se restaura: al recargar el navegador pierde el
-    // acceso a la cámara/pantalla y la grabación en curso, así que no tiene
-    // sentido dejarlo ahí mostrando una sesión que ya no existe.
-    let target = 'config';
-    if (hasBasics){
-      const savedView = localStorage.getItem(LAST_VIEW_KEY);
-      target = RESTORABLE_VIEWS.includes(savedView) ? savedView : 'inicio';
+    if (!hasBasics){ showView('config'); return; }
+
+    // Volvemos a la última vista en la que estaba antes de recargar
+    // (Dashboard, Config, Journal, Resumen o Grabación).
+    const savedView = localStorage.getItem(LAST_VIEW_KEY);
+    if (savedView === 'sesion'){
+      // Estaba en Grabación cuando recargó. La grabación en sí (el video que
+      // se estaba guardando) no se puede retomar: al recargar, el navegador
+      // corta el acceso a cámara/pantalla y se pierde el MediaRecorder activo
+      // — eso pasa con cualquier app web, no depende de este código. Lo que
+      // sí podemos hacer es dejarlo directo en la pantalla de Grabación,
+      // lista para arrancar una sesión nueva con un clic, en vez de mandarlo
+      // a otra pantalla.
+      const {entry} = todayInfo();
+      startSession(entry);
+      return;
     }
-    showView(target);
+    showView(RESTORABLE_VIEWS.includes(savedView) ? savedView : 'inicio');
   }
 
   function showAuthOverlay(){
@@ -1926,10 +1962,12 @@
   const navResumen = document.getElementById('navResumen');
   const navGrabacionEl = document.getElementById('navGrabacion');
 
-  // Vistas que se restauran al recargar la página. "sesion" (grabación en
-  // vivo), "post" y "done" quedan afuera a propósito: dependen de streams de
-  // cámara/pantalla y datos en memoria que no sobreviven a un F5.
-  const RESTORABLE_VIEWS = ['inicio', 'config', 'historial', 'resumen'];
+  // Vistas que se restauran al recargar la página. "post" y "done" quedan
+  // afuera a propósito: dependen de datos en memoria (video/foto pendientes)
+  // que no sobreviven a un F5. "sesion" (Grabación) sí se guarda, pero
+  // bootApp() la maneja distinto (ver más abajo): no puede retomar la
+  // grabación en sí, solo dejar esa pantalla lista para arrancar de nuevo.
+  const RESTORABLE_VIEWS = ['inicio', 'config', 'historial', 'resumen', 'sesion'];
 
   function showView(name){
     Object.keys(views).forEach(k => { views[k].style.display = (k === name) ? (k === 'sesion' ? 'flex' : 'block') : 'none'; });
@@ -2439,12 +2477,25 @@
       .join('\n');
   }
 
+  // Mapea el texto de la etiqueta a una clase CSS (setup/entrada/gestion/error)
+  // para colorear el punto de la línea de tiempo y la pastilla de la nota.
+  const NOTE_TAG_SLUGS = {Setup: 'setup', Entrada: 'entrada', 'Gestión': 'gestion', Error: 'error'};
+  function noteTagSlug(tag){ return NOTE_TAG_SLUGS[tag] || ''; }
+
   function renderNotesList(){
-    notesListEmpty.style.display = sessionNoteLog.length ? 'none' : 'block';
+    const hasNotes = sessionNoteLog.length > 0;
+    notesListEmpty.style.display = hasNotes ? 'none' : 'block';
+    notesList.classList.toggle('has-notes', hasNotes);
     notesList.querySelectorAll('.note-item').forEach(el => el.remove());
-    sessionNoteLog.forEach(n => {
+    // La más reciente arriba, como en el diseño.
+    const ordered = sessionNoteLog.slice().reverse();
+    ordered.forEach((n, idx) => {
+      const slug = noteTagSlug(n.tag);
       const item = document.createElement('div');
       item.className = 'note-item';
+      const dot = document.createElement('span');
+      dot.className = 'note-item-dot' + (slug ? ' tag-' + slug : '') + (idx === 0 ? ' latest' : '');
+      item.appendChild(dot);
       const meta = document.createElement('div');
       meta.className = 'note-item-meta';
       const time = document.createElement('span');
@@ -2453,7 +2504,7 @@
       meta.appendChild(time);
       if (n.tag){
         const pill = document.createElement('span');
-        pill.className = 'note-tag-pill';
+        pill.className = 'note-tag-pill' + (slug ? ' tag-' + slug : '');
         pill.textContent = n.tag;
         meta.appendChild(pill);
       }
@@ -2464,7 +2515,8 @@
       item.appendChild(text);
       notesList.appendChild(item);
     });
-    notesList.scrollTop = notesList.scrollHeight;
+    // La más nueva queda arriba: el scroll se mantiene en el tope.
+    notesList.scrollTop = 0;
   }
 
   function addSessionNote(){
