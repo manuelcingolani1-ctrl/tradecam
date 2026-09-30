@@ -560,10 +560,16 @@
         <h1 id="inicioGreeting">Hola</h1>
         <p class="sub" id="inicioDate" style="margin-bottom:0">—</p>
       </div>
-      <button class="startbtn" id="startSessionBtn" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"></circle></svg>
-        Iniciar sesión
-      </button>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn secondary" id="exportJournalBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Exportar journal
+        </button>
+        <button class="startbtn" id="startSessionBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"></circle></svg>
+          Iniciar sesión
+        </button>
+      </div>
     </div>
     <div id="inicioWarning" class="unsupported" style="margin-bottom:20px"></div>
 
@@ -2168,7 +2174,71 @@
   const planMeta = document.getElementById('planMeta');
   const planEyebrow = document.getElementById('planEyebrow');
   const startSessionBtn = document.getElementById('startSessionBtn');
+  const exportJournalBtn = document.getElementById('exportJournalBtn');
   const inicioWarning = document.getElementById('inicioWarning');
+
+  // Pone a salvo un valor para una celda de CSV: si tiene coma, comilla o
+  // salto de línea, lo envuelve en comillas dobles (duplicando las que ya
+  // tenga adentro), como espera Excel/Sheets al importar el archivo.
+  function csvCell(value){
+    const s = (value === null || value === undefined) ? '' : String(value);
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function resultLabel(result){
+    if (result === 'win') return 'Ganadora';
+    if (result === 'loss') return 'Perdedora';
+    if (result === 'breakeven') return 'Neutra';
+    return '';
+  }
+
+  exportJournalBtn.addEventListener('click', () => {
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    if (!journal.length){
+      alert('Todavía no hay sesiones en el journal para exportar.');
+      return;
+    }
+    const sorted = journal.slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const headers = ['Fecha', 'Activo', 'Cuenta', 'Resultado', 'P&L', 'Operaciones totales', 'Ganadoras', 'Perdedoras', 'Duración (min)', 'Notas del día', 'Notas de la sesión', 'Video', 'Foto de operaciones'];
+    const rows = [headers];
+    sorted.forEach(entry => {
+      const sessionNotes = Array.isArray(entry.markers)
+        ? entry.markers.map(m => {
+            const label = (typeof m.atMs === 'number') ? formatElapsed(m.atMs) : '';
+            const tag = m.tag ? ('[' + m.tag + '] ') : '';
+            return (label ? (label + ' — ') : '') + tag + (m.text || '');
+          }).join(' | ')
+        : '';
+      rows.push([
+        entry.date || '',
+        entry.asset || '',
+        entry.account || '',
+        resultLabel(entry.result),
+        (entry.pnl !== null && entry.pnl !== undefined) ? entry.pnl : '',
+        (entry.tradesTotal !== null && entry.tradesTotal !== undefined) ? entry.tradesTotal : '',
+        (entry.tradesWin !== null && entry.tradesWin !== undefined) ? entry.tradesWin : '',
+        (entry.tradesLoss !== null && entry.tradesLoss !== undefined) ? entry.tradesLoss : '',
+        (entry.durationMin !== null && entry.durationMin !== undefined) ? entry.durationMin : '',
+        entry.notes || '',
+        sessionNotes,
+        entry.videoFilename || '',
+        entry.photoFilename || ''
+      ]);
+    });
+    // BOM al inicio para que Excel detecte UTF-8 y muestre bien los acentos.
+    const csv = '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'tradecam_journal_' + stamp + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
 
   function todayInfo(){
     const now = new Date();
