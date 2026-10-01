@@ -1,5 +1,43 @@
-const { app, BrowserWindow, session, desktopCapturer, systemPreferences, shell } = require('electron');
+const { app, BrowserWindow, session, desktopCapturer, systemPreferences, shell, ipcMain } = require('electron');
 const path = require('path');
+
+// Proveedores de almacenamiento en la nube con conexión real implementada.
+// Los que todavía no están acá (dropbox, onedrive, r2, b2, firebase)
+// responden "not_implemented" y la interfaz lo avisa en vez de fallar
+// en silencio.
+const cloudProviders = {
+  gdrive: require('./cloud/google-drive')
+};
+
+ipcMain.handle('cloud:connect', async (event, provider) => {
+  const mod = cloudProviders[provider];
+  if (!mod) return { ok: false, error: 'not_implemented' };
+  try {
+    return await mod.connect();
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+});
+
+ipcMain.handle('cloud:disconnect', async (event, provider) => {
+  const mod = cloudProviders[provider];
+  if (!mod) return { ok: false, error: 'not_implemented' };
+  try {
+    return await mod.disconnect();
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+});
+
+ipcMain.handle('cloud:status', async (event, provider) => {
+  const mod = cloudProviders[provider];
+  if (!mod) return { connected: false, error: 'not_implemented' };
+  try {
+    return await mod.status();
+  } catch (e) {
+    return { connected: false, error: String((e && e.message) || e) };
+  }
+});
 
 let mainWindow;
 
@@ -14,7 +52,8 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true
+      sandbox: true,
+      preload: path.join(__dirname, 'preload.js')
     }
   });
 

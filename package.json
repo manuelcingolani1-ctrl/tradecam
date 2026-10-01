@@ -32,7 +32,9 @@
     },
     "files": [
       "main.js",
-      "index.html"
+      "preload.js",
+      "index.html",
+      "cloud/**/*"
     ],
     "directories": {
       "output": "dist",

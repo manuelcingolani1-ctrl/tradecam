@@ -3216,6 +3216,7 @@
     if (prefAutosave) prefAutosave.checked = config.autosaveEnabled !== false;
     renderQualityPicker();
     renderStorageSection();
+    refreshStorageStatuses();
   }
 
   // ---- Almacenamiento en la nube ----
@@ -3231,6 +3232,73 @@
     return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + fg + '" stroke-width="1.8" ' +
       'stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4.5 4.5 0 0 1-.5-8.97A5.5 5.5 0 0 1 17.3 7.1 4 4 0 0 1 17 15H7z"/></svg>';
   }
+  // Proveedores con conexión real ya enchufada en main.js/cloud/*.js.
+  // Los demás siguen siendo un toggle de interfaz hasta que se sumen.
+  const STORAGE_PROVIDERS_WITH_REAL_API = ['gdrive'];
+  function formatGB(bytes){
+    return (bytes / 1e9).toFixed(1) + ' GB';
+  }
+  // Consulta el estado real (conectado + uso) de los proveedores que ya
+  // tienen integración, y lo vuelca en config.storageProviders antes de
+  // pintar la lista. Si la app corre fuera de Electron (sin window.cloudAPI,
+  // por ej. este mismo .html abierto suelto en un navegador) se omite y
+  // queda el toggle de interfaz como respaldo.
+  async function refreshStorageStatuses(){
+    if (!window.cloudAPI) return;
+    for (const id of STORAGE_PROVIDERS_WITH_REAL_API){
+      try {
+        const res = await window.cloudAPI.status(id);
+        const st = config.storageProviders[id];
+        if (!st) continue;
+        st.connected = !!res.connected;
+        st.usedBytes = res.usedBytes || null;
+        st.totalBytes = res.totalBytes || null;
+      } catch (e) { /* se deja el último estado conocido */ }
+    }
+    renderStorageSection();
+  }
+  async function toggleStorageProvider(id){
+    const st = config.storageProviders[id];
+    if (!st) return;
+    const hasRealApi = window.cloudAPI && STORAGE_PROVIDERS_WITH_REAL_API.includes(id);
+    if (!hasRealApi){
+      // Sin integración real todavía (o corriendo fuera de Electron):
+      // toggle de interfaz, como antes.
+      st.connected = !st.connected;
+      renderStorageSection();
+      if (window.cloudAPI && !STORAGE_PROVIDERS_WITH_REAL_API.includes(id)){
+        showToast(STORAGE_PROVIDERS_META[id].name + ': la conexión real todavía no está armada para este proveedor.');
+      }
+      return;
+    }
+    const btn = document.querySelector('[data-storage-toggle="' + id + '"]');
+    const wasConnected = st.connected;
+    if (btn){ btn.disabled = true; btn.textContent = wasConnected ? 'Desconectando…' : 'Conectando…'; }
+    try {
+      if (wasConnected){
+        await window.cloudAPI.disconnect(id);
+        st.connected = false;
+        st.usedBytes = null; st.totalBytes = null;
+      } else {
+        const res = await window.cloudAPI.connect(id);
+        if (!res.ok){
+          if (res.error === 'not_configured'){
+            showToast('Falta configurar las credenciales de ' + STORAGE_PROVIDERS_META[id].name + ' (cloud/google-drive.js).');
+          } else {
+            showToast('No se pudo conectar con ' + STORAGE_PROVIDERS_META[id].name + '. Probá de nuevo.');
+          }
+        } else {
+          st.connected = true;
+          const statusRes = await window.cloudAPI.status(id);
+          st.usedBytes = statusRes.usedBytes || null;
+          st.totalBytes = statusRes.totalBytes || null;
+        }
+      }
+    } catch (e) {
+      showToast('No se pudo conectar con ' + STORAGE_PROVIDERS_META[id].name + '. Probá de nuevo.');
+    }
+    renderStorageSection();
+  }
   function renderStorageSection(){
     const list = document.getElementById('storageList');
     if (!list) return;
@@ -3245,9 +3313,17 @@
       const statusHtml = st.connected
         ? '<div class="storage-status on"><span class="dot"></span>Conectada</div>'
         : '<div class="storage-status"><span class="dot"></span>No conectada</div>';
-      const usageHtml = st.connected
-        ? '<span class="storage-usage-empty">Sincronizando uso…</span>'
-        : '<span class="storage-usage-empty">— sin conectar —</span>';
+      let usageHtml;
+      if (st.connected && st.totalBytes){
+        const pct = Math.max(0, Math.min(100, Math.round((st.usedBytes / st.totalBytes) * 100)));
+        const barColor = pct >= 90 ? 'var(--danger)' : pct >= 75 ? '#F0B90B' : 'var(--accent)';
+        usageHtml = '<div class="storage-usage-track"><div class="storage-usage-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>' +
+          '<span class="storage-usage-label">' + formatGB(st.usedBytes) + ' de ' + formatGB(st.totalBytes) + ' · ' + pct + '%</span>';
+      } else if (st.connected) {
+        usageHtml = '<span class="storage-usage-empty">Sincronizando uso…</span>';
+      } else {
+        usageHtml = '<span class="storage-usage-empty">— sin conectar —</span>';
+      }
       const btnHtml = st.connected
         ? '<button type="button" class="storage-connect-btn disconnect" data-storage-toggle="' + id + '">Desconectar</button>'
         : '<button type="button" class="storage-connect-btn connect" data-storage-toggle="' + id + '">Conectar</button>';
@@ -3291,12 +3367,6 @@
     const j = i + dir;
     if (i < 0 || j < 0 || j >= order.length) return;
     const tmp = order[i]; order[i] = order[j]; order[j] = tmp;
-    renderStorageSection();
-  }
-  function toggleStorageProvider(id){
-    const st = config.storageProviders[id];
-    if (!st) return;
-    st.connected = !st.connected;
     renderStorageSection();
   }
   const fallbackLocalBtn = document.getElementById('fallbackLocalBtn');
