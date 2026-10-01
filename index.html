@@ -3295,10 +3295,12 @@
           }
         }
       } else {
-        showToast('No se pudo subir la grabación a ' + providerName + ' (quedó guardada en tu computadora).');
+        console.error('[uploadRecordingToCloud] respuesta no ok', res);
+        showToast('No se pudo subir a ' + providerName + ': ' + ((res && res.error) || 'error desconocido') + ' (el video quedó guardado en tu computadora).', 8000);
       }
     } catch (e) {
-      showToast('No se pudo subir la grabación a ' + providerName + ' (quedó guardada en tu computadora).');
+      console.error('[uploadRecordingToCloud] excepción', e);
+      showToast('No se pudo subir a ' + providerName + ': ' + ((e && e.message) || 'error desconocido') + ' (el video quedó guardado en tu computadora).', 8000);
     }
   }
   async function toggleStorageProvider(id){
@@ -3502,10 +3504,11 @@
   });
 
   const toast = document.getElementById('toast');
-  function showToast(msg){
+  function showToast(msg, durationMs){
     toast.textContent = msg;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 1800);
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => toast.classList.remove('show'), durationMs || 1800);
   }
   document.getElementById('saveBtn').addEventListener('click', () => {
     saveConfigToStorage();
