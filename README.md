@@ -1,4 +1,4 @@
-# TradeCam
+# CamTrader
 
 App de escritorio para grabar tus sesiones de trading intradía (pantalla + cámara + notas) y llevar un journal diario, con cuentas separadas por trader.
 
@@ -16,7 +16,7 @@ Cada vez que quieras que se generen los instaladores de Windows, Mac y Linux:
 4. Andá a la pestaña **Actions** del repositorio en GitHub y vas a ver el build corriendo (tarda unos minutos: compila en una Windows, una Mac y una Linux reales, en paralelo).
 5. Cuando termina, andá a **Releases** (en la página principal del repo) — ahí vas a encontrar el `.exe` de Windows, el `.dmg` de Mac y el `.AppImage` de Linux, listos para que cualquiera los descargue con un link.
 
-También podés disparar el build sin crear un tag: pestaña **Actions** → **Build & publish TradeCam** → **Run workflow**.
+También podés disparar el build sin crear un tag: pestaña **Actions** → **Build & publish CamTrader** → **Run workflow**.
 
 ## Conectar Google Drive (almacenamiento en la nube)
 
@@ -27,11 +27,11 @@ es **público**, así que esas credenciales nunca se suben a git: viven en
 compu, y en un secret de GitHub Actions para que los instaladores que
 genera el workflow también las lleven adentro.
 
-1. Entrá a [console.cloud.google.com](https://console.cloud.google.com), creá un proyecto (por ejemplo "TradeCam").
+1. Entrá a [console.cloud.google.com](https://console.cloud.google.com), creá un proyecto (por ejemplo "CamTrader").
 2. "APIs & Services" → "Library" → buscá "Google Drive API" → "Enable".
-3. "APIs & Services" → "OAuth consent screen": tipo "External", nombre "TradeCam", tu email como soporte. En "Test users" agregá tu propia cuenta de Gmail (así queda en modo Testing y no hace falta pasar la verificación de Google para uso personal).
-4. En esa misma pantalla, agregá el scope `https://www.googleapis.com/auth/drive.file` (acceso solo a los archivos que TradeCam suba, nunca a todo tu Drive).
-5. "APIs & Services" → "Credentials" → "Create Credentials" → "OAuth client ID" → tipo "Desktop app" → nombre "TradeCam Desktop". Te da un **Client ID** y un **Client Secret**.
+3. "APIs & Services" → "OAuth consent screen": tipo "External", nombre "CamTrader", tu email como soporte. En "Test users" agregá tu propia cuenta de Gmail (así queda en modo Testing y no hace falta pasar la verificación de Google para uso personal).
+4. En esa misma pantalla, agregá el scope `https://www.googleapis.com/auth/drive.file` (acceso solo a los archivos que CamTrader suba, nunca a todo tu Drive).
+5. "APIs & Services" → "Credentials" → "Create Credentials" → "OAuth client ID" → tipo "Desktop app" → nombre "CamTrader Desktop". Te da un **Client ID** y un **Client Secret**.
 6. Copiá `cloud/credentials.local.json.example` a `cloud/credentials.local.json` (este archivo NO se sube a git) y completá ahí `clientId` y `clientSecret` con esos valores.
 7. Para que los instaladores automáticos (GitHub Actions) también los lleven: en el repo, "Settings" → "Secrets and variables" → "Actions" → "New repository secret". Nombre: `CLOUD_CREDENTIALS_JSON`. Valor: el contenido completo de tu `cloud/credentials.local.json` (el JSON entero, tal cual).
 

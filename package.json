@@ -1,6 +1,6 @@
 {
   "name": "tradecam",
-  "productName": "TradeCam",
+  "productName": "CamTrader",
   "version": "1.0.0",
   "description": "Grabá tus sesiones de trading (pantalla + cámara + notas) y llevá tu journal diario.",
   "main": "main.js",
@@ -24,7 +24,7 @@
   },
   "build": {
     "appId": "com.manuelcingolani.tradecam",
-    "productName": "TradeCam",
+    "productName": "CamTrader",
     "publish": {
       "provider": "github",
       "owner": "manuelcingolani1-ctrl",
@@ -34,7 +34,8 @@
       "main.js",
       "preload.js",
       "index.html",
-      "cloud/**/*"
+      "cloud/**/*",
+      "build/icon.png"
     ],
     "directories": {
       "output": "dist",
@@ -46,8 +47,8 @@
     "mac": {
       "target": ["dmg"],
       "extendInfo": {
-        "NSCameraUsageDescription": "TradeCam necesita la cámara para grabarte durante tus sesiones de trading.",
-        "NSMicrophoneUsageDescription": "TradeCam necesita el micrófono para grabar audio durante tus sesiones de trading."
+        "NSCameraUsageDescription": "CamTrader necesita la cámara para grabarte durante tus sesiones de trading.",
+        "NSMicrophoneUsageDescription": "CamTrader necesita el micrófono para grabar audio durante tus sesiones de trading."
       }
     },
     "linux": {

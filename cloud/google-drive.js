@@ -1,6 +1,6 @@
 // Conexión real a Google Drive (OAuth 2.0 + PKCE, flujo "Desktop app").
 //
-// Las credenciales (Client ID / Client Secret) NO van acá adentro: TradeCam
+// Las credenciales (Client ID / Client Secret) NO van acá adentro: CamTrader
 // es un repo público, y aunque Google trata el secret de un cliente
 // "Desktop app" como no-confidencial, igual no corresponde publicarlo en
 // GitHub (es lo que bloqueó el push protection la primera vez). Van en
@@ -13,7 +13,7 @@
 // (ver "files" en package.json), solo que nunca viaja por git.
 //
 // No pedimos acceso a todo tu Drive: el scope "drive.file" solo le da a
-// TradeCam permiso sobre los archivos que la propia app suba, nunca a los
+// CamTrader permiso sobre los archivos que la propia app suba, nunca a los
 // que ya tenías ahí.
 'use strict';
 
@@ -76,7 +76,7 @@ function waitForCallback(port) {
       const error = url.searchParams.get('error');
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       if (error) {
-        res.end(pageHtml('No se pudo conectar (' + error + '). Podés cerrar esta pestaña y volver a TradeCam.'));
+        res.end(pageHtml('No se pudo conectar (' + error + '). Podés cerrar esta pestaña y volver a CamTrader.'));
         server.close();
         reject(new Error(error));
         return;
@@ -85,7 +85,7 @@ function waitForCallback(port) {
         res.end(pageHtml('Falta el código. Podés cerrar esta pestaña.'));
         return;
       }
-      res.end(pageHtml('Listo, ya podés volver a TradeCam. Esta pestaña se puede cerrar.'));
+      res.end(pageHtml('Listo, ya podés volver a CamTrader. Esta pestaña se puede cerrar.'));
       server.close();
       resolve(code);
     });

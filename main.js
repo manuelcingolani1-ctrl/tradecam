@@ -48,7 +48,8 @@ function createWindow() {
     minWidth: 980,
     minHeight: 640,
     backgroundColor: '#0A0D12',
-    title: 'TradeCam',
+    title: 'CamTrader',
+    icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -70,7 +71,7 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   // macOS pide permiso de cámara/micrófono a nivel de sistema operativo
-  // (esto dispara el cartel nativo de "TradeCam quiere acceder a tu cámara").
+  // (esto dispara el cartel nativo de "CamTrader quiere acceder a tu cámara").
   if (process.platform === 'darwin' && systemPreferences.askForMediaAccess) {
     try { await systemPreferences.askForMediaAccess('camera'); } catch (e) {}
     try { await systemPreferences.askForMediaAccess('microphone'); } catch (e) {}

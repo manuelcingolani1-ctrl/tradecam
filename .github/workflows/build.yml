@@ -1,4 +1,4 @@
-name: Build & publish TradeCam
+name: Build & publish CamTrader
 
 # Se dispara cada vez que subís un tag con forma v1.0.0, v1.0.1, etc.
 # Compila la app en una Windows, una Mac y una Linux reales (las tres
