@@ -91,9 +91,18 @@ app.whenReady().then(async () => {
   // Autoriza los permisos que la app realmente usa (cámara/micrófono,
   // compartir pantalla, y portapapeles si hiciera falta). Sin esto, Electron
   // rechaza los pedidos de la página por defecto.
+  const allowedPermissions = ['media', 'display-capture', 'clipboard-read', 'clipboard-sanitized-write', 'fileSystem'];
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-    const allowed = ['media', 'display-capture', 'clipboard-read', 'clipboard-sanitized-write'];
-    callback(allowed.includes(permission));
+    callback(allowedPermissions.includes(permission));
+  });
+  // El selector de carpeta (showDirectoryPicker en modo "readwrite") hace,
+  // además del pedido de arriba, un chequeo de permiso aparte para escribir
+  // ("fileSystem") cada vez que se intenta escribir. Sin este handler,
+  // Electron lo deniega en silencio y el selector termina en un AbortError
+  // aunque el usuario sí haya elegido una carpeta — por eso la app no podía
+  // guardar grabaciones.
+  session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+    return allowedPermissions.includes(permission);
   });
 
   // Habilita navigator.mediaDevices.getDisplayMedia() (grabar pantalla).
