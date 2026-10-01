@@ -557,6 +557,26 @@
   .notes-send-btn{flex:none;width:32px;height:32px;border-radius:8px;background:var(--teal);
     border:none;color:#08110f;display:flex;align-items:center;justify-content:center;cursor:pointer}
   .notes-send-btn:hover{background:#3fe0c8}
+
+  /* ---------- Panel flotante (notas + cámara), fuera de la ventana principal ----------
+     Vive en una ventana real de Picture-in-Picture del sistema operativo:
+     queda arriba de cualquier otra app (el bróker, TradingView, lo que sea),
+     no solo de las demás pestañas del navegador, así no hace falta volver a
+     TradeCam para anotar algo o mirarse mientras se opera. */
+  .pip-body{margin:0;padding:12px;display:flex;flex-direction:column;gap:10px;height:100%;
+    box-sizing:border-box;background:var(--bg)}
+  .pip-cam{position:relative;flex:none;width:100%;aspect-ratio:4/3;max-height:45vh;border-radius:12px;
+    overflow:hidden;border:2px solid var(--teal);background:#1a2029}
+  .pip-cam video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
+  .pip-cam .cam-placeholder{font-size:30px}
+  .pip-notes{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface);
+    border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .pip-notes-title{flex:none;font-family:var(--font-display);font-size:11px;font-weight:700;
+    padding:10px 12px 0;color:var(--text-2);text-transform:uppercase;letter-spacing:0.04em}
+  .pip-notes .note-tags{padding:8px 12px 0}
+  .pip-notes .notes-list{padding:8px 12px 8px 28px}
+  .pip-notes .notes-input-row{padding:8px 10px}
+
   .startup-overlay{position:absolute;inset:0;background:var(--bg);display:flex;align-items:center;
     justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:24px;z-index:5}
   .startup-overlay p{color:var(--text-2);font-size:14px;max-width:360px;margin:0}
@@ -1540,6 +1560,9 @@
         </button>
         <button class="icon-btn-top" id="toggleCamBtn" type="button" title="Apagar cámara">
           <span class="zicon" id="camIcon"></span>
+        </button>
+        <button class="icon-btn-top" id="floatPipBtn" type="button" title="Flotar notas y cámara en una ventana aparte">
+          <span class="zicon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"></rect><rect x="12" y="11" width="7" height="5" rx="1" fill="currentColor" stroke="none"></rect></svg></span>
         </button>
         <button class="icon-btn-top icon-btn-top-wide" id="shareScreenBtn" type="button" title="Compartir pantalla" style="display:none">
           <span class="zicon">🖥️</span>
@@ -3663,11 +3686,15 @@
   const NOTE_TAG_SLUGS = {Setup: 'setup', Entrada: 'entrada', 'Gestión': 'gestion', Error: 'error'};
   function noteTagSlug(tag){ return NOTE_TAG_SLUGS[tag] || ''; }
 
-  function renderNotesList(){
+  // Pinta la lista de notas en un contenedor dado (el de la columna de
+  // siempre, o el de la ventana flotante): las dos vistas muestran siempre
+  // lo mismo porque leen el mismo sessionNoteLog.
+  function renderNotesListInto(listEl, emptyEl){
+    if (!listEl) return;
     const hasNotes = sessionNoteLog.length > 0;
-    notesListEmpty.style.display = hasNotes ? 'none' : 'block';
-    notesList.classList.toggle('has-notes', hasNotes);
-    notesList.querySelectorAll('.note-item').forEach(el => el.remove());
+    if (emptyEl) emptyEl.style.display = hasNotes ? 'none' : 'block';
+    listEl.classList.toggle('has-notes', hasNotes);
+    listEl.querySelectorAll('.note-item').forEach(el => el.remove());
     // La más reciente arriba, como en el diseño.
     const ordered = sessionNoteLog.slice().reverse();
     ordered.forEach((n, idx) => {
@@ -3694,35 +3721,168 @@
       text.textContent = n.text;
       item.appendChild(meta);
       item.appendChild(text);
-      notesList.appendChild(item);
+      listEl.appendChild(item);
     });
     // La más nueva queda arriba: el scroll se mantiene en el tope.
-    notesList.scrollTop = 0;
+    listEl.scrollTop = 0;
   }
 
-  function addSessionNote(){
-    const text = notesInput.value.trim();
+  // Repinta todos los lugares donde se muestran las notas: la columna de
+  // siempre, y además la ventana flotante cuando está abierta.
+  function renderNotesList(){
+    renderNotesListInto(notesList, notesListEmpty);
+    if (pipNotesList) renderNotesListInto(pipNotesList, pipNotesListEmpty);
+  }
+
+  function addSessionNote(inputEl){
+    const input = inputEl || notesInput;
+    const text = input.value.trim();
     if (!text) return;
     sessionNoteLog.push({ text, tag: selectedNoteTag, atMs: currentElapsedMs, at: Date.now() });
-    notesInput.value = '';
+    input.value = '';
     renderNotesList();
     syncNotesBodyText();
   }
 
-  noteTags.querySelectorAll('.note-tag-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const tag = chip.dataset.tag;
-      selectedNoteTag = (selectedNoteTag === tag) ? null : tag;
-      noteTags.querySelectorAll('.note-tag-chip').forEach(c => {
+  // Ata los chips de etiqueta de un contenedor dado a la misma
+  // selectedNoteTag compartida, y deja el foco en el input de ese mismo
+  // panel. Se usa para los chips de la columna de siempre y, si está
+  // abierta, para los de la ventana flotante.
+  function bindNoteTagChips(container, inputToFocus){
+    container.querySelectorAll('.note-tag-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const tag = chip.dataset.tag;
+        selectedNoteTag = (selectedNoteTag === tag) ? null : tag;
+        syncNoteTagChipsUI();
+        if (inputToFocus) inputToFocus.focus();
+      });
+    });
+  }
+  function syncNoteTagChipsUI(){
+    noteTags.querySelectorAll('.note-tag-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.tag === selectedNoteTag);
+    });
+    if (pipNoteTags){
+      pipNoteTags.querySelectorAll('.note-tag-chip').forEach(c => {
         c.classList.toggle('active', c.dataset.tag === selectedNoteTag);
       });
-      notesInput.focus();
-    });
+    }
+  }
+  bindNoteTagChips(noteTags, notesInput);
+
+  notesSendBtn.addEventListener('click', () => addSessionNote(notesInput));
+  notesInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter'){ e.preventDefault(); addSessionNote(notesInput); }
   });
 
-  notesSendBtn.addEventListener('click', addSessionNote);
-  notesInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter'){ e.preventDefault(); addSessionNote(); }
+  // ---- Panel flotante: notas + cámara en una ventana aparte ----
+  // Document Picture-in-Picture abre una ventana real del sistema operativo
+  // que queda siempre arriba de todo lo demás (el bróker, TradingView,
+  // cualquier otra app), no solo arriba de otras pestañas. Así se puede
+  // anotar y verse a cámara mientras se opera, sin volver a la pestaña de
+  // TradeCam. En navegadores que no la soportan (Firefox, Safari) el botón
+  // queda deshabilitado en vez de romper algo.
+  const floatPipBtn = document.getElementById('floatPipBtn');
+  const pipSupported = 'documentPictureInPicture' in window;
+  let pipWindow = null;
+  let pipCamVideo = null, pipCamPlaceholder = null;
+  let pipNoteTags = null, pipNotesList = null, pipNotesListEmpty = null, pipNotesInput = null;
+
+  if (!pipSupported){
+    floatPipBtn.disabled = true;
+    floatPipBtn.title = 'Tu navegador no soporta ventanas flotantes (probá con Chrome o Edge)';
+  }
+
+  function buildPipContent(pipDoc){
+    const body = pipDoc.body;
+    body.className = 'pip-body';
+
+    const cam = pipDoc.createElement('div');
+    cam.className = 'pip-cam';
+    pipCamVideo = pipDoc.createElement('video');
+    pipCamVideo.autoplay = true; pipCamVideo.muted = true; pipCamVideo.playsInline = true;
+    pipCamPlaceholder = pipDoc.createElement('div');
+    pipCamPlaceholder.className = 'cam-placeholder';
+    pipCamPlaceholder.textContent = camPlaceholderPip.textContent;
+    cam.appendChild(pipCamVideo);
+    cam.appendChild(pipCamPlaceholder);
+    body.appendChild(cam);
+
+    const notes = pipDoc.createElement('div');
+    notes.className = 'pip-notes';
+    notes.innerHTML =
+      '<div class="pip-notes-title">Notas de la sesión</div>' +
+      '<div class="note-tags" id="pipNoteTags">' +
+        '<button class="note-tag-chip" data-tag="Setup" type="button">Setup</button>' +
+        '<button class="note-tag-chip" data-tag="Entrada" type="button">Entrada</button>' +
+        '<button class="note-tag-chip" data-tag="Gestión" type="button">Gestión</button>' +
+        '<button class="note-tag-chip" data-tag="Error" type="button">Error</button>' +
+      '</div>' +
+      '<div class="notes-list" id="pipNotesList">' +
+        '<div class="notes-list-empty" id="pipNotesListEmpty">Escribí tu plan y lo que vayas viendo...</div>' +
+      '</div>' +
+      '<div class="notes-input-row">' +
+        '<input type="text" id="pipNotesInput" class="notes-input" placeholder="Escribir nota..." autocomplete="off">' +
+        '<button class="notes-send-btn" id="pipNotesSendBtn" type="button" title="Agregar nota">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>' +
+        '</button>' +
+      '</div>';
+    body.appendChild(notes);
+
+    pipNoteTags = notes.querySelector('#pipNoteTags');
+    pipNotesList = notes.querySelector('#pipNotesList');
+    pipNotesListEmpty = notes.querySelector('#pipNotesListEmpty');
+    pipNotesInput = notes.querySelector('#pipNotesInput');
+    const pipNotesSendBtn = notes.querySelector('#pipNotesSendBtn');
+
+    bindNoteTagChips(pipNoteTags, pipNotesInput);
+    pipNotesSendBtn.addEventListener('click', () => addSessionNote(pipNotesInput));
+    pipNotesInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter'){ e.preventDefault(); addSessionNote(pipNotesInput); }
+    });
+
+    syncNoteTagChipsUI();
+    renderNotesListInto(pipNotesList, pipNotesListEmpty);
+    updateCamVisualState();
+  }
+
+  function clearPipRefs(){
+    pipWindow = null;
+    pipCamVideo = null; pipCamPlaceholder = null;
+    pipNoteTags = null; pipNotesList = null; pipNotesListEmpty = null; pipNotesInput = null;
+    floatPipBtn.classList.remove('active');
+    floatPipBtn.title = 'Flotar notas y cámara en una ventana aparte';
+  }
+
+  async function openFloatingPanel(){
+    if (!pipSupported || pipWindow || !floatPipBtn) return;
+    try {
+      pipWindow = await documentPictureInPicture.requestWindow({width: 300, height: 480});
+    } catch (e) {
+      pipWindow = null;
+      return;
+    }
+    // Copia el CSS de la app (tipografías, colores, componentes) así el
+    // panel flotante se ve exactamente igual, en vez de reconstruirlo a mano.
+    const pipDoc = pipWindow.document;
+    pipDoc.title = 'TradeCam · notas y cámara';
+    document.querySelectorAll('link[rel="stylesheet"], style').forEach(el => {
+      pipDoc.head.appendChild(el.cloneNode(true));
+    });
+    buildPipContent(pipDoc);
+    if (activeCamStream) pipCamVideo.srcObject = activeCamStream;
+    floatPipBtn.classList.add('active');
+    floatPipBtn.title = 'Volver a mostrar las notas y la cámara acá';
+    pipWindow.addEventListener('pagehide', clearPipRefs, {once: true});
+  }
+
+  function closeFloatingPanel(){
+    if (pipWindow) pipWindow.close();
+  }
+
+  floatPipBtn.addEventListener('click', () => {
+    if (pipWindow) closeFloatingPanel();
+    else openFloatingPanel();
   });
 
   function applyCamShape(){
@@ -3746,6 +3906,12 @@
     } else {
       camVideo.style.visibility = camEnabled ? 'visible' : 'hidden';
       camPlaceholderPip.classList.toggle('show', !camEnabled);
+    }
+    // La cámara de la ventana flotante siempre muestra el mismo stream crudo,
+    // sin importar si en el stage se está compartiendo pantalla o no.
+    if (pipCamVideo){
+      pipCamVideo.style.visibility = camEnabled ? 'visible' : 'hidden';
+      pipCamPlaceholder.classList.toggle('show', !camEnabled);
     }
   }
 
@@ -4139,6 +4305,7 @@
   }
 
   async function startSession(entry){
+    closeFloatingPanel();
     showView('sesion');
     startupOverlay.style.display = 'flex';
     startupBackBtn.style.display = 'none';
@@ -4635,6 +4802,7 @@
   });
 
   function showPost(filename, startedAt, entry, dateStr, markers, autoEntryId){
+    closeFloatingPanel();
     pendingVideoFilename = filename;
     pendingDateStr = dateStr;
     pendingMarkers = Array.isArray(markers) ? markers : [];
