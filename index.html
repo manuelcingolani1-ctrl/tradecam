@@ -3492,8 +3492,11 @@
       setFolderStatus('ok', 'Guardando en: ' + handle.name);
       pickFolderBtn.textContent = 'Cambiar carpeta';
     } catch (e) {
-      if (e && e.name === 'AbortError') return;
       console.error('[pickFolderBtn click]', e);
+      if (e && e.name === 'AbortError') {
+        setFolderStatus('off', 'Se cerró el selector de carpeta sin elegir ninguna (AbortError). Probá de nuevo y confirmá con el botón de Finder.');
+        return;
+      }
       setFolderStatus('off', 'No se pudo confirmar la carpeta: ' + (e && (e.name + ' — ' + e.message) || 'error desconocido') + '. Probá de nuevo.');
     }
   });
