@@ -664,25 +664,26 @@
   @media (max-width:640px){ .stats-grid{grid-template-columns:repeat(2,1fr)} }
 
   /* ---------- Mini calendario mensual de journaling (vista Journal) ---------- */
-  .jcal-card{margin-top:20px}
-  .jcal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-  .jcal-month-label{font-family:var(--font-display);font-weight:700;font-size:14px;text-transform:capitalize}
-  .jcal-legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2)}
-  .jcal-legend .pill-dot{width:6px;height:6px}
-  .jcal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
-  .jcal-weekdays span{text-align:center;font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase}
-  .jcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-  .jcal-day{aspect-ratio:1;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;cursor:default}
-  .jcal-day .n{font-family:var(--font-mono);font-size:11.5px;color:var(--text-2)}
-  .jcal-day.muted{background:none;border-color:transparent;visibility:hidden}
-  .jcal-day.today{border-color:rgba(45,212,191,.5)}
+  .jcal-card{margin-top:20px;max-width:300px}
+  .jcal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .jcal-month-label{font-family:var(--font-display);font-weight:700;font-size:12px;text-transform:capitalize}
+  .jcal-legend{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--text-2)}
+  .jcal-legend .pill-dot{width:5px;height:5px}
+  .jcal-head .dp-nav{width:20px;height:20px;font-size:12px}
+  .jcal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px}
+  .jcal-weekdays span{text-align:center;font-size:8.5px;font-weight:700;color:var(--text-2);text-transform:uppercase}
+  .jcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .jcal-day{aspect-ratio:1;border-radius:7px;background:none;border:1px solid transparent;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;cursor:default}
+  .jcal-day .n{font-family:var(--font-mono);font-size:10px;color:var(--text-2)}
+  .jcal-day.muted{visibility:hidden}
+  .jcal-day.today{background:var(--surface-2)}
   .jcal-day.today .n{color:var(--teal);font-weight:700}
-  .jcal-day.has-entry{background:var(--teal-soft);border-color:rgba(45,212,191,.35);cursor:pointer}
+  .jcal-day.has-entry{cursor:pointer}
   .jcal-day.has-entry .n{color:var(--text);font-weight:700}
-  .jcal-day.has-entry:hover{border-color:var(--teal)}
-  .jcal-day .dots{display:flex;gap:3px}
-  .jcal-day .dots .pill-dot{width:5px;height:5px}
+  .jcal-day.has-entry:hover{background:var(--surface-2);border-color:var(--border)}
+  .jcal-day .dots{display:flex;gap:2px}
+  .jcal-day .dots .pill-dot{width:3.5px;height:3.5px}
 
   /* ---------- Vista Calendario (día / semana / mes / año) ---------- */
   .cal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
