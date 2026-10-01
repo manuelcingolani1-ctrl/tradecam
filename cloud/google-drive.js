@@ -255,4 +255,35 @@ async function uploadFile(filePath, fileName, mimeType) {
   return putRes.json();
 }
 
-module.exports = { connect, disconnect, status, uploadFile, isConfigured };
+// Igual que uploadFile, pero a partir de un Buffer ya en memoria en vez de
+// una ruta en disco. Hace falta porque los videos que graba la app con la
+// File System Access API del navegador (showDirectoryPicker) no tienen una
+// ruta de archivo real que Electron pueda leer con fs — así que el
+// renderer manda los bytes directo (ver uploadRecordingToCloud en index.html).
+async function uploadBuffer(buffer, fileName, mimeType) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) throw new Error('not_connected');
+
+  const initRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + accessToken,
+      'Content-Type': 'application/json; charset=UTF-8',
+      'X-Upload-Content-Type': mimeType,
+      'X-Upload-Content-Length': String(buffer.length)
+    },
+    body: JSON.stringify({ name: fileName })
+  });
+  if (!initRes.ok) throw new Error('upload_init_failed');
+  const sessionUrl = initRes.headers.get('location');
+
+  const putRes = await fetch(sessionUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': mimeType, 'Content-Length': String(buffer.length) },
+    body: buffer
+  });
+  if (!putRes.ok) throw new Error('upload_failed');
+  return putRes.json();
+}
+
+module.exports = { connect, disconnect, status, uploadFile, uploadBuffer, isConfigured };

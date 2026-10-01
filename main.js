@@ -39,11 +39,15 @@ ipcMain.handle('cloud:status', async (event, provider) => {
   }
 });
 
-ipcMain.handle('cloud:upload', async (event, provider, filePath, fileName, mimeType) => {
+// arrayBuffer llega desde el renderer con los bytes del video ya leídos en
+// memoria (ver uploadRecordingToCloud en index.html) — no una ruta de
+// archivo, porque los videos grabados con la File System Access API del
+// navegador no tienen una ruta real que este proceso pueda leer con fs.
+ipcMain.handle('cloud:upload', async (event, provider, fileName, mimeType, arrayBuffer) => {
   const mod = cloudProviders[provider];
   if (!mod) return { ok: false, error: 'not_implemented' };
   try {
-    await mod.uploadFile(filePath, fileName, mimeType);
+    await mod.uploadBuffer(Buffer.from(arrayBuffer), fileName, mimeType);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String((e && e.message) || e) };

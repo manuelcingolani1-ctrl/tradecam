@@ -3261,7 +3261,7 @@
   // prioridad (según el orden que armó el usuario en Configuración), y le
   // sube el video recién grabado. Si no hay ninguno conectado, no hace nada.
   async function uploadRecordingToCloud(folderHandle, filename){
-    if (!window.cloudAPI || !window.fileAPI) return;
+    if (!window.cloudAPI) return;
     const providerId = (config.storageOrder || []).find(id =>
       STORAGE_PROVIDERS_WITH_REAL_API.includes(id) &&
       config.storageProviders[id] && config.storageProviders[id].connected
@@ -3271,10 +3271,12 @@
     try {
       const fileHandleForUpload = await folderHandle.getFileHandle(filename);
       const file = await fileHandleForUpload.getFile();
-      const filePath = window.fileAPI.getPathForFile(file);
-      if (!filePath) throw new Error('sin ruta de archivo');
+      // Se manda el contenido ya leído (no una ruta): los videos grabados
+      // con la File System Access API no tienen una ruta real que el
+      // proceso principal pueda abrir con fs.
+      const arrayBuffer = await file.arrayBuffer();
       showToast('Subiendo la grabación a ' + providerName + '…');
-      const res = await window.cloudAPI.uploadFile(providerId, filePath, filename, 'video/webm');
+      const res = await window.cloudAPI.uploadFile(providerId, filename, 'video/webm', arrayBuffer);
       if (res && res.ok) {
         showToast('Grabación subida a ' + providerName + ' ✓');
         refreshStorageStatuses();
