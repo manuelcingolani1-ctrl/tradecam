@@ -223,8 +223,9 @@ async function disconnect() {
 }
 
 // Sube un archivo a Drive con upload resumable (apto para videos grandes:
-// no carga todo el archivo en memoria). Todavía no está enganchado al
-// guardado de sesiones — es la pieza de base para esa próxima etapa.
+// no carga todo el archivo en memoria). Se llama automáticamente apenas
+// termina cada grabación (ver uploadRecordingToCloud en index.html), si
+// Google Drive es el proveedor conectado con mayor prioridad.
 async function uploadFile(filePath, fileName, mimeType) {
   const accessToken = await getAccessToken();
   if (!accessToken) throw new Error('not_connected');

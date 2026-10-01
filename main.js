@@ -39,6 +39,17 @@ ipcMain.handle('cloud:status', async (event, provider) => {
   }
 });
 
+ipcMain.handle('cloud:upload', async (event, provider, filePath, fileName, mimeType) => {
+  const mod = cloudProviders[provider];
+  if (!mod) return { ok: false, error: 'not_implemented' };
+  try {
+    await mod.uploadFile(filePath, fileName, mimeType);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+});
+
 let mainWindow;
 
 function createWindow() {

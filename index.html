@@ -3257,6 +3257,34 @@
     }
     renderStorageSection();
   }
+  // Elige el proveedor con conexión real que esté conectado y tenga mayor
+  // prioridad (según el orden que armó el usuario en Configuración), y le
+  // sube el video recién grabado. Si no hay ninguno conectado, no hace nada.
+  async function uploadRecordingToCloud(folderHandle, filename){
+    if (!window.cloudAPI || !window.fileAPI) return;
+    const providerId = (config.storageOrder || []).find(id =>
+      STORAGE_PROVIDERS_WITH_REAL_API.includes(id) &&
+      config.storageProviders[id] && config.storageProviders[id].connected
+    );
+    if (!providerId) return;
+    const providerName = STORAGE_PROVIDERS_META[providerId].name;
+    try {
+      const fileHandleForUpload = await folderHandle.getFileHandle(filename);
+      const file = await fileHandleForUpload.getFile();
+      const filePath = window.fileAPI.getPathForFile(file);
+      if (!filePath) throw new Error('sin ruta de archivo');
+      showToast('Subiendo la grabación a ' + providerName + '…');
+      const res = await window.cloudAPI.uploadFile(providerId, filePath, filename, 'video/webm');
+      if (res && res.ok) {
+        showToast('Grabación subida a ' + providerName + ' ✓');
+        refreshStorageStatuses();
+      } else {
+        showToast('No se pudo subir la grabación a ' + providerName + ' (quedó guardada en tu computadora).');
+      }
+    } catch (e) {
+      showToast('No se pudo subir la grabación a ' + providerName + ' (quedó guardada en tu computadora).');
+    }
+  }
   async function toggleStorageProvider(id){
     const st = config.storageProviders[id];
     if (!st) return;
@@ -4902,6 +4930,11 @@
       }
       startupOverlay.style.display = 'none';
       sessionInProgress = false;
+
+      // Subida a la nube: no bloquea la pantalla de cierre de sesión, corre
+      // en segundo plano y avisa con un toast cuando termina (o si falla,
+      // la grabación ya está a salvo en la carpeta local de todos modos).
+      uploadRecordingToCloud(folderHandle, filename);
 
       showPost(filename, sessionStartedAt, entry, dateStr, sessionNoteLog, autoEntry.createdAt);
     };
