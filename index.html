@@ -3234,7 +3234,7 @@
   }
   // Proveedores con conexión real ya enchufada en main.js/cloud/*.js.
   // Los demás siguen siendo un toggle de interfaz hasta que se sumen.
-  const STORAGE_PROVIDERS_WITH_REAL_API = ['gdrive'];
+  const STORAGE_PROVIDERS_WITH_REAL_API = ['gdrive', 'dropbox'];
   function formatGB(bytes){
     return (bytes / 1e9).toFixed(1) + ' GB';
   }
@@ -3331,7 +3331,7 @@
         const res = await window.cloudAPI.connect(id);
         if (!res.ok){
           if (res.error === 'not_configured'){
-            showToast('Falta configurar las credenciales de ' + STORAGE_PROVIDERS_META[id].name + ' (cloud/google-drive.js).');
+            showToast('Falta configurar las credenciales de ' + STORAGE_PROVIDERS_META[id].name + ' (cloud/credentials.local.json).');
           } else {
             showToast('No se pudo conectar con ' + STORAGE_PROVIDERS_META[id].name + '. Probá de nuevo.');
           }

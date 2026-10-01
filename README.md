@@ -44,6 +44,33 @@ Los tokens se guardan cifrados en el disco (con `safeStorage` de
 Electron, que usa el llavero del sistema operativo), nunca en texto
 plano ni en el repositorio.
 
+## Conectar Dropbox (almacenamiento en la nube)
+
+Igual que con Google Drive: el botón "Conectar" de Dropbox en
+Configuración > Almacenamiento en la nube necesita credenciales propias
+antes de funcionar, y nunca se suben a git — viven en
+`cloud/credentials.local.json` (gitignoreado) para correr la app en tu
+compu, y en el mismo secret de GitHub Actions para que los instaladores
+también las lleven adentro.
+
+1. Entrá a [dropbox.com/developers/apps](https://www.dropbox.com/developers/apps) con tu cuenta de Dropbox y hacé clic en "Create app".
+2. Elegí "Scoped access", después "App folder" (así la app solo puede escribir dentro de una carpeta propia, `/CamTrader`, nunca en el resto de tu Dropbox). Ponele un nombre, por ejemplo "CamTrader".
+3. Ya dentro de la app creada, pestaña "Permissions": tildá `account_info.read`, `files.content.write` y `files.metadata.read`, y después "Submit" al final de la página.
+4. Pestaña "Settings": en "OAuth 2" → "Redirect URIs" agregá exactamente `http://127.0.0.1:42814/callback` (ese puerto es el que usa CamTrader para recibir la respuesta de Dropbox; tiene que ser idéntico, sin barra final extra).
+5. En esa misma pestaña vas a ver el **App key** y el **App secret** (hacé clic en "Show" para verlo).
+6. Copiá `cloud/credentials.local.json.example` a `cloud/credentials.local.json` si todavía no existe (este archivo NO se sube a git) y completá ahí, dentro de la clave `"dropbox"`, `appKey` y `appSecret` con esos valores.
+7. Para que los instaladores automáticos (GitHub Actions) también los lleven: actualizá el secret `CLOUD_CREDENTIALS_JSON` en el repo ("Settings" → "Secrets and variables" → "Actions") con el contenido completo y actualizado de tu `cloud/credentials.local.json` (con `gdrive` y `dropbox` juntos en el mismo JSON).
+
+Las grabaciones que se suben a Dropbox quedan dentro de una carpeta
+`/CamTrader` en la raíz de tu Dropbox (se crea sola la primera vez que
+subís algo). Si ya existe un archivo con el mismo nombre, Dropbox le
+agrega un sufijo automáticamente en vez de pisarlo.
+
+Los demás proveedores (OneDrive, Cloudflare R2, Backblaze B2, Firebase
+Storage) todavía no tienen la conexión real implementada — el botón
+"Conectar" avisa que falta esa integración hasta que se sume, siguiendo
+el mismo patrón que `cloud/google-drive.js` y `cloud/dropbox.js`.
+
 ## Desarrollo local
 
 ```

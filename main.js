@@ -6,7 +6,8 @@ const path = require('path');
 // responden "not_implemented" y la interfaz lo avisa en vez de fallar
 // en silencio.
 const cloudProviders = {
-  gdrive: require('./cloud/google-drive')
+  gdrive: require('./cloud/google-drive'),
+  dropbox: require('./cloud/dropbox')
 };
 
 ipcMain.handle('cloud:connect', async (event, provider) => {
