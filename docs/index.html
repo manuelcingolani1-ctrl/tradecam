@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradeCam</title>
+<meta name="description" content="TradeCam — grabá tus sesiones de trading intradía (pantalla + cámara + notas) y llevá tu journal diario.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap">
+<style>
+  :root{
+    --bg:#0A0D12; --surface:#12161D; --surface-2:#171C25; --border:#242C3B;
+    --text:#F2F4F7; --text-2:#8B93A7; --teal:#2DD4BF; --accent:#22C55E;
+    --font-ui:'Manrope',system-ui,sans-serif; --font-display:'Space Grotesk','Manrope',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui)}
+  a{color:var(--teal);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:860px;margin:0 auto;padding:72px 24px 48px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:48px}
+  .brand-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(155deg,var(--teal),#1AA898)}
+  .brand span{font-family:var(--font-display);font-weight:700;font-size:18px}
+  h1{font-family:var(--font-display);font-size:34px;font-weight:700;letter-spacing:-0.3px;margin:0 0 14px;max-width:560px}
+  .lead{color:var(--text-2);font-size:16px;line-height:1.6;max-width:560px;margin:0 0 32px}
+  .cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#062012;font-weight:700;
+    padding:12px 22px;border-radius:10px;font-size:14px}
+  .cta:hover{text-decoration:none;filter:brightness(1.07)}
+  .features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:56px 0}
+  .feature{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+  .feature h3{font-family:var(--font-display);font-size:14.5px;margin:0 0 8px;color:var(--teal)}
+  .feature p{margin:0;font-size:13.5px;line-height:1.55;color:var(--text-2)}
+  footer{border-top:1px solid var(--border);margin-top:40px;padding-top:24px;display:flex;justify-content:space-between;
+    flex-wrap:wrap;gap:12px;font-size:13px;color:var(--text-2)}
+  @media (max-width:600px){ .features{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><div class="brand-mark"></div><span>TradeCam</span></div>
+
+  <h1>Grabá tus sesiones de trading y llevá tu journal, todo en un solo lugar.</h1>
+  <p class="lead">TradeCam es una app de escritorio que graba pantalla, cámara y notas durante tus sesiones de trading intradía, y te ayuda a llevar un journal diario con estadísticas, calendario y resumen semanal — con cuentas separadas por trader.</p>
+  <a class="cta" href="https://github.com/manuelcingolani1-ctrl/tradecam/releases">Descargar la última versión</a>
+
+  <div class="features">
+    <div class="feature">
+      <h3>Grabación</h3>
+      <p>Pantalla, cámara y micrófono a la vez, con notas durante la sesión.</p>
+    </div>
+    <div class="feature">
+      <h3>Journal diario</h3>
+      <p>Resultado, P&L, duración y notas de cada sesión, con estadísticas y racha.</p>
+    </div>
+    <div class="feature">
+      <h3>Calendario y resumen semanal</h3>
+      <p>Tu esquema de activos y cuentas por día, y cómo te fue cada semana.</p>
+    </div>
+    <div class="feature">
+      <h3>Almacenamiento en la nube</h3>
+      <p>Conectá tu cuenta de Google Drive (y pronto otras) para guardar tus grabaciones ahí, en orden de prioridad.</p>
+    </div>
+  </div>
+
+  <footer>
+    <span>© <span id="y"></span> Manuel Cingolani</span>
+    <span><a href="privacy.html">Política de privacidad</a> · <a href="mailto:manuelcingolani1@gmail.com">manuelcingolani1@gmail.com</a> · <a href="https://github.com/manuelcingolani1-ctrl/tradecam">Código en GitHub</a></span>
+  </footer>
+</div>
+<script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>
