@@ -3464,7 +3464,10 @@
         setFolderStatus('warn', 'Carpeta elegida (' + handle.name + '), falta confirmar acceso.');
         pickFolderBtn.textContent = 'Confirmar acceso a la carpeta';
       }
-    } catch (e) { setFolderStatus('off', 'No hay carpeta seleccionada todavía.'); }
+    } catch (e) {
+      console.error('[checkExistingFolder]', e);
+      setFolderStatus('off', 'No hay carpeta seleccionada todavía.' + (e && e.message ? ' (' + e.message + ')' : ''));
+    }
   }
   pickFolderBtn.addEventListener('click', async () => {
     if (!supportsFsAccess) return;
@@ -3490,7 +3493,8 @@
       pickFolderBtn.textContent = 'Cambiar carpeta';
     } catch (e) {
       if (e && e.name === 'AbortError') return;
-      setFolderStatus('off', 'No se pudo confirmar la carpeta. Probá de nuevo.');
+      console.error('[pickFolderBtn click]', e);
+      setFolderStatus('off', 'No se pudo confirmar la carpeta: ' + (e && (e.name + ' — ' + e.message) || 'error desconocido') + '. Probá de nuevo.');
     }
   });
 
