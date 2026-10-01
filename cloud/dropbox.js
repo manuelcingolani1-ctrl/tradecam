@@ -211,14 +211,13 @@ async function status() {
 
     const account = await accountRes.json();
     const usage = await usageRes.json();
+    // El campo "allocated" viene directo en "allocation" (no anidado bajo
+    // allocation.individual / allocation.team como podría sugerir el nombre
+    // del tag) — tanto para cuentas individuales como de equipo. Si no
+    // viene (plan sin límite fijo), dejamos totalBytes en null y la
+    // interfaz avisa que no hay dato.
     const allocation = usage.allocation || {};
-    // Cuentas "team" traen el límite en allocation.team, cuentas individuales
-    // en allocation.individual — si no viene ninguno (plan sin límite fijo),
-    // dejamos totalBytes en null y la interfaz avisa que no hay dato.
-    const totalBytes =
-      (allocation.individual && allocation.individual.allocated) ??
-      (allocation.team && allocation.team.allocated) ??
-      null;
+    const totalBytes = allocation.allocated !== undefined ? allocation.allocated : null;
 
     return {
       connected: true,
