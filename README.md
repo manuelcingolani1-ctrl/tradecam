@@ -21,14 +21,19 @@ También podés disparar el build sin crear un tag: pestaña **Actions** → **B
 ## Conectar Google Drive (almacenamiento en la nube)
 
 En Configuración > Almacenamiento en la nube, el botón "Conectar" de
-Google Drive necesita credenciales propias antes de funcionar:
+Google Drive necesita credenciales propias antes de funcionar. Este repo
+es **público**, así que esas credenciales nunca se suben a git: viven en
+`cloud/credentials.local.json` (gitignoreado) para correr la app en tu
+compu, y en un secret de GitHub Actions para que los instaladores que
+genera el workflow también las lleven adentro.
 
 1. Entrá a [console.cloud.google.com](https://console.cloud.google.com), creá un proyecto (por ejemplo "TradeCam").
 2. "APIs & Services" → "Library" → buscá "Google Drive API" → "Enable".
 3. "APIs & Services" → "OAuth consent screen": tipo "External", nombre "TradeCam", tu email como soporte. En "Test users" agregá tu propia cuenta de Gmail (así queda en modo Testing y no hace falta pasar la verificación de Google para uso personal).
 4. En esa misma pantalla, agregá el scope `https://www.googleapis.com/auth/drive.file` (acceso solo a los archivos que TradeCam suba, nunca a todo tu Drive).
 5. "APIs & Services" → "Credentials" → "Create Credentials" → "OAuth client ID" → tipo "Desktop app" → nombre "TradeCam Desktop". Te da un **Client ID** y un **Client Secret**.
-6. Pegalos en `cloud/google-drive.js`, en las constantes `CLIENT_ID` y `CLIENT_SECRET`.
+6. Copiá `cloud/credentials.local.json.example` a `cloud/credentials.local.json` (este archivo NO se sube a git) y completá ahí `clientId` y `clientSecret` con esos valores.
+7. Para que los instaladores automáticos (GitHub Actions) también los lleven: en el repo, "Settings" → "Secrets and variables" → "Actions" → "New repository secret". Nombre: `CLOUD_CREDENTIALS_JSON`. Valor: el contenido completo de tu `cloud/credentials.local.json` (el JSON entero, tal cual).
 
 Los demás proveedores (Dropbox, OneDrive, Cloudflare R2, Backblaze B2,
 Firebase Storage) todavía no tienen la conexión real implementada — el

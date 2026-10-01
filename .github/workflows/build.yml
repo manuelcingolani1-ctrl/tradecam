@@ -36,6 +36,12 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
+      - name: Cargar credenciales de almacenamiento en la nube
+        shell: bash
+        run: node -e "require('fs').mkdirSync('cloud',{recursive:true});require('fs').writeFileSync('cloud/credentials.local.json', process.env.CLOUD_CREDENTIALS_JSON || '{}')"
+        env:
+          CLOUD_CREDENTIALS_JSON: ${{ secrets.CLOUD_CREDENTIALS_JSON }}
+
       - name: Compilar y publicar en el Release
         run: ${{ matrix.script }} -- --publish always
         env:

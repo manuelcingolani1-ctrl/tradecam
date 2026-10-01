@@ -1,8 +1,16 @@
 // Conexión real a Google Drive (OAuth 2.0 + PKCE, flujo "Desktop app").
 //
-// Completá CLIENT_ID y CLIENT_SECRET con los que te da Google Cloud Console
-// (ver README.md, sección "Conectar Google Drive"). Hasta que los completes,
-// "Conectar" en la app va a avisar que falta configurar esto.
+// Las credenciales (Client ID / Client Secret) NO van acá adentro: TradeCam
+// es un repo público, y aunque Google trata el secret de un cliente
+// "Desktop app" como no-confidencial, igual no corresponde publicarlo en
+// GitHub (es lo que bloqueó el push protection la primera vez). Van en
+// cloud/credentials.local.json, que está en .gitignore y nunca se sube.
+//
+// Para configurarlo: copiá cloud/credentials.local.json.example a
+// cloud/credentials.local.json y completá los valores que te da Google
+// Cloud Console (ver README.md, sección "Conectar Google Drive"). Ese
+// archivo SÍ queda incluido cuando se empaqueta la app para distribuir
+// (ver "files" en package.json), solo que nunca viaja por git.
 //
 // No pedimos acceso a todo tu Drive: el scope "drive.file" solo le da a
 // TradeCam permiso sobre los archivos que la propia app suba, nunca a los
@@ -12,11 +20,23 @@
 const crypto = require('crypto');
 const http = require('http');
 const fs = require('fs');
+const path = require('path');
 const { shell } = require('electron');
 const tokenStore = require('./token-store');
 
-const CLIENT_ID = 'TU_CLIENT_ID.apps.googleusercontent.com';
-const CLIENT_SECRET = 'TU_CLIENT_SECRET';
+function loadCredentials() {
+  try {
+    const raw = fs.readFileSync(path.join(__dirname, 'credentials.local.json'), 'utf8');
+    const json = JSON.parse(raw);
+    return (json && json.gdrive) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+const creds = loadCredentials();
+const CLIENT_ID = creds.clientId || '';
+const CLIENT_SECRET = creds.clientSecret || '';
 
 const PROVIDER = 'gdrive';
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
@@ -26,7 +46,7 @@ const REVOKE_URL = 'https://oauth2.googleapis.com/revoke';
 const CALLBACK_PORT = 42813; // Google permite cualquier puerto en 127.0.0.1 para clientes "Desktop app", sin registrarlo.
 
 function isConfigured() {
-  return !CLIENT_ID.startsWith('TU_') && !CLIENT_SECRET.startsWith('TU_');
+  return !!CLIENT_ID && !!CLIENT_SECRET;
 }
 
 function base64url(buf) {

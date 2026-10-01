@@ -1,3 +1,7 @@
 node_modules/
 dist/
 .DS_Store
+
+# Credenciales reales de los proveedores de almacenamiento en la nube.
+# Nunca se suben al repo (es público). Ver cloud/credentials.local.json.example.
+cloud/credentials.local.json
