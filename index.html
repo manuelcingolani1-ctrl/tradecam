@@ -654,6 +654,7 @@
   .week-nav-label{font-weight:700;font-size:15px;text-align:center;flex:1;font-family:var(--font-display)}
   @media (max-width:560px){ .week-nav{flex-direction:column;gap:10px} }
   .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .stats-grid-wide{grid-template-columns:repeat(6,1fr)}
   .stat-box{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;
     padding:16px 18px;text-align:center}
   .stat-value{font-size:27px;font-weight:600;color:var(--text);line-height:1.1;font-family:var(--font-mono)}
@@ -662,28 +663,30 @@
   .stat-label{font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;
     letter-spacing:0.04em;margin-top:8px}
   @media (max-width:640px){ .stats-grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:900px){ .stats-grid-wide{grid-template-columns:repeat(3,1fr)} }
+  @media (max-width:480px){ .stats-grid-wide{grid-template-columns:repeat(2,1fr)} }
 
-  /* ---------- Mini calendario mensual de journaling (vista Journal) ---------- */
-  .jcal-card{margin-top:20px;max-width:300px}
-  .jcal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-  .jcal-month-label{font-family:var(--font-display);font-weight:700;font-size:12px;text-transform:capitalize}
-  .jcal-legend{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--text-2)}
-  .jcal-legend .pill-dot{width:5px;height:5px}
-  .jcal-head .dp-nav{width:20px;height:20px;font-size:12px}
-  .jcal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px}
-  .jcal-weekdays span{text-align:center;font-size:8.5px;font-weight:700;color:var(--text-2);text-transform:uppercase}
-  .jcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-  .jcal-day{aspect-ratio:1;border-radius:7px;background:none;border:1px solid transparent;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;cursor:default}
-  .jcal-day .n{font-family:var(--font-mono);font-size:10px;color:var(--text-2)}
+  /* ---------- Mini calendario mensual de journaling (vista Journal): una
+     cuadrícula de cuadraditos lunes a viernes (los fines de semana no
+     cuentan, no hay sesiones operativas) que se colorean con el color del
+     activo cuando ese día quedó grabado/journaled. Centrado en la página,
+     sin números: el detalle de cada día se ve tocándolo. ---------- */
+  .jcal-card{margin:22px auto 0;max-width:340px;text-align:center}
+  .jcal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .jcal-month-label{font-family:var(--font-display);font-weight:700;font-size:13px;text-transform:capitalize}
+  .jcal-legend{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2)}
+  .jcal-legend .pill-dot{width:6px;height:6px}
+  .jcal-head .dp-nav{width:22px;height:22px;font-size:13px}
+  .jcal-board{display:inline-block}
+  .jcal-weekdays{display:grid;grid-template-columns:repeat(5,32px);gap:6px;margin-bottom:6px}
+  .jcal-weekdays span{text-align:center;font-size:9.5px;font-weight:700;color:var(--text-2);text-transform:uppercase}
+  .jcal-grid{display:grid;grid-template-columns:repeat(5,32px);grid-auto-rows:32px;gap:6px}
+  .jcal-day{border-radius:8px;background:var(--surface-2);border:1px solid var(--border);
+    position:relative;cursor:default;transition:filter .15s,border-color .15s}
   .jcal-day.muted{visibility:hidden}
-  .jcal-day.today{background:var(--surface-2)}
-  .jcal-day.today .n{color:var(--teal);font-weight:700}
-  .jcal-day.has-entry{cursor:pointer}
-  .jcal-day.has-entry .n{color:var(--text);font-weight:700}
-  .jcal-day.has-entry:hover{background:var(--surface-2);border-color:var(--border)}
-  .jcal-day .dots{display:flex;gap:2px}
-  .jcal-day .dots .pill-dot{width:3.5px;height:3.5px}
+  .jcal-day.today{box-shadow:inset 0 0 0 2px var(--teal)}
+  .jcal-day.has-entry{border-color:transparent;cursor:pointer}
+  .jcal-day.has-entry:hover{filter:brightness(1.18)}
 
   /* ---------- Vista Calendario (día / semana / mes / año) ---------- */
   .cal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
@@ -1107,7 +1110,15 @@
 
     <section id="historialStats">
       <h2>Estadísticas</h2>
-      <div class="stats-grid">
+      <div class="stats-grid stats-grid-wide">
+        <div class="stat-box">
+          <div class="stat-value accent" id="statBestStreak">0</div>
+          <div class="stat-label">Mejor racha</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statTotalSessions">0</div>
+          <div class="stat-label">Sesiones totales</div>
+        </div>
         <div class="stat-box">
           <div class="stat-value accent" id="statDaysMonth">0</div>
           <div class="stat-label">Días grabados este mes</div>
@@ -1125,6 +1136,7 @@
           <div class="stat-label">Winrate</div>
         </div>
       </div>
+      <p class="hint" style="margin:10px 0 0">Los sábados y domingos no cuentan: no hay sesiones operativas esos días.</p>
 
       <div class="jcal-card">
         <div class="jcal-head">
@@ -1135,8 +1147,10 @@
             <button class="dp-nav" id="jcalNextBtn" type="button" title="Mes siguiente">›</button>
           </div>
         </div>
-        <div class="jcal-weekdays"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
-        <div class="jcal-grid" id="jcalGrid"></div>
+        <div class="jcal-board">
+          <div class="jcal-weekdays"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span></div>
+          <div class="jcal-grid" id="jcalGrid"></div>
+        </div>
       </div>
     </section>
 
@@ -3281,6 +3295,7 @@
     if (!currentUser || !config.streakAlertEnabled) return;
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     const now = new Date();
+    if (now.getDay() === 0 || now.getDay() === 6) return; // sábado y domingo no cuentan, no hay sesión que perder
     if (now.getHours() < 20) return; // recién a partir de las 20:00
     const todayStr = todayDateStr(now);
     if (alreadyJournaledToday(todayStr)) return;
@@ -4774,28 +4789,70 @@
     renderHistorial();
   });
 
+  const statBestStreak = document.getElementById('statBestStreak');
+  const statTotalSessions = document.getElementById('statTotalSessions');
   const statDaysMonth = document.getElementById('statDaysMonth');
   const statStreak = document.getElementById('statStreak');
   const statMinutes = document.getElementById('statMinutes');
   const statWinrate = document.getElementById('statWinrate');
 
-  function computeStats(journal){
+  // Sábado y domingo no cuentan para ninguna estadística ni para el
+  // calendario de journaling: no hay sesiones operativas esos días.
+  function isWeekendDateStr(dateStr){
+    const d = parseDateStrLocal(dateStr);
+    const dow = d.getDay();
+    return dow === 0 || dow === 6;
+  }
+  function prevBusinessDay(d){
+    const cur = new Date(d);
+    do { cur.setDate(cur.getDate() - 1); } while (cur.getDay() === 0 || cur.getDay() === 6);
+    return cur;
+  }
+
+  function computeStats(journalAll){
+    const journal = (journalAll || []).filter(e => e.date && !isWeekendDateStr(e.date));
+
     const now = new Date();
     const monthKey = now.getFullYear() + '-' + pad(now.getMonth() + 1);
     const daysThisMonth = new Set(
-      journal.filter(e => e.date && e.date.slice(0, 7) === monthKey).map(e => e.date)
+      journal.filter(e => e.date.slice(0, 7) === monthKey).map(e => e.date)
     ).size;
 
     function toKey(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-    const recordedDates = new Set(journal.map(e => e.date).filter(Boolean));
+    const recordedDates = new Set(journal.map(e => e.date));
+
+    // Racha actual: cuenta días hábiles consecutivos con journal hacia atrás
+    // desde hoy (o desde el último día hábil, si hoy es fin de semana), sin
+    // que un sábado/domingo de por medio la corte.
     let streak = 0;
     if (recordedDates.size){
-      const cursor = new Date();
-      if (!recordedDates.has(toKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+      let cursor = new Date();
+      while (cursor.getDay() === 0 || cursor.getDay() === 6) cursor = prevBusinessDay(cursor);
+      if (!recordedDates.has(toKey(cursor))) cursor = prevBusinessDay(cursor);
       while (recordedDates.has(toKey(cursor))){
         streak++;
-        cursor.setDate(cursor.getDate() - 1);
+        cursor = prevBusinessDay(cursor);
       }
+    }
+
+    // Mejor racha histórica: el run más largo de días hábiles consecutivos
+    // con journal, recorriendo todas las fechas registradas una sola vez.
+    let bestStreak = 0;
+    if (recordedDates.size){
+      const sortedDates = Array.from(recordedDates).sort();
+      let current = 0, prevDate = null;
+      sortedDates.forEach(dateStr => {
+        const d = parseDateStrLocal(dateStr);
+        if (prevDate){
+          const expected = new Date(prevDate);
+          do { expected.setDate(expected.getDate() + 1); } while (expected.getDay() === 0 || expected.getDay() === 6);
+          current = (toKey(expected) === dateStr) ? current + 1 : 1;
+        } else {
+          current = 1;
+        }
+        if (current > bestStreak) bestStreak = current;
+        prevDate = d;
+      });
     }
 
     const totalMin = journal.reduce((sum, e) => sum + (typeof e.durationMin === 'number' ? e.durationMin : 0), 0);
@@ -4814,11 +4871,13 @@
       if (winDays + lossDays > 0) winrate = Math.round((winDays / (winDays + lossDays)) * 100);
     }
 
-    return {daysThisMonth, streak, totalMin, winrate};
+    return {daysThisMonth, streak, bestStreak, totalSessions: journal.length, totalMin, winrate};
   }
 
   function renderStats(journal){
     const s = computeStats(journal);
+    if (statBestStreak) statBestStreak.textContent = s.bestStreak + (s.bestStreak === 1 ? ' día' : ' días');
+    if (statTotalSessions) statTotalSessions.textContent = s.totalSessions;
     statDaysMonth.textContent = s.daysThisMonth;
     statStreak.textContent = s.streak + (s.streak === 1 ? ' día' : ' días');
     statMinutes.textContent = s.totalMin;
@@ -4826,11 +4885,9 @@
   }
 
   // ---- Calendario mensual de journaling (debajo de las estadísticas del
-  // Journal): marca automáticamente los días que tienen al menos una entrada
-  // en el journal, ya sea porque esa sesión se grabó (video) o porque se
-  // cargó una foto de operaciones y se completó el journal a mano. Cada día
-  // muestra un punto por cada activo distinto operado ese día, con el mismo
-  // color que se usa en el resto de la app.
+  // Journal): una cuadrícula de cuadraditos lunes a viernes (los fines de
+  // semana no cuentan) que se colorean con el color del activo cuando ese
+  // día quedó grabado o journaled (video, o foto + journal completado).
   const jcalMonthLabel = document.getElementById('jcalMonthLabel');
   const jcalGrid = document.getElementById('jcalGrid');
   const jcalPrevBtn = document.getElementById('jcalPrevBtn');
@@ -4859,25 +4916,34 @@
     });
 
     const todayKey = dateToKey(new Date());
-    const first = new Date(jcalYear, jcalMonth, 1);
-    const startDow = (first.getDay() + 6) % 7; // lunes = 0
     const daysInMonth = new Date(jcalYear, jcalMonth + 1, 0).getDate();
 
-    let cells = '';
-    for (let i = 0; i < startDow; i++) cells += '<div class="jcal-day muted"></div>';
+    // Solo los días hábiles (lunes a viernes) tienen cuadradito: no hay
+    // sesiones operativas los fines de semana.
+    const businessDates = [];
     for (let d = 1; d <= daysInMonth; d++){
+      const dow = new Date(jcalYear, jcalMonth, d).getDay();
+      if (dow === 0 || dow === 6) continue;
+      businessDates.push(d);
+    }
+
+    let cells = '';
+    if (businessDates.length){
+      const firstDow = new Date(jcalYear, jcalMonth, businessDates[0]).getDay(); // 1=lunes..5=viernes
+      for (let i = 0; i < firstDow - 1; i++) cells += '<div class="jcal-day muted"></div>';
+    }
+    businessDates.forEach(d => {
       const key = jcalYear + '-' + pad(jcalMonth + 1) + '-' + pad(d);
       const assets = byDate[key];
       let cls = 'jcal-day';
       if (key === todayKey) cls += ' today';
-      if (assets && assets.length) cls += ' has-entry';
-      let dotsHtml = '';
+      let style = '';
       if (assets && assets.length){
-        dotsHtml = '<div class="dots">' + assets.slice(0, 3).map(a =>
-          '<span class="pill-dot" style="background:' + colorFor(a) + '"></span>').join('') + '</div>';
+        cls += ' has-entry';
+        style = ' style="background:' + colorFor(assets[0]) + '"';
       }
-      cells += '<div class="' + cls + '" data-date="' + key + '"><span class="n">' + d + '</span>' + dotsHtml + '</div>';
-    }
+      cells += '<div class="' + cls + '" data-date="' + key + '" title="' + key + '"' + style + '></div>';
+    });
     jcalGrid.innerHTML = cells;
     jcalGrid.querySelectorAll('.jcal-day.has-entry').forEach(cell => {
       cell.addEventListener('click', () => {
