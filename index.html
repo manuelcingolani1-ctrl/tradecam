@@ -3278,6 +3278,22 @@
       if (res && res.ok) {
         showToast('Grabación subida a ' + providerName + ' ✓');
         refreshStorageStatuses();
+        // Se pregunta por sesión (no hay un "borrar siempre" automático):
+        // así cada trader decide caso a caso si quiere liberar espacio ya
+        // mismo o conservar la copia local para revisarla sin depender de
+        // internet.
+        const borrar = confirm(
+          'Ya se subió a ' + providerName + '. ¿Querés borrar la copia local de tu computadora para liberar espacio?\n\n' +
+          '(El video va a seguir disponible en ' + providerName + '; esto solo borra el archivo de esta compu.)'
+        );
+        if (borrar) {
+          try {
+            await folderHandle.removeEntry(filename);
+            showToast('Copia local borrada. El video queda disponible en ' + providerName + '.');
+          } catch (e) {
+            showToast('No se pudo borrar la copia local, pero el video ya está a salvo en ' + providerName + '.');
+          }
+        }
       } else {
         showToast('No se pudo subir la grabación a ' + providerName + ' (quedó guardada en tu computadora).');
       }
