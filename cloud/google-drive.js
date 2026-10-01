@@ -188,7 +188,11 @@ async function status() {
     const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota,user', {
       headers: { Authorization: 'Bearer ' + accessToken }
     });
-    if (!res.ok) return { connected: true, usedBytes: null, totalBytes: null };
+    if (!res.ok) {
+      const bodyText = await res.text().catch(() => '(sin cuerpo)');
+      console.error('[gdrive status] respuesta no OK', res.status, bodyText);
+      return { connected: true, usedBytes: null, totalBytes: null };
+    }
     const json = await res.json();
     const q = json.storageQuota || {};
     return {
@@ -200,6 +204,7 @@ async function status() {
       totalBytes: q.limit !== undefined ? Number(q.limit) : null
     };
   } catch (e) {
+    console.error('[gdrive status] excepción', e);
     return { connected: true, usedBytes: null, totalBytes: null };
   }
 }
