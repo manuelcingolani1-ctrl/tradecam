@@ -183,14 +183,24 @@ async function status() {
   if (!accessToken) return { connected: false };
 
   try {
+    // Los endpoints "RPC" de Dropbox (a diferencia de los de subida de
+    // contenido) exigen Content-Type: application/json y un body, aunque no
+    // reciban parámetros — si no, devuelven 400 y la app se queda sin datos
+    // de uso para siempre.
+    const rpcHeaders = {
+      Authorization: 'Bearer ' + accessToken,
+      'Content-Type': 'application/json'
+    };
     const [accountRes, usageRes] = await Promise.all([
       fetch('https://api.dropboxapi.com/2/users/get_current_account', {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + accessToken }
+        headers: rpcHeaders,
+        body: 'null'
       }),
       fetch('https://api.dropboxapi.com/2/users/get_space_usage', {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + accessToken }
+        headers: rpcHeaders,
+        body: 'null'
       })
     ]);
 
