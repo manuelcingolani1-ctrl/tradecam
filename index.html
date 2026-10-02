@@ -2451,16 +2451,25 @@
       const base = defaultConfig();
       if (!raw) return base;
       const parsed = JSON.parse(raw);
+      const mergedStorageProviders = Object.assign({}, base.storageProviders, parsed.storageProviders || {});
+      // Descarta proveedores que ya no existen (por ejemplo, si una config
+      // vieja guardada tenía uno que después se sacó de la app) — solo se
+      // conservan los que siguen en defaultConfig().
+      Object.keys(mergedStorageProviders).forEach(id => {
+        if (!(id in base.storageProviders)) delete mergedStorageProviders[id];
+      });
       const merged = Object.assign(base, parsed, {
         schedule: Object.assign({}, base.schedule, parsed.schedule || {}),
         accountMeta: Object.assign({}, base.accountMeta, parsed.accountMeta || {}),
-        storageProviders: Object.assign({}, base.storageProviders, parsed.storageProviders || {})
+        storageProviders: mergedStorageProviders
       });
       // Config guardada antes de este agregado: completa el orden de
-      // prioridad con los proveedores nuevos que falten, al final.
+      // prioridad con los proveedores nuevos que falten, al final, y
+      // descarta los que ya no existen.
       if (!Array.isArray(merged.storageOrder) || !merged.storageOrder.length){
         merged.storageOrder = base.storageOrder.slice();
       } else {
+        merged.storageOrder = merged.storageOrder.filter(id => base.storageOrder.includes(id));
         base.storageOrder.forEach(id => { if (!merged.storageOrder.includes(id)) merged.storageOrder.push(id); });
       }
       // Completa horario por día y accountMeta que puedan faltar en
