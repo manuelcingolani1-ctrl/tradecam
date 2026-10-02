@@ -810,6 +810,45 @@
   .hist-badge.loss{background:var(--danger-soft);color:var(--danger)}
   .hist-badge.neutral{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border)}
 
+  /* ---------- Replay: lista de sesiones guardadas (estilo FX Replay) ---------- */
+  .replay-sessions-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .replay-sessions-head h2{margin:0}
+  .replay-sessions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:16px}
+  .replay-session-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:18px 20px;cursor:pointer;transition:border-color .15s,transform .1s;display:flex;flex-direction:column;gap:10px}
+  .replay-session-card:hover{border-color:var(--teal);transform:translateY(-1px)}
+  .replay-session-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .replay-session-card-name{font-weight:800;font-size:15px;line-height:1.35}
+  .replay-session-card-asset{font-size:12px;color:var(--text-2);font-family:var(--font-mono);margin-top:2px}
+  .replay-session-card-del{flex:none;background:none;border:none;color:var(--text-2);cursor:pointer;
+    font-size:14px;padding:2px 4px;border-radius:6px;line-height:1}
+  .replay-session-card-del:hover{color:var(--danger);background:var(--danger-soft)}
+  .replay-session-card-stats{display:flex;gap:16px;flex-wrap:wrap}
+  .replay-session-stat{display:flex;flex-direction:column;gap:2px}
+  .replay-session-stat-label{font-size:10.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.04em}
+  .replay-session-stat-value{font-family:var(--font-mono);font-size:14px;font-weight:700}
+  .replay-session-stat-value.pos{color:var(--accent)}
+  .replay-session-stat-value.neg{color:var(--danger)}
+  .replay-session-card-date{font-size:11px;color:var(--text-2);margin-top:auto}
+  .replay-sessions-empty{color:var(--text-2);font-size:14px;text-align:center;padding:50px 20px;
+    border:1px dashed var(--border);border-radius:18px;margin-top:16px}
+
+  /* ---------- Replay: formulario "Crear sesión" ---------- */
+  .replay-create-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .replay-create-head h2{margin:0}
+
+  /* ---------- Replay: encabezado del workspace dedicado (tras "Crear sesión") ---------- */
+  .replay-workspace-header{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+  .replay-workspace-title{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .replay-workspace-title h2{margin:0;font-size:19px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .replay-workspace-sub{font-size:12.5px;color:var(--text-2);font-family:var(--font-mono)}
+  .replay-balance-pill{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:10px 16px}
+  .replay-balance-label{font-size:10.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.04em}
+  .replay-balance-value{font-family:var(--font-mono);font-size:17px;font-weight:800}
+  .replay-balance-value.pos{color:var(--accent)}
+  .replay-balance-value.neg{color:var(--danger)}
+
   /* ---------- Historial ---------- */
   .hist-empty{color:var(--text-2);font-size:14px;text-align:center;padding:60px 20px;
     border:1px dashed var(--border);border-radius:18px}
@@ -2013,15 +2052,41 @@
     <div class="dash-topbar">
       <div>
         <h1 style="margin:0 0 4px">Replay / Backtesting</h1>
-        <p class="sub" style="margin:0">Repasá velas históricas vela por vela y practicá tu entrada/salida sin arriesgar nada real.</p>
+        <p class="sub" style="margin:0">Creá una sesión de backtesting con cuenta demo, repasá velas históricas vela por vela y guardá tus métricas.</p>
       </div>
     </div>
 
-    <section>
-      <h2>Elegí qué velas repasar</h2>
-      <p class="hint">Buscá cualquier activo (forex, cripto, índices, acciones, metales, energías) y elegí la fecha de inicio — el gráfico se carga solo.</p>
+    <!-- ESTADO A: lista de sesiones guardadas (como el dashboard de FX Replay) -->
+    <section id="replaySessionsListSection">
+      <div class="replay-sessions-head">
+        <h2>Tus sesiones de backtesting</h2>
+        <button class="btn" id="replayNewSessionBtn" type="button">+ Nueva sesión</button>
+      </div>
+      <p class="hint" style="margin-top:4px">Cada sesión tiene su propio activo, balance demo y métricas guardadas. Abrí una para seguir repasándola, o creá una nueva.</p>
+      <div class="replay-sessions-grid" id="replaySessionsGrid"></div>
+      <p class="replay-sessions-empty" id="replaySessionsEmptyHint" style="display:none">Todavía no creaste ninguna sesión. Tocá "+ Nueva sesión" para elegir un activo, poner un balance demo y empezar a repasar velas.</p>
+    </section>
 
-      <label for="assetSearchInput">Activo</label>
+    <!-- ESTADO B: formulario "Crear sesión" -->
+    <section id="replayCreateSection" style="display:none">
+      <div class="replay-create-head">
+        <h2>Crear sesión de backtesting</h2>
+        <button class="btn secondary" id="replayCancelCreateBtn" type="button">← Volver a mis sesiones</button>
+      </div>
+      <p class="hint">Ponele un nombre a la sesión, elegí un balance demo y el activo a repasar — todo va a quedar guardado para revisar sus métricas después.</p>
+
+      <div class="row">
+        <div>
+          <label for="replaySessionName">Nombre de la sesión</label>
+          <input type="text" id="replaySessionName" placeholder="Ej. NAS100 — ruptura de rango" maxlength="60">
+        </div>
+        <div>
+          <label for="replaySessionBalance">Balance demo</label>
+          <input type="number" id="replaySessionBalance" min="1" step="100" value="10000" placeholder="Ej. 10000">
+        </div>
+      </div>
+
+      <label for="assetSearchInput" style="margin-top:14px;display:block">Activo</label>
       <div class="ap-cats" id="assetCatChips">
         <button type="button" class="ap-cat-chip active" data-cat="all">Todos</button>
         <button type="button" class="ap-cat-chip" data-cat="forex">Forex</button>
@@ -2065,86 +2130,101 @@
       </div>
     </section>
 
-    <section id="replayChartSection" style="display:none">
-      <div class="replay-chart-topbar">
-        <h2>Repaso vela por vela</h2>
-        <div class="replay-tf-row" id="replayTimeframeRow">
-          <button type="button" class="replay-tf-btn" data-tf="M1">1m</button>
-          <button type="button" class="replay-tf-btn" data-tf="M5">5m</button>
-          <button type="button" class="replay-tf-btn active" data-tf="M15">15m</button>
-          <button type="button" class="replay-tf-btn" data-tf="M30">30m</button>
-          <button type="button" class="replay-tf-btn" data-tf="H1">1h</button>
-          <button type="button" class="replay-tf-btn" data-tf="H4">4h</button>
-          <button type="button" class="replay-tf-btn" data-tf="D1">1D</button>
+    <!-- ESTADO C: workspace dedicado de la sesión (gráfico + ticket) -->
+    <div id="replayWorkspace" style="display:none">
+      <div class="replay-workspace-header">
+        <button class="btn secondary" id="replayBackToSessionsBtn" type="button">← Mis sesiones</button>
+        <div class="replay-workspace-title">
+          <h2 id="replayWorkspaceTitle">—</h2>
+          <span class="replay-workspace-sub" id="replayWorkspaceSub">—</span>
         </div>
-      </div>
-      <div class="replay-chart-area">
-        <div class="replay-draw-toolbar" id="replayDrawToolbar">
-          <button type="button" class="replay-tool-btn active" data-tool="" title="Cursor (sin dibujar)">↖</button>
-          <button type="button" class="replay-tool-btn" data-tool="segment" title="Línea de tendencia">╱</button>
-          <button type="button" class="replay-tool-btn" data-tool="horizontalStraightLine" title="Línea horizontal">—</button>
-          <button type="button" class="replay-tool-btn" data-tool="rayLine" title="Rayo">↗</button>
-          <button type="button" class="replay-tool-btn" data-tool="rect" title="Rectángulo">▭</button>
-          <button type="button" class="replay-tool-btn" data-tool="circle" title="Círculo">◯</button>
-          <button type="button" class="replay-tool-btn" data-tool="fibonacciLine" title="Retroceso de Fibonacci">Fib</button>
-          <div class="replay-tool-sep"></div>
-          <button type="button" class="replay-tool-btn" id="replayClearDrawingsBtn" title="Borrar todos los dibujos">🗑</button>
-        </div>
-        <div id="replayChart" class="replay-chart-canvas"></div>
-      </div>
-      <div class="replay-playback-row">
-        <button class="btn secondary" id="replayStepBackBtn" type="button" title="Retroceder una vela">⏮</button>
-        <button class="btn" id="replayPlayBtn" type="button">▶ Reproducir</button>
-        <button class="btn secondary" id="replayStepBtn" type="button">Avanzar una vela ⏭</button>
-        <select id="replaySpeed">
-          <option value="1">1x</option>
-          <option value="2">2x</option>
-          <option value="4">4x</option>
-        </select>
-        <button class="btn secondary" id="replayResetBtn" type="button">Reiniciar</button>
-        <span id="replayPosLabel" class="replay-pos-label">—</span>
-      </div>
-    </section>
-
-    <section id="replayTicketSection" class="card replay-ticket-card" style="display:none">
-      <h2>Ticket simulado</h2>
-      <p class="hint" style="margin-top:0">Marcá una entrada sobre la vela actual del replay, seguí avanzando, y cerrala cuando quieras. No es una operación real, es solo para practicar.</p>
-
-      <div class="row">
-        <div>
-          <label for="replayTicketAsset">Activo (para tu journal)</label>
-          <select id="replayTicketAsset"></select>
-        </div>
-        <div>
-          <label for="replayTicketSize">Tamaño simulado</label>
-          <input type="text" id="replayTicketSize" inputmode="decimal" placeholder="Ej. 1" value="1">
+        <div class="replay-balance-pill">
+          <span class="replay-balance-label">Balance demo</span>
+          <span class="replay-balance-value" id="replayWorkspaceBalance">—</span>
         </div>
       </div>
 
-      <div class="replay-dir-row">
-        <button class="replay-dir-btn sell" id="replaySellBtn" type="button">
-          <span class="replay-dir-label">▼ VENDER</span>
-          <span class="replay-dir-price" id="replaySellPrice">—</span>
-        </button>
-        <button class="replay-dir-btn buy" id="replayBuyBtn" type="button">
-          <span class="replay-dir-label">▲ COMPRAR</span>
-          <span class="replay-dir-price" id="replayBuyPrice">—</span>
-        </button>
-      </div>
-
-      <div id="replayOpenInfo" class="replay-open-info" style="display:none"></div>
-
-      <div id="replayResultInfo" class="replay-result-info" style="display:none"></div>
-
-      <div id="replayJournalRow" style="display:none;margin-top:14px">
-        <label for="replayTicketNotes">Notas de esta operación simulada</label>
-        <textarea id="replayTicketNotes" rows="3" placeholder="¿Qué viste? ¿Seguiste tu plan?"></textarea>
-        <div style="margin-top:12px;display:flex;gap:10px">
-          <button class="btn" id="replaySaveJournalBtn" type="button">Guardar en journal como backtest</button>
-          <button class="btn secondary" id="replayDiscardBtn" type="button">Descartar</button>
+      <section id="replayChartSection" style="display:none">
+        <div class="replay-chart-topbar">
+          <h2>Repaso vela por vela</h2>
+          <div class="replay-tf-row" id="replayTimeframeRow">
+            <button type="button" class="replay-tf-btn" data-tf="M1">1m</button>
+            <button type="button" class="replay-tf-btn" data-tf="M5">5m</button>
+            <button type="button" class="replay-tf-btn active" data-tf="M15">15m</button>
+            <button type="button" class="replay-tf-btn" data-tf="M30">30m</button>
+            <button type="button" class="replay-tf-btn" data-tf="H1">1h</button>
+            <button type="button" class="replay-tf-btn" data-tf="H4">4h</button>
+            <button type="button" class="replay-tf-btn" data-tf="D1">1D</button>
+          </div>
         </div>
-      </div>
-    </section>
+        <div class="replay-chart-area">
+          <div class="replay-draw-toolbar" id="replayDrawToolbar">
+            <button type="button" class="replay-tool-btn active" data-tool="" title="Cursor (sin dibujar)">↖</button>
+            <button type="button" class="replay-tool-btn" data-tool="segment" title="Línea de tendencia">╱</button>
+            <button type="button" class="replay-tool-btn" data-tool="horizontalStraightLine" title="Línea horizontal">—</button>
+            <button type="button" class="replay-tool-btn" data-tool="rayLine" title="Rayo">↗</button>
+            <button type="button" class="replay-tool-btn" data-tool="rect" title="Rectángulo">▭</button>
+            <button type="button" class="replay-tool-btn" data-tool="circle" title="Círculo">◯</button>
+            <button type="button" class="replay-tool-btn" data-tool="fibonacciLine" title="Retroceso de Fibonacci">Fib</button>
+            <div class="replay-tool-sep"></div>
+            <button type="button" class="replay-tool-btn" id="replayClearDrawingsBtn" title="Borrar todos los dibujos">🗑</button>
+          </div>
+          <div id="replayChart" class="replay-chart-canvas"></div>
+        </div>
+        <div class="replay-playback-row">
+          <button class="btn secondary" id="replayStepBackBtn" type="button" title="Retroceder una vela">⏮</button>
+          <button class="btn" id="replayPlayBtn" type="button">▶ Reproducir</button>
+          <button class="btn secondary" id="replayStepBtn" type="button">Avanzar una vela ⏭</button>
+          <select id="replaySpeed">
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="4">4x</option>
+          </select>
+          <button class="btn secondary" id="replayResetBtn" type="button">Reiniciar</button>
+          <span id="replayPosLabel" class="replay-pos-label">—</span>
+        </div>
+      </section>
+
+      <section id="replayTicketSection" class="card replay-ticket-card" style="display:none">
+        <h2>Ticket simulado</h2>
+        <p class="hint" style="margin-top:0">Marcá una entrada sobre la vela actual del replay, seguí avanzando, y cerrala cuando quieras. No es una operación real, es solo para practicar.</p>
+
+        <div class="row">
+          <div>
+            <label for="replayTicketAsset">Activo (para tu journal)</label>
+            <select id="replayTicketAsset"></select>
+          </div>
+          <div>
+            <label for="replayTicketSize">Tamaño simulado</label>
+            <input type="text" id="replayTicketSize" inputmode="decimal" placeholder="Ej. 1" value="1">
+          </div>
+        </div>
+
+        <div class="replay-dir-row">
+          <button class="replay-dir-btn sell" id="replaySellBtn" type="button">
+            <span class="replay-dir-label">▼ VENDER</span>
+            <span class="replay-dir-price" id="replaySellPrice">—</span>
+          </button>
+          <button class="replay-dir-btn buy" id="replayBuyBtn" type="button">
+            <span class="replay-dir-label">▲ COMPRAR</span>
+            <span class="replay-dir-price" id="replayBuyPrice">—</span>
+          </button>
+        </div>
+
+        <div id="replayOpenInfo" class="replay-open-info" style="display:none"></div>
+
+        <div id="replayResultInfo" class="replay-result-info" style="display:none"></div>
+
+        <div id="replayJournalRow" style="display:none;margin-top:14px">
+          <label for="replayTicketNotes">Notas de esta operación simulada</label>
+          <textarea id="replayTicketNotes" rows="3" placeholder="¿Qué viste? ¿Seguiste tu plan?"></textarea>
+          <div style="margin-top:12px;display:flex;gap:10px">
+            <button class="btn" id="replaySaveJournalBtn" type="button">Guardar en journal como backtest</button>
+            <button class="btn secondary" id="replayDiscardBtn" type="button">Descartar</button>
+          </div>
+        </div>
+      </section>
+    </div>
   </div>
 
   </div><!-- /main -->
@@ -2693,6 +2773,7 @@
   let STORAGE_KEY = 'tradecam_config_v1';
   let JOURNAL_KEY = 'tradecam_journal_v1';
   let LAST_VIEW_KEY = 'tradecam_last_view_v1';
+  let REPLAY_SESSIONS_KEY = 'tradecam_replay_sessions_v1';
   const DB_NAME = 'tradecam'; const STORE_NAME = 'handles'; let HANDLE_KEY = 'saveFolder';
 
   const defaultConfig = () => ({
@@ -2867,6 +2948,7 @@
     currentUser = user;
     STORAGE_KEY = 'tradecam_config_v1::' + user.id;
     JOURNAL_KEY = 'tradecam_journal_v1::' + user.id;
+    REPLAY_SESSIONS_KEY = 'tradecam_replay_sessions_v1::' + user.id;
     HANDLE_KEY = 'saveFolder::' + user.id;
     LAST_VIEW_KEY = 'tradecam_last_view_v1::' + user.id;
     config = loadConfig();
@@ -7585,6 +7667,21 @@
   const replaySaveJournalBtn = document.getElementById('replaySaveJournalBtn');
   const replayDiscardBtn = document.getElementById('replayDiscardBtn');
 
+  // ---- Sesiones de backtesting (lista / crear / workspace) ----
+  const replaySessionsListSection = document.getElementById('replaySessionsListSection');
+  const replaySessionsGrid = document.getElementById('replaySessionsGrid');
+  const replaySessionsEmptyHint = document.getElementById('replaySessionsEmptyHint');
+  const replayNewSessionBtn = document.getElementById('replayNewSessionBtn');
+  const replayCreateSection = document.getElementById('replayCreateSection');
+  const replayCancelCreateBtn = document.getElementById('replayCancelCreateBtn');
+  const replaySessionNameInput = document.getElementById('replaySessionName');
+  const replaySessionBalanceInput = document.getElementById('replaySessionBalance');
+  const replayWorkspace = document.getElementById('replayWorkspace');
+  const replayBackToSessionsBtn = document.getElementById('replayBackToSessionsBtn');
+  const replayWorkspaceTitle = document.getElementById('replayWorkspaceTitle');
+  const replayWorkspaceSub = document.getElementById('replayWorkspaceSub');
+  const replayWorkspaceBalanceEl = document.getElementById('replayWorkspaceBalance');
+
   let replayChart = null;
   let replayCandles = [];
   let replayIndex = -1;
@@ -7594,6 +7691,149 @@
   let replayLastClosedResult = null; // última posición cerrada, pendiente de guardar o descartar
   let replayTimeframe = 'M15';       // timeframe activo — ahora se elige con los botones del gráfico, no en el formulario de arriba
   let replayActiveDrawTool = '';     // nombre de overlay de KLineChart en curso ('' = cursor, sin dibujar)
+  let replaySessions = [];           // todas las sesiones de backtesting guardadas del usuario actual
+  let activeReplaySession = null;    // la sesión abierta en el workspace, o null si estamos en la lista/creación
+
+  // =======================================================================
+  // SESIONES DE BACKTESTING: alta, guardado, lista y workspace dedicado.
+  // Cada sesión guarda su propio activo/timeframe/balance demo y el
+  // historial de operaciones simuladas que se cerraron dentro de ella, para
+  // que al volver se vean las métricas (igual que el dashboard de sesiones
+  // de FX Replay). Todo vive en localStorage, namespaceado por usuario
+  // (REPLAY_SESSIONS_KEY) igual que el journal.
+  // =======================================================================
+  function loadReplaySessions(){
+    try { replaySessions = JSON.parse(localStorage.getItem(REPLAY_SESSIONS_KEY) || '[]'); }
+    catch (e) { replaySessions = []; }
+    if (!Array.isArray(replaySessions)) replaySessions = [];
+  }
+
+  function persistReplaySessions(){
+    try { localStorage.setItem(REPLAY_SESSIONS_KEY, JSON.stringify(replaySessions)); } catch (e) {}
+  }
+
+  function replaySessionPnl(session){
+    return (session.trades || []).reduce((sum, t) => sum + (t.pnl || 0), 0);
+  }
+
+  function formatMoney(n){
+    const v = Math.round((n || 0) * 100) / 100;
+    return (v >= 0 ? '' : '−') + '$' + Math.abs(v).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+
+  function renderReplaySessionsList(){
+    loadReplaySessions();
+    const sorted = replaySessions.slice().sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
+    replaySessionsGrid.innerHTML = '';
+    replaySessionsEmptyHint.style.display = sorted.length ? 'none' : 'block';
+    sorted.forEach((session) => {
+      const pnl = replaySessionPnl(session);
+      const balance = (session.balance || 0) + pnl;
+      const trades = (session.trades || []).length;
+      const wins = (session.trades || []).filter((t) => t.pnl > 0).length;
+      const winRate = trades ? Math.round((wins / trades) * 100) : 0;
+      const card = document.createElement('div');
+      card.className = 'replay-session-card';
+      card.innerHTML =
+        '<div class="replay-session-card-top">' +
+          '<div>' +
+            '<div class="replay-session-card-name"></div>' +
+            '<div class="replay-session-card-asset"></div>' +
+          '</div>' +
+          '<button type="button" class="replay-session-card-del" title="Eliminar sesión">🗑</button>' +
+        '</div>' +
+        '<div class="replay-session-card-stats">' +
+          '<div class="replay-session-stat"><span class="replay-session-stat-label">Balance</span><span class="replay-session-stat-value balance-val"></span></div>' +
+          '<div class="replay-session-stat"><span class="replay-session-stat-label">P&amp;L</span><span class="replay-session-stat-value pnl-val"></span></div>' +
+          '<div class="replay-session-stat"><span class="replay-session-stat-label">Operaciones</span><span class="replay-session-stat-value">' + trades + (trades ? ' (' + winRate + '% win)' : '') + '</span></div>' +
+        '</div>' +
+        '<div class="replay-session-card-date"></div>';
+      card.querySelector('.replay-session-card-name').textContent = session.name || 'Sesión sin nombre';
+      card.querySelector('.replay-session-card-asset').textContent = (session.assetLabel || session.symbol || '') + ' · ' + (session.timeframe || '');
+      const balanceVal = card.querySelector('.balance-val');
+      balanceVal.textContent = formatMoney(balance);
+      balanceVal.classList.add(pnl >= 0 ? 'pos' : 'neg');
+      const pnlVal = card.querySelector('.pnl-val');
+      pnlVal.textContent = (pnl >= 0 ? '+' : '') + formatMoney(pnl);
+      pnlVal.classList.add(pnl >= 0 ? 'pos' : 'neg');
+      card.querySelector('.replay-session-card-date').textContent = 'Creada el ' + new Date(session.createdAt).toLocaleDateString('es-AR');
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.replay-session-card-del')) return;
+        openReplaySession(session);
+      });
+      card.querySelector('.replay-session-card-del').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!confirm('¿Eliminar la sesión "' + (session.name || 'sin nombre') + '"? Esta acción no se puede deshacer.')) return;
+        replaySessions = replaySessions.filter((s) => s.id !== session.id);
+        persistReplaySessions();
+        renderReplaySessionsList();
+      });
+      replaySessionsGrid.appendChild(card);
+    });
+  }
+
+  function showReplaySessionsList(){
+    stopReplayPlayback();
+    activeReplaySession = null;
+    replaySessionsListSection.style.display = 'block';
+    replayCreateSection.style.display = 'none';
+    replayWorkspace.style.display = 'none';
+    renderReplaySessionsList();
+  }
+
+  function showReplayCreateForm(){
+    replaySessionsListSection.style.display = 'none';
+    replayCreateSection.style.display = 'block';
+    replayWorkspace.style.display = 'none';
+    if (!replaySessionNameInput.value){
+      const existing = (replaySessions || []).length;
+      replaySessionNameInput.value = 'Sesión de backtesting #' + (existing + 1);
+    }
+    replaySessionNameInput.focus();
+  }
+
+  function updateWorkspaceBalanceUI(){
+    if (!activeReplaySession) return;
+    const pnl = replaySessionPnl(activeReplaySession);
+    const balance = (activeReplaySession.balance || 0) + pnl;
+    replayWorkspaceBalanceEl.textContent = formatMoney(balance);
+    replayWorkspaceBalanceEl.classList.toggle('pos', pnl >= 0);
+    replayWorkspaceBalanceEl.classList.toggle('neg', pnl < 0);
+  }
+
+  // Abre el workspace dedicado de una sesión ya creada: restaura su activo,
+  // timeframe y rango de fechas, y carga las velas automáticamente — tal
+  // como "me lleve a otra plataforma dentro de la aplicación" que pidió el
+  // usuario.
+  function openReplaySession(session){
+    activeReplaySession = session;
+    replaySessionsListSection.style.display = 'none';
+    replayCreateSection.style.display = 'none';
+    replayWorkspace.style.display = 'block';
+    replayWorkspaceTitle.textContent = session.name || 'Sesión sin nombre';
+    replayWorkspaceSub.textContent = (session.assetLabel || session.symbol || '') + ' · ' + (session.timeframe || '');
+    updateWorkspaceBalanceUI();
+
+    replaySelectedAsset = { source: session.source, symbol: session.symbol, category: session.category, label: session.assetLabel };
+    replayTimeframe = session.timeframe || 'M15';
+    replayTimeframeRow.querySelectorAll('.replay-tf-btn').forEach((b) => b.classList.toggle('active', b.dataset.tf === replayTimeframe));
+    replayFromInput.value = session.fromDate || '';
+    replayToInput.value = session.toDate || '';
+    if (replayFromPicker) replayFromPicker.sync();
+    if (replayToPicker) replayToPicker.sync();
+    updateReplayLoadBtnState();
+
+    createReplayChartIfNeeded();
+    loadReplayCandles({ scrollToChart: false });
+    setTimeout(() => { if (replayChart) try { replayChart.resize(); } catch (e) {} }, 0);
+  }
+
+  replayNewSessionBtn.addEventListener('click', () => {
+    replaySessionNameInput.value = '';
+    showReplayCreateForm();
+  });
+  replayCancelCreateBtn.addEventListener('click', showReplaySessionsList);
+  replayBackToSessionsBtn.addEventListener('click', showReplaySessionsList);
 
   function formatReplayTime(ts){
     return new Date(ts * 1000).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
@@ -7614,9 +7854,9 @@
   function updateReplayLoadBtnState(){
     const ready = !!(replaySelectedAsset && replayFromInput.value);
     replayLoadBtn.disabled = !ready;
-    if (!replaySelectedAsset) replayLoadBtn.textContent = 'Elegí un activo para analizar';
-    else if (!replayFromInput.value) replayLoadBtn.textContent = 'Elegí una fecha "Desde" para analizar';
-    else replayLoadBtn.textContent = 'Analizar';
+    if (!replaySelectedAsset) replayLoadBtn.textContent = 'Elegí un activo para crear la sesión';
+    else if (!replayFromInput.value) replayLoadBtn.textContent = 'Elegí una fecha "Desde" para crear la sesión';
+    else replayLoadBtn.textContent = 'Crear sesión';
   }
 
   const replayAssetSelector = createAssetSelector({
@@ -7657,8 +7897,13 @@
     if (replayToPicker) replayToPicker.sync();
     updateReplayLoadBtnState();
     if (replayChart){
-      setTimeout(() => { try { replayChart.applyOptions({width: replayChartEl.clientWidth}); } catch (e) {} }, 0);
+      setTimeout(() => { try { replayChart.resize(); } catch (e) {} }, 0);
     }
+
+    // Entrar a la pestaña de Replay siempre arranca en la lista de sesiones
+    // guardadas (como el dashboard de FX Replay) — abrir una sesión puntual
+    // se hace clickeando su tarjeta, no navegando directo al workspace.
+    showReplaySessionsList();
   }
   replayFromInput.addEventListener('change', updateReplayLoadBtnState);
 
@@ -7864,12 +8109,32 @@
         direction: r.direction,
         size: r.size,
         entryTime: r.entryTime,
-        exitTime: r.exitTime
+        exitTime: r.exitTime,
+        sessionId: activeReplaySession ? activeReplaySession.id : null
       }
     };
     const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
     journal.push(entry);
     localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+
+    // Además de ir al journal general, la operación queda en las métricas
+    // de ESTA sesión de backtesting (balance demo + lista de trades), para
+    // que su tarjeta en "Mis sesiones" muestre P&L y cantidad de operaciones
+    // ya actualizados la próxima vez que se vea la lista.
+    if (activeReplaySession){
+      activeReplaySession.trades = activeReplaySession.trades || [];
+      activeReplaySession.trades.push({
+        direction: r.direction, entryPrice: r.entryPrice, exitPrice: r.exitPrice,
+        entryTime: r.entryTime, exitTime: r.exitTime, size: r.size,
+        pnl: Math.round(r.pnl * 100) / 100, at: Date.now()
+      });
+      activeReplaySession.updatedAt = Date.now();
+      const idx = replaySessions.findIndex((s) => s.id === activeReplaySession.id);
+      if (idx !== -1) replaySessions[idx] = activeReplaySession;
+      persistReplaySessions();
+      updateWorkspaceBalanceUI();
+    }
+
     showToast('Operación simulada guardada en tu journal como backtest ✓');
     replayLastClosedResult = null;
     replayResultInfo.style.display = 'none';
@@ -7952,7 +8217,47 @@
       updateReplayLoadBtnState();
     }
   }
-  replayLoadBtn.addEventListener('click', () => loadReplayCandles());
+  // El botón "Crear sesión" del formulario: valida nombre/balance/activo/fecha,
+  // crea y persiste la sesión (balance demo + metadata del activo elegido) y
+  // recién ahí entra al workspace dedicado, que carga las velas solo. Esto es
+  // lo que separa "configurar" de "operar" — igual que crear una sesión en
+  // FX Replay te lleva a su propia pantalla de gráfico.
+  function createAndOpenReplaySession(){
+    if (!replaySelectedAsset){ replayStatus.textContent = 'Elegí un activo primero.'; return; }
+    if (!replayFromInput.value){ replayStatus.textContent = 'Elegí una fecha de inicio.'; return; }
+    const balanceRaw = parseFloat(String(replaySessionBalanceInput.value).replace(',', '.'));
+    const balance = (isFinite(balanceRaw) && balanceRaw > 0) ? balanceRaw : 10000;
+    const name = replaySessionNameInput.value.trim() || ('Sesión de backtesting #' + (replaySessions.length + 1));
+
+    const session = {
+      id: 'rs_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      name,
+      balance,
+      source: replaySelectedAsset.source,
+      symbol: replaySelectedAsset.symbol,
+      category: replaySelectedAsset.category,
+      assetLabel: replaySelectedAsset.label || replaySelectedAsset.symbol,
+      timeframe: replayTimeframe,
+      fromDate: replayFromInput.value,
+      toDate: replayToInput.value,
+      trades: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    replaySessions.push(session);
+    persistReplaySessions();
+
+    activeReplaySession = session;
+    replaySessionsListSection.style.display = 'none';
+    replayCreateSection.style.display = 'none';
+    replayWorkspace.style.display = 'block';
+    replayWorkspaceTitle.textContent = session.name;
+    replayWorkspaceSub.textContent = session.assetLabel + ' · ' + session.timeframe;
+    updateWorkspaceBalanceUI();
+
+    loadReplayCandles();
+  }
+  replayLoadBtn.addEventListener('click', createAndOpenReplaySession);
 
   replayTimeframeRow.querySelectorAll('.replay-tf-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -7960,6 +8265,14 @@
       replayTimeframeRow.querySelectorAll('.replay-tf-btn').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       replayTimeframe = btn.dataset.tf;
+      if (activeReplaySession){
+        activeReplaySession.timeframe = replayTimeframe;
+        activeReplaySession.updatedAt = Date.now();
+        replayWorkspaceSub.textContent = activeReplaySession.assetLabel + ' · ' + replayTimeframe;
+        const idx = replaySessions.findIndex((s) => s.id === activeReplaySession.id);
+        if (idx !== -1) replaySessions[idx] = activeReplaySession;
+        persistReplaySessions();
+      }
       if (replaySelectedAsset) loadReplayCandles({ scrollToChart: false });
     });
   });
