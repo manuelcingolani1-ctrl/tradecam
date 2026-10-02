@@ -103,6 +103,23 @@ bucket. Una grabación de más de 5 GB no se puede subir todavía (hace
 falta "subida multipart", que no está implementada) — en ese caso la app
 avisa con un error claro y el video queda solo en tu computadora.
 
+## Conectar Backblaze B2 (almacenamiento en la nube)
+
+Igual que R2: API compatible con S3, sin login por navegador, con una
+API key fija.
+
+1. Creá una cuenta en [backblaze.com/sign-up/cloud-storage](https://www.backblaze.com/sign-up/cloud-storage) (nivel gratis: 10 GB).
+2. **"B2 Cloud Storage"** → **"Buckets"** → **"Create a Bucket"**. Nombre único a nivel mundial (si `camtrader` ya está tomado, probá `camtrader-` + algo tuyo). Files in Bucket: **"Private"**.
+3. Entrá al bucket creado y copiá el **"Endpoint"** que muestra (por ejemplo `s3.us-west-004.backblazeb2.com`).
+4. **"Application Keys"** → **"Add a New Application Key"** → nombre `CamTrader`, restringido al bucket que creaste, acceso **"Read and Write"** → **"Create New Key"**.
+5. Copiá el **`keyID`** y el **`applicationKey`** (este último solo se muestra una vez).
+6. Completá dentro de `"b2"` en `cloud/credentials.local.json`: `endpoint`, `keyId`, `applicationKey` y `bucketName` (el nombre exacto que le diste).
+7. Actualizá el secret `CLOUD_CREDENTIALS_JSON` en GitHub con el JSON completo (los cuatro proveedores juntos).
+
+Mismo tope de seguridad configurable que R2 (`safetyCapGB` dentro de
+`"b2"`, 9.5 GB por defecto) y la misma limitación de 5 GB por archivo
+(sin subida multipart todavía).
+
 ## Desarrollo local
 
 ```
