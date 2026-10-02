@@ -148,6 +148,21 @@ Es 100% gratis, sin ninguna API paga:
 - **Bitcoin (y cualquier otro par de Binance)**: se trae de la API pública
   de Binance (`/api/v3/klines`), de solo lectura de mercado, sin cuenta ni
   API key. Funciona en Windows, Mac y Linux.
+- **Acciones, índices y metales (Yahoo Finance)**: se trae del endpoint
+  público "chart" de Yahoo Finance, sin cuenta ni API key. Funciona en
+  Windows, Mac y Linux.
+  - Acciones: el ticker tal cual (`AAPL`, `MSFT`, `SPY`).
+  - Índices "cash": `^GSPC` (S&P 500), `^NDX` (Nasdaq 100), `^DJI` (Dow Jones).
+  - Metales (futuro continuo, no spot): `GC=F` (oro), `SI=F` (plata).
+  - En D1 (diario) el historial llega décadas atrás. En M1/M5/M15/M30/H1/H4
+    Yahoo solo entrega entre ~7 días (M1) y ~60 días (el resto) de
+    historial intradía — es una limitación real de Yahoo, no de TradeCam;
+    si pedís un rango más largo en esos timeframes, la app ajusta sola la
+    fecha de inicio y te avisa.
+  - Yahoo es la fuente menos estable de las tres: a veces cambia esta API
+    sin aviso. Si falla en D1, TradeCam prueba automáticamente con
+    [Stooq](https://stooq.com) como respaldo (solo para acciones de EE.UU.
+    con ticker simple, ej. `AAPL`) antes de mostrar un error.
 
 Las velas que se traen quedan guardadas en un caché local en disco (JSON
 plano, en la carpeta de datos de la app — no en `localStorage`, por el

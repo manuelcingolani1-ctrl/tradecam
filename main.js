@@ -133,9 +133,11 @@ function fetchFromMT5(symbol, timeframe, fromTs, toTs, pythonPath) {
   });
 }
 
-function httpsGetJson(url) {
+// Pide una URL por HTTPS y devuelve el body crudo (texto). Base de
+// httpsGetJson (abajo) y de fetchFromStooq, que necesita CSV, no JSON.
+function httpsGetText(url, headers) {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'TradeCam' } }, (res) => {
+    https.get(url, { headers: Object.assign({ 'User-Agent': 'TradeCam' }, headers || {}) }, (res) => {
       let data = '';
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
@@ -143,13 +145,19 @@ function httpsGetJson(url) {
           reject(new Error('HTTP ' + res.statusCode + ': ' + data.slice(0, 300)));
           return;
         }
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          reject(new Error('Respuesta inválida de Binance: ' + e.message));
-        }
+        resolve(data);
       });
     }).on('error', reject);
+  });
+}
+
+function httpsGetJson(url, headers) {
+  return httpsGetText(url, headers).then((data) => {
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      throw new Error('Respuesta inválida (no es JSON): ' + e.message);
+    }
   });
 }
 
@@ -194,6 +202,140 @@ async function fetchFromBinance(symbol, timeframe, fromTs, toTs) {
   }
 }
 
+// Yahoo Finance no tiene un timeframe de 4 horas, así que H4 se arma acá
+// agrupando de a 4 velas de 1 hora (open=primera, close=última, high/low y
+// volumen agregados). El último grupo puede quedar incompleto (vela "en
+// formación"), que es lo esperado en un replay.
+const YAHOO_INTERVAL_MAP = { M1: '1m', M5: '5m', M15: '15m', M30: '30m', H1: '60m', H4: '60m', D1: '1d' };
+
+// Ventanas reales que Yahoo deja pedir hacia atrás para cada intervalo
+// intradía (documentadas por reportes de usuarios, no por Yahoo mismo, que
+// no publica esto formalmente): 1 minuto solo llega a ~7 días; el resto de
+// los intradía (5m, 15m, 30m, 60m) a ~60 días. D1 no tiene este límite.
+const YAHOO_MAX_INTRADAY_DAYS = { '1m': 7, '5m': 60, '15m': 60, '30m': 60, '60m': 60 };
+
+function aggregateCandles(candles, groupSize) {
+  const out = [];
+  for (let i = 0; i < candles.length; i += groupSize) {
+    const group = candles.slice(i, i + groupSize);
+    if (!group.length) continue;
+    out.push({
+      time: group[0].time,
+      open: group[0].open,
+      high: Math.max.apply(null, group.map((c) => c.high)),
+      low: Math.min.apply(null, group.map((c) => c.low)),
+      close: group[group.length - 1].close,
+      volume: group.reduce((sum, c) => sum + (c.volume || 0), 0)
+    });
+  }
+  return out;
+}
+
+// Trae velas de Yahoo Finance (sin API key, endpoint público "chart" que
+// usa la propia web de Yahoo). Sirve para acciones de EE.UU. (AAPL, SPY),
+// índices "cash" (^GSPC = S&P 500, ^NDX = Nasdaq 100, ^DJI = Dow Jones) y
+// metales como futuro continuo (GC=F = oro, SI=F = plata). Yahoo cambia
+// esta API sin aviso de tanto en tanto (ver notas del repo) — si deja de
+// funcionar, es lo primero a revisar.
+async function fetchFromYahoo(symbol, timeframe, fromTs, toTs) {
+  const interval = YAHOO_INTERVAL_MAP[timeframe];
+  if (!interval) return { ok: false, error: 'Timeframe inválido: ' + timeframe };
+
+  let effectiveFromTs = fromTs;
+  let warning;
+  const maxDays = YAHOO_MAX_INTRADAY_DAYS[interval];
+  if (maxDays) {
+    const minFromTs = toTs - maxDays * 86400;
+    if (effectiveFromTs < minFromTs) {
+      effectiveFromTs = minFromTs;
+      warning = 'Yahoo Finance solo entrega velas de ' + timeframe + ' de los últimos ' + maxDays +
+        ' días aproximadamente; se ajustó la fecha de inicio. Para historial más largo, usá D1 (diario).';
+    }
+  }
+
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(symbol) +
+    '?period1=' + effectiveFromTs + '&period2=' + toTs + '&interval=' + interval + '&events=history';
+
+  try {
+    const body = await httpsGetJson(url, {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+      'Accept': 'application/json'
+    });
+    const chartErr = body && body.chart && body.chart.error;
+    if (chartErr) {
+      return { ok: false, error: 'Yahoo Finance: ' + (chartErr.description || chartErr.code || 'símbolo no encontrado') + '. Revisá el símbolo (ej. AAPL, ^GSPC, ^NDX, GC=F).' };
+    }
+    const result = body && body.chart && body.chart.result && body.chart.result[0];
+    if (!result || !result.timestamp || !result.timestamp.length) {
+      return { ok: false, error: 'Yahoo Finance no devolvió velas para "' + symbol + '" en ese rango. Revisá el símbolo y las fechas.' };
+    }
+    const ts = result.timestamp;
+    const quote = result.indicators && result.indicators.quote && result.indicators.quote[0];
+    if (!quote) return { ok: false, error: 'Yahoo Finance devolvió una respuesta sin datos de precio.' };
+
+    let candles = [];
+    for (let i = 0; i < ts.length; i++) {
+      // Yahoo rellena con null las velas sin datos (feriados, huecos); se
+      // descartan en vez de guardar un agujero en el gráfico.
+      if (quote.close[i] == null || quote.open[i] == null) continue;
+      candles.push({
+        time: ts[i],
+        open: quote.open[i],
+        high: quote.high[i],
+        low: quote.low[i],
+        close: quote.close[i],
+        volume: quote.volume[i] || 0
+      });
+    }
+    if (timeframe === 'H4') candles = aggregateCandles(candles, 4);
+
+    return { ok: true, candles, warning };
+  } catch (e) {
+    return { ok: false, error: 'No se pudo traer velas de Yahoo Finance: ' + e.message + '. Revisá tu conexión a internet y el símbolo (ej. AAPL, ^GSPC, ^NDX, GC=F).' };
+  }
+}
+
+// Fallback de Yahoo cuando falla (Yahoo rompe esta API sin aviso de tanto
+// en tanto — ver el reporte de investigación de fuentes de datos). Solo
+// cubre el caso más simple y confiable: velas diarias (D1) de acciones de
+// EE.UU. con ticker "plano" (AAPL, MSFT, SPY...), vía el CSV público de
+// Stooq. No intenta mapear índices (^GSPC) ni futuros (GC=F) a la
+// nomenclatura de Stooq porque esa tabla de equivalencias no es confiable
+// sin probarla contra la API real — en esos casos simplemente no hay
+// fallback y se devuelve el error original de Yahoo.
+async function fetchFromStooq(symbol, fromTs, toTs) {
+  if (!/^[A-Za-z]{1,6}$/.test(symbol)) return { ok: false, error: 'stooq_not_applicable' };
+  const stooqSymbol = symbol.toLowerCase() + '.us';
+  const fmt = (ts) => {
+    const d = new Date(ts * 1000);
+    return d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0') + String(d.getUTCDate()).padStart(2, '0');
+  };
+  const url = 'https://stooq.com/q/d/l/?s=' + encodeURIComponent(stooqSymbol) +
+    '&d1=' + fmt(fromTs) + '&d2=' + fmt(toTs) + '&i=d';
+  try {
+    const csv = await httpsGetText(url);
+    const lines = csv.trim().split('\n');
+    if (lines.length < 2 || /no data|N\/D/i.test(csv)) {
+      return { ok: false, error: 'Stooq no tiene datos para "' + symbol + '".' };
+    }
+    const candles = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',');
+      if (cols.length < 6) continue;
+      const [dateStr, open, high, low, close, volume] = cols;
+      const time = Math.floor(Date.UTC(
+        parseInt(dateStr.slice(0, 4), 10),
+        parseInt(dateStr.slice(5, 7), 10) - 1,
+        parseInt(dateStr.slice(8, 10), 10)
+      ) / 1000);
+      candles.push({ time, open: parseFloat(open), high: parseFloat(high), low: parseFloat(low), close: parseFloat(close), volume: parseFloat(volume) || 0 });
+    }
+    return { ok: true, candles };
+  } catch (e) {
+    return { ok: false, error: 'No se pudo traer velas de Stooq: ' + e.message };
+  }
+}
+
 ipcMain.handle('replay:getCandles', async (event, params) => {
   const { source, symbol, timeframe, fromTs, toTs, pythonPath } = params || {};
   if (!source || !symbol || !timeframe || !fromTs || !toTs) {
@@ -209,6 +351,17 @@ ipcMain.handle('replay:getCandles', async (event, params) => {
       freshResult = await fetchFromMT5(symbol, timeframe, fromTs, toTs, pythonPath);
     } else if (source === 'binance') {
       freshResult = await fetchFromBinance(symbol, timeframe, fromTs, toTs);
+    } else if (source === 'yahoo') {
+      freshResult = await fetchFromYahoo(symbol, timeframe, fromTs, toTs);
+      if (!freshResult.ok && timeframe === 'D1') {
+        // Yahoo es la fuente menos estable de las tres (rompe su propia API
+        // sin aviso de tanto en tanto). Para velas diarias, antes de
+        // rendirse, probamos Stooq como segunda opción.
+        const stooqResult = await fetchFromStooq(symbol, fromTs, toTs);
+        if (stooqResult.ok && stooqResult.candles.length) {
+          freshResult = { ok: true, candles: stooqResult.candles, warning: 'Yahoo Finance falló (' + freshResult.error + '); se usó Stooq como respaldo.' };
+        }
+      }
     } else {
       return { ok: false, error: 'Fuente desconocida: ' + source };
     }
@@ -226,7 +379,7 @@ ipcMain.handle('replay:getCandles', async (event, params) => {
   const merged = mergeCandles(cached, freshResult.candles || []);
   writeCandleCache(source, symbol, timeframe, merged);
   const windowed = merged.filter((c) => c.time >= fromTs && c.time <= toTs);
-  return { ok: true, candles: windowed };
+  return { ok: true, candles: windowed, warning: freshResult.warning };
 });
 
 let mainWindow;
