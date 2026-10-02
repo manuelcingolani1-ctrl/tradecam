@@ -103,6 +103,13 @@
   .pill-link{background:none;border:1px solid var(--border);color:var(--text-2);font-size:12px;font-weight:600;
     padding:6px 12px;border-radius:999px;cursor:pointer;font-family:var(--font-ui)}
   .pill-link:hover{color:var(--teal);border-color:var(--teal)}
+  .seg-toggle{display:inline-flex;gap:2px;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:999px;padding:3px;flex:0 0 auto}
+  .seg-btn{background:none;border:none;color:var(--text-2);font-family:var(--font-ui);font-size:11.5px;
+    font-weight:700;letter-spacing:.01em;padding:5px 12px;border-radius:999px;cursor:pointer;
+    transition:color .15s,background .15s;white-space:nowrap}
+  .seg-btn:hover{color:var(--text)}
+  .seg-btn.active{background:var(--teal-soft);color:var(--teal)}
   .sched{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
   .sched-day{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
   .sched-day.today{background:var(--teal-soft);border-color:rgba(45,212,191,.4)}
@@ -1032,14 +1039,21 @@
     </div>
     <div id="inicioWarning" class="unsupported" style="margin-bottom:20px"></div>
 
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <div class="seg-toggle" id="kpiPeriodToggle" role="tablist" aria-label="Período de las métricas">
+        <button type="button" class="seg-btn" data-period="week">Semana</button>
+        <button type="button" class="seg-btn" data-period="month">Mes</button>
+        <button type="button" class="seg-btn" data-period="year">Año</button>
+      </div>
+    </div>
     <div class="kpi-grid">
       <div class="kpi">
-        <div class="kpi-label">P&amp;L semana</div>
+        <div class="kpi-label" id="kpiPnlLabel">P&amp;L semana</div>
         <div class="kpi-value" id="kpiPnl">—</div>
         <div class="kpi-sub" id="kpiPnlSub">Sin datos todavía</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Winrate semana</div>
+        <div class="kpi-label" id="kpiWinrateLabel">Winrate semana</div>
         <div class="kpi-value" id="kpiWinrate">—</div>
         <div class="kpi-sub" id="kpiWinrateSub">Sin operaciones cargadas</div>
       </div>
@@ -1083,11 +1097,18 @@
           <div class="meta" id="planMeta"></div>
         </div>
         <div class="card" style="padding:18px 22px">
-          <div class="panel-title" style="margin-bottom:12px">Este mes</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px">
+            <div class="panel-title" id="monthCardTitle">Este mes</div>
+            <div class="seg-toggle" id="monthPeriodToggle" role="tablist" aria-label="Período del resumen">
+              <button type="button" class="seg-btn" data-period="week">Sem</button>
+              <button type="button" class="seg-btn" data-period="month">Mes</button>
+              <button type="button" class="seg-btn" data-period="year">Año</button>
+            </div>
+          </div>
           <div class="divider"></div>
           <div class="kv-row"><span>P&amp;L acumulado</span><span class="num" id="monthPnl">—</span></div>
           <div class="kv-row"><span>Mejor día</span><span class="num" id="monthBest">—</span></div>
-          <div class="kv-row"><span>Sesiones con journal</span><span class="num" id="monthJournal">—</span></div>
+          <div class="kv-row"><span id="monthJournalLabel">Sesiones con journal</span><span class="num" id="monthJournal">—</span></div>
         </div>
       </div>
     </div>
@@ -4026,9 +4047,77 @@
   const kpiSessions = document.getElementById('kpiSessions');
   const kpiSessionsSub = document.getElementById('kpiSessionsSub');
   const kpiStreak = document.getElementById('kpiStreak');
+  const kpiPnlLabel = document.getElementById('kpiPnlLabel');
+  const kpiWinrateLabel = document.getElementById('kpiWinrateLabel');
   const monthPnl = document.getElementById('monthPnl');
   const monthBest = document.getElementById('monthBest');
   const monthJournal = document.getElementById('monthJournal');
+  const monthJournalLabel = document.getElementById('monthJournalLabel');
+  const monthCardTitle = document.getElementById('monthCardTitle');
+  const kpiPeriodToggle = document.getElementById('kpiPeriodToggle');
+  const monthPeriodToggle = document.getElementById('monthPeriodToggle');
+
+  // ---- Selector de período (Semana / Mes / Año) para las tarjetas del dashboard ----
+  // Cada tarjeta recuerda su propio período elegido entre sesiones.
+  const PERIOD_LABELS = {
+    week:  {kpi: 'semana', sessionsSub: 'esta semana',  cardTitle: 'Esta semana', journalLabel: 'Sesiones con journal'},
+    month: {kpi: 'mes',    sessionsSub: 'este mes',      cardTitle: 'Este mes',    journalLabel: 'Sesiones con journal'},
+    year:  {kpi: 'año',    sessionsSub: 'este año',      cardTitle: 'Este año',    journalLabel: 'Sesiones con journal'}
+  };
+  let kpiPeriod = localStorage.getItem('tradecam_kpi_period_v1') || 'week';
+  let monthCardPeriod = localStorage.getItem('tradecam_monthcard_period_v1') || 'month';
+  if (!PERIOD_LABELS[kpiPeriod]) kpiPeriod = 'week';
+  if (!PERIOD_LABELS[monthCardPeriod]) monthCardPeriod = 'month';
+
+  function getMonthStart(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+  function getMonthEnd(d){ return new Date(d.getFullYear(), d.getMonth() + 1, 0); }
+  function getYearStart(d){ return new Date(d.getFullYear(), 0, 1); }
+  function getYearEnd(d){ return new Date(d.getFullYear(), 11, 31); }
+
+  // Devuelve el rango [start, end] (ambos inclusive) de un período, anclado a "ref" (hoy por defecto).
+  function getPeriodRange(period, ref){
+    ref = ref || new Date();
+    if (period === 'month') return {start: getMonthStart(ref), end: getMonthEnd(ref)};
+    if (period === 'year') return {start: getYearStart(ref), end: getYearEnd(ref)};
+    const start = getWeekStart(dateToKey(ref));
+    const end = new Date(start); end.setDate(end.getDate() + 6);
+    return {start, end};
+  }
+
+  // Cuenta cuántos días del esquema semanal (lunes a viernes con activo + cuenta asignados)
+  // caen dentro de un rango de fechas, para usarlo como denominador de "sesiones grabadas".
+  function countScheduledDaysInRange(start, end){
+    let count = 0;
+    const d = new Date(start);
+    while (d <= end){
+      const dow = DOW_KEY[d.getDay()];
+      const e = config.schedule[dow];
+      if (e && !e.off && e.asset && e.account) count++;
+      d.setDate(d.getDate() + 1);
+    }
+    return count;
+  }
+
+  function setActiveSegBtn(toggleEl, period){
+    Array.from(toggleEl.querySelectorAll('.seg-btn')).forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.period === period);
+    });
+  }
+
+  kpiPeriodToggle.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.seg-btn');
+    if (!btn) return;
+    kpiPeriod = btn.dataset.period;
+    localStorage.setItem('tradecam_kpi_period_v1', kpiPeriod);
+    renderDashboardWidgets();
+  });
+  monthPeriodToggle.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.seg-btn');
+    if (!btn) return;
+    monthCardPeriod = btn.dataset.period;
+    localStorage.setItem('tradecam_monthcard_period_v1', monthCardPeriod);
+    renderDashboardWidgets();
+  });
 
   document.getElementById('dashEditScheduleBtn').addEventListener('click', () => showView('config'));
   document.getElementById('dashViewAllBtn').addEventListener('click', () => showView('historial'));
@@ -4058,14 +4147,18 @@
       dashSchedule.appendChild(cell);
     });
 
-    // ---- Semana actual (lunes a domingo) ----
+    // ---- Tarjetas superiores: P&L / Winrate / Sesiones grabadas, según el período elegido ----
     const now = new Date();
-    const weekStart = getWeekStart(dateToKey(now));
-    const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
-    const startKey = dateToKey(weekStart), endKey = dateToKey(weekEnd);
-    const weekEntries = journal.filter(e => e.date && e.date >= startKey && e.date <= endKey);
+    setActiveSegBtn(kpiPeriodToggle, kpiPeriod);
+    const kpiLabels = PERIOD_LABELS[kpiPeriod];
+    const {start: kpiStart, end: kpiEnd} = getPeriodRange(kpiPeriod, now);
+    const kpiStartKey = dateToKey(kpiStart), kpiEndKey = dateToKey(kpiEnd);
+    const periodEntries = journal.filter(e => e.date && e.date >= kpiStartKey && e.date <= kpiEndKey);
 
-    const pnlEntries = weekEntries.filter(e => typeof e.pnl === 'number');
+    kpiPnlLabel.textContent = 'P&L ' + kpiLabels.kpi;
+    kpiWinrateLabel.textContent = 'Winrate ' + kpiLabels.kpi;
+
+    const pnlEntries = periodEntries.filter(e => typeof e.pnl === 'number');
     if (pnlEntries.length){
       const total = pnlEntries.reduce((sum, e) => sum + e.pnl, 0);
       kpiPnl.textContent = fmtMoney(total);
@@ -4073,11 +4166,11 @@
       kpiPnlSub.textContent = pnlEntries.length + (pnlEntries.length === 1 ? ' sesión con P&L' : ' sesiones con P&L');
     } else {
       kpiPnl.textContent = '—'; kpiPnl.style.color = 'var(--text)';
-      kpiPnlSub.textContent = 'Sin P&L cargado esta semana';
+      kpiPnlSub.textContent = 'Sin P&L cargado ' + kpiLabels.sessionsSub;
     }
 
     let winsFromTrades = 0, lossesFromTrades = 0;
-    weekEntries.forEach(e => {
+    periodEntries.forEach(e => {
       if (typeof e.tradesWin === 'number') winsFromTrades += e.tradesWin;
       if (typeof e.tradesLoss === 'number') lossesFromTrades += e.tradesLoss;
     });
@@ -4085,19 +4178,16 @@
     if (winrateN > 0){
       winrate = Math.round((winsFromTrades / winrateN) * 100);
     } else {
-      const winDays = weekEntries.filter(e => e.result === 'win').length;
-      const lossDays = weekEntries.filter(e => e.result === 'loss').length;
+      const winDays = periodEntries.filter(e => e.result === 'win').length;
+      const lossDays = periodEntries.filter(e => e.result === 'loss').length;
       if (winDays + lossDays > 0){ winrate = Math.round((winDays / (winDays + lossDays)) * 100); winrateN = winDays + lossDays; }
     }
     kpiWinrate.textContent = winrate === null ? '—' : (winrate + '%');
     kpiWinrateSub.textContent = winrateN > 0 ? (winrateN + (winrateN === 1 ? ' operación' : ' operaciones')) : 'Sin operaciones cargadas';
 
-    const scheduledDays = DAYS.filter(d => {
-      const e = config.schedule[d.key];
-      return e && !e.off && e.asset && e.account;
-    }).length;
-    kpiSessions.textContent = weekEntries.length + ' / ' + scheduledDays;
-    kpiSessionsSub.textContent = 'esta semana';
+    const scheduledDays = countScheduledDaysInRange(kpiStart, kpiEnd);
+    kpiSessions.textContent = periodEntries.length + ' / ' + scheduledDays;
+    kpiSessionsSub.textContent = kpiLabels.sessionsSub;
 
     const stats = computeStats(journal);
     kpiStreak.textContent = stats.streak + (stats.streak === 1 ? ' día' : ' días');
@@ -4131,9 +4221,14 @@
       });
     }
 
-    // ---- Este mes ----
-    const monthKey = now.getFullYear() + '-' + pad(now.getMonth() + 1);
-    const monthEntries = journal.filter(e => e.date && e.date.startsWith(monthKey));
+    // ---- Tarjeta lateral (P&L acumulado / Mejor día / Sesiones con journal), según su propio período ----
+    setActiveSegBtn(monthPeriodToggle, monthCardPeriod);
+    const monthLabels = PERIOD_LABELS[monthCardPeriod];
+    monthCardTitle.textContent = monthLabels.cardTitle;
+    monthJournalLabel.textContent = monthLabels.journalLabel;
+    const {start: mcStart, end: mcEnd} = getPeriodRange(monthCardPeriod, now);
+    const mcStartKey = dateToKey(mcStart), mcEndKey = dateToKey(mcEnd);
+    const monthEntries = journal.filter(e => e.date && e.date >= mcStartKey && e.date <= mcEndKey);
     const monthPnlEntries = monthEntries.filter(e => typeof e.pnl === 'number');
     if (monthPnlEntries.length){
       monthPnl.textContent = fmtMoney(monthPnlEntries.reduce((s, e) => s + e.pnl, 0));
