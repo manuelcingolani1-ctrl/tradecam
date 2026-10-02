@@ -3375,7 +3375,11 @@
   function renderStorageSection(){
     const list = document.getElementById('storageList');
     if (!list) return;
-    const order = config.storageOrder;
+    // Filtro de seguridad: si por lo que sea config.storageOrder trae un id
+    // que ya no existe en STORAGE_PROVIDERS_META (por ejemplo, de una config
+    // vieja guardada antes de sacar un proveedor de la app), se descarta acá
+    // en vez de romper el resto del dibujo de la lista.
+    const order = config.storageOrder.filter(id => STORAGE_PROVIDERS_META[id]);
     const connectedCount = order.filter(id => config.storageProviders[id] && config.storageProviders[id].connected).length;
     const countEl = document.getElementById('storageConnectedCount');
     if (countEl) countEl.textContent = connectedCount + ' de ' + order.length + ' conectadas';
