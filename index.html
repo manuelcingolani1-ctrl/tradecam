@@ -702,6 +702,21 @@
   .result-btn.active.win{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
   .result-btn.active.loss{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
   .result-btn.active.neutral{background:var(--surface-2);border-color:var(--text-2);color:var(--text)}
+  .tilt-picker{display:flex;gap:8px}
+  .tilt-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;
+    border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);
+    cursor:pointer;font-family:var(--font-ui);min-height:56px;justify-content:center}
+  .tilt-btn .tilt-num{font-size:18px;font-weight:800;font-family:var(--font-mono)}
+  .tilt-btn .tilt-label{font-size:10px;text-align:center;line-height:1.3;color:inherit;opacity:0.85}
+  .tilt-btn.active[data-value="1"]{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  .tilt-btn.active[data-value="2"]{background:rgba(240,137,59,0.14);border-color:#F0893B;color:#F0893B}
+  .tilt-btn.active[data-value="3"]{background:rgba(240,185,11,0.14);border-color:#F0B90B;color:#F0B90B}
+  .tilt-btn.active[data-value="4"]{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+  .tilt-btn.active[data-value="5"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .tilt-picker-mini .tilt-btn{padding:8px 4px;min-height:40px}
+  .tilt-picker-mini .tilt-btn .tilt-num{font-size:14px}
+  .tilt-picker-mini .tilt-btn .tilt-label{display:none}
+  .tilt-saved-hint{font-size:11px;color:var(--text-2);margin-top:8px}
   .hist-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
     padding:3px 9px;border-radius:999px;margin-top:8px;font-family:var(--font-mono)}
   .hist-badge.win{background:var(--accent-soft);color:var(--accent)}
@@ -1607,6 +1622,30 @@
           </div>
         </section>
 
+        <section class="card detalle-tilt-card">
+          <h2>Tiltmeter</h2>
+          <p class="hint" style="margin-top:-6px">Se guarda solo a medida que contestás.</p>
+          <div class="tilt-picker tilt-picker-mini" id="detalleTiltRatingPicker">
+            <button type="button" class="tilt-btn" data-value="1"><span class="tilt-num">1</span></button>
+            <button type="button" class="tilt-btn" data-value="2"><span class="tilt-num">2</span></button>
+            <button type="button" class="tilt-btn" data-value="3"><span class="tilt-num">3</span></button>
+            <button type="button" class="tilt-btn" data-value="4"><span class="tilt-num">4</span></button>
+            <button type="button" class="tilt-btn" data-value="5"><span class="tilt-num">5</span></button>
+          </div>
+          <div style="margin-top:12px">
+            <label for="detalleTiltContext">¿Qué viste antes de entrar?</label>
+            <input type="text" id="detalleTiltContext" placeholder="Contexto / setup">
+          </div>
+          <div style="margin-top:10px">
+            <label for="detalleTiltFeeling">¿Cómo te sentiste durante la operación?</label>
+            <input type="text" id="detalleTiltFeeling" placeholder="—">
+          </div>
+          <div style="margin-top:10px">
+            <label for="detalleTiltProcess">¿Fue proceso o resultado?</label>
+            <input type="text" id="detalleTiltProcess" placeholder="¿Seguiste tu plan o improvisaste?">
+          </div>
+        </section>
+
         <section class="card detalle-eval-card">
           <h2>Autoevaluación</h2>
           <div class="eval-row">
@@ -1733,6 +1772,30 @@
   <div id="view-post" class="wrap" style="display:none">
     <h1>Cerrá el día</h1>
     <p class="sub" id="postSummary">—</p>
+
+    <section>
+      <h2>Tiltmeter</h2>
+      <p class="hint">¿Cómo estabas en esta operación? Se guarda solo a medida que contestás, no hace falta tocar "Guardar".</p>
+      <div class="tilt-picker" id="tiltRatingPicker">
+        <button type="button" class="tilt-btn" data-value="1"><span class="tilt-num">1</span><span class="tilt-label">Ansioso /<br>impulsivo</span></button>
+        <button type="button" class="tilt-btn" data-value="2"><span class="tilt-num">2</span><span class="tilt-label">&nbsp;</span></button>
+        <button type="button" class="tilt-btn" data-value="3"><span class="tilt-num">3</span><span class="tilt-label">&nbsp;</span></button>
+        <button type="button" class="tilt-btn" data-value="4"><span class="tilt-num">4</span><span class="tilt-label">&nbsp;</span></button>
+        <button type="button" class="tilt-btn" data-value="5"><span class="tilt-num">5</span><span class="tilt-label">Tranquilo /<br>en control</span></button>
+      </div>
+      <div style="margin-top:16px">
+        <label for="tiltContext">¿Qué viste antes de entrar?</label>
+        <input type="text" id="tiltContext" placeholder="Contexto / setup">
+      </div>
+      <div style="margin-top:14px">
+        <label for="tiltFeeling">¿Cómo te sentiste durante la operación?</label>
+        <input type="text" id="tiltFeeling" placeholder="...">
+      </div>
+      <div style="margin-top:14px">
+        <label for="tiltProcess">¿Fue proceso o resultado?</label>
+        <input type="text" id="tiltProcess" placeholder="¿Seguiste tu plan o improvisaste?">
+      </div>
+    </section>
 
     <section>
       <h2>Foto de tus operaciones</h2>
@@ -4599,6 +4662,27 @@
     const n = parseFloat(s.replace(',', '.'));
     return isNaN(n) ? s : n;
   }
+  // Actualiza (parcial) una entrada del journal ya existente, identificada
+  // por su createdAt, y la vuelve a guardar. La usa el Tiltmeter para
+  // autoguardarse sin botón, tanto en "Cerrá el día" como en el detalle de
+  // una sesión — el mismo patrón que ya usa saveDetalleField/saveDetalleEval.
+  function updateJournalEntryField(createdAtId, patchFn){
+    if (createdAtId === null || createdAtId === undefined) return null;
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    const idx = journal.findIndex(x => x.createdAt === createdAtId);
+    if (idx === -1) return null;
+    const patch = typeof patchFn === 'function' ? patchFn(journal[idx]) : patchFn;
+    journal[idx] = Object.assign({}, journal[idx], patch);
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+    return journal[idx];
+  }
+  function debounce(fn, ms){
+    let t;
+    return function(...args){
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
   function formatElapsed(ms){
     const s = Math.floor(ms / 1000);
     return pad(Math.floor(s/3600)) + ':' + pad(Math.floor(s/60)%60) + ':' + pad(s%60);
@@ -5191,6 +5275,35 @@
     });
   });
 
+  // ---- Tiltmeter (pantalla "Cerrá el día") ----
+  // Se autoguarda en la misma entrada de journal de esta sesión (pendingEntryId)
+  // apenas cambia algo, sin esperar a "Guardar journal"/"Saltar por ahora":
+  // así no se pierde aunque cierres la app antes de llegar a tocar esos botones.
+  const tiltRatingPicker = document.getElementById('tiltRatingPicker');
+  const tiltRatingBtns = Array.from(tiltRatingPicker.querySelectorAll('.tilt-btn'));
+  const tiltContext = document.getElementById('tiltContext');
+  const tiltFeeling = document.getElementById('tiltFeeling');
+  const tiltProcess = document.getElementById('tiltProcess');
+  let pendingTiltRating = null;
+
+  function saveTiltPatch(patch){
+    if (pendingEntryId === null) return;
+    updateJournalEntryField(pendingEntryId, (e) => ({ tiltmeter: Object.assign({}, e.tiltmeter, patch) }));
+  }
+  tiltRatingBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      pendingTiltRating = (pendingTiltRating === btn.dataset.value) ? null : btn.dataset.value;
+      tiltRatingBtns.forEach(b => b.classList.toggle('active', b.dataset.value === pendingTiltRating));
+      saveTiltPatch({ rating: pendingTiltRating ? Number(pendingTiltRating) : null });
+    });
+  });
+  const saveTiltContext = debounce(() => saveTiltPatch({ context: tiltContext.value }), 400);
+  const saveTiltFeeling = debounce(() => saveTiltPatch({ feeling: tiltFeeling.value }), 400);
+  const saveTiltProcess = debounce(() => saveTiltPatch({ process: tiltProcess.value }), 400);
+  tiltContext.addEventListener('input', saveTiltContext);
+  tiltFeeling.addEventListener('input', saveTiltFeeling);
+  tiltProcess.addEventListener('input', saveTiltProcess);
+
   photoInput.addEventListener('change', () => {
     const file = photoInput.files && photoInput.files[0];
     pendingPhotoFile = file || null;
@@ -5244,6 +5357,23 @@
     selectedResult = null;
     resultBtns.forEach(b => { b.classList.remove('active', 'win', 'loss', 'neutral'); });
 
+    // Tiltmeter: normalmente arranca vacío (sesión nueva), pero si ya había
+    // un borrador autoguardado para esta misma sesión (pendingEntryId), se
+    // recupera lo que se haya contestado antes de llegar a esta pantalla.
+    let existingTilt = null;
+    if (pendingEntryId !== null){
+      try {
+        const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+        const found = journal.find(x => x.createdAt === pendingEntryId);
+        if (found && found.tiltmeter) existingTilt = found.tiltmeter;
+      } catch (e) {}
+    }
+    pendingTiltRating = (existingTilt && existingTilt.rating) ? String(existingTilt.rating) : null;
+    tiltRatingBtns.forEach(b => b.classList.toggle('active', b.dataset.value === pendingTiltRating));
+    tiltContext.value = (existingTilt && existingTilt.context) || '';
+    tiltFeeling.value = (existingTilt && existingTilt.feeling) || '';
+    tiltProcess.value = (existingTilt && existingTilt.process) || '';
+
     showView('post');
   }
 
@@ -5280,7 +5410,16 @@
       entryPrice: parseNumOrText(journalEntryPrice.value),
       exitPrice: parseNumOrText(journalExitPrice.value),
       riskReward: journalRiskReward.value.trim() || null,
-      commissions: parseNumOrText(journalCommissions.value)
+      commissions: parseNumOrText(journalCommissions.value),
+      // El Tiltmeter ya se autoguarda solo en cada cambio (saveTiltPatch);
+      // esto es un respaldo extra para que el último tipeo quede guardado
+      // también si tocás "Guardar"/"Saltar" antes de que pase el debounce.
+      tiltmeter: {
+        rating: pendingTiltRating ? Number(pendingTiltRating) : null,
+        context: tiltContext.value || '',
+        feeling: tiltFeeling.value || '',
+        process: tiltProcess.value || ''
+      }
     };
     const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
     const existingIdx = (pendingEntryId !== null) ? journal.findIndex(e => e.createdAt === pendingEntryId) : -1;
@@ -6109,6 +6248,11 @@
   const detalleEvalPlan = document.getElementById('detalleEval-plan');
   const detalleEvalSize = document.getElementById('detalleEval-size');
   const detalleEvalEmotion = document.getElementById('detalleEval-emotion');
+  const detalleTiltRatingPicker = document.getElementById('detalleTiltRatingPicker');
+  const detalleTiltRatingBtns = Array.from(detalleTiltRatingPicker.querySelectorAll('.tilt-btn'));
+  const detalleTiltContext = document.getElementById('detalleTiltContext');
+  const detalleTiltFeeling = document.getElementById('detalleTiltFeeling');
+  const detalleTiltProcess = document.getElementById('detalleTiltProcess');
 
   let currentDetalleEntry = null;
   let detalleReturnView = 'historial';
@@ -6167,6 +6311,11 @@
     badges.push('<span class="detalle-badge num">' + formatDurationLong(entry.durationMin) + '</span>');
     const notesCount = Array.isArray(entry.markers) ? entry.markers.length : 0;
     badges.push('<span class="detalle-badge">' + notesCount + (notesCount === 1 ? ' nota' : ' notas') + '</span>');
+    if (entry.tiltmeter && entry.tiltmeter.rating){
+      const tiltColors = {1:'var(--danger)', 2:'#F0893B', 3:'#F0B90B', 4:'var(--teal)', 5:'var(--accent)'};
+      const tc = tiltColors[entry.tiltmeter.rating] || 'var(--text-2)';
+      badges.push('<span class="detalle-badge" style="color:' + tc + ';border-color:' + tc + '"><span class="pill-dot" style="background:' + tc + '"></span>Tiltmeter ' + entry.tiltmeter.rating + '/5</span>');
+    }
     detalleBadges.innerHTML = badges.join('');
 
     // ---- métricas ----
@@ -6187,6 +6336,14 @@
     detalleEvalPlan.checked = !!evalData.plan;
     detalleEvalSize.checked = !!evalData.size;
     detalleEvalEmotion.checked = !!evalData.emotion;
+
+    // ---- tiltmeter ----
+    const tiltData = entry.tiltmeter || {};
+    const tiltRatingStr = tiltData.rating ? String(tiltData.rating) : null;
+    detalleTiltRatingBtns.forEach(b => b.classList.toggle('active', b.dataset.value === tiltRatingStr));
+    detalleTiltContext.value = tiltData.context || '';
+    detalleTiltFeeling.value = tiltData.feeling || '';
+    detalleTiltProcess.value = tiltData.process || '';
 
     // ---- notas cronológicas ----
     detalleNotesList.innerHTML = '';
@@ -6359,6 +6516,26 @@
     localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
   }
   [detalleEvalPlan, detalleEvalSize, detalleEvalEmotion].forEach(el => el.addEventListener('change', saveDetalleEval));
+
+  // ---- Tiltmeter (vista de detalle) ----
+  // Mismo patrón de autoguardado que saveDetalleEval/saveDetalleField: cada
+  // cambio se escribe directo en la entrada de journal, sin botón "guardar".
+  function saveDetalleTiltPatch(patch){
+    if (!currentDetalleEntry) return;
+    const updated = updateJournalEntryField(currentDetalleEntry.createdAt, (e) => ({ tiltmeter: Object.assign({}, e.tiltmeter, patch) }));
+    if (updated) currentDetalleEntry = updated;
+  }
+  detalleTiltRatingBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const current = detalleTiltRatingBtns.find(b => b.classList.contains('active'));
+      const newValue = (current === btn) ? null : btn.dataset.value;
+      detalleTiltRatingBtns.forEach(b => b.classList.toggle('active', b === btn && newValue !== null));
+      saveDetalleTiltPatch({ rating: newValue ? Number(newValue) : null });
+    });
+  });
+  detalleTiltContext.addEventListener('input', debounce(() => saveDetalleTiltPatch({ context: detalleTiltContext.value }), 400));
+  detalleTiltFeeling.addEventListener('input', debounce(() => saveDetalleTiltPatch({ feeling: detalleTiltFeeling.value }), 400));
+  detalleTiltProcess.addEventListener('input', debounce(() => saveDetalleTiltPatch({ process: detalleTiltProcess.value }), 400));
 
   detalleEditNotesBtn.addEventListener('click', () => { if (currentDetalleEntry) openEditModal(currentDetalleEntry); });
 
