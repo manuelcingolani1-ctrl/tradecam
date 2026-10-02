@@ -290,6 +290,7 @@
 
   /* ---------- Configuración (rediseño): grilla de dos columnas ---------- */
   #view-config.wrap{max-width:1180px}
+  #view-replay.wrap{max-width:1180px}
   .config-grid{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
   .config-col-main{flex:1 1 600px;min-width:0}
   .config-col-side{flex:0 0 320px;min-width:280px}
@@ -759,10 +760,45 @@
   .replay-playback-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
   .replay-pos-label{font-size:13px;color:var(--text-2);font-family:var(--font-mono);margin-left:auto}
   .replay-ticket-card{padding:24px 28px}
+
+  /* Barra de timeframes arriba del gráfico (M1/M5/.../D1) */
+  .replay-chart-topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+  .replay-chart-topbar h2{margin:0}
+  .replay-tf-row{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:10px;padding:3px}
+  .replay-tf-btn{background:none;border:none;color:var(--text-2);font-family:var(--font-ui);font-weight:700;
+    font-size:12px;padding:7px 11px;border-radius:7px;cursor:pointer;transition:background-color .15s,color .15s}
+  .replay-tf-btn:hover{color:var(--text)}
+  .replay-tf-btn.active{background:var(--teal);color:#04201C}
+
+  /* Área del gráfico: toolbar de dibujo a la izquierda + canvas */
+  .replay-chart-area{display:flex;gap:8px}
+  .replay-draw-toolbar{flex:none;width:42px;display:flex;flex-direction:column;gap:4px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:6px}
+  .replay-tool-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+    background:none;border:none;border-radius:8px;color:var(--text-2);cursor:pointer;font-size:15px;
+    line-height:1;transition:background-color .15s,color .15s}
+  .replay-tool-btn:hover{background:var(--surface-3);color:var(--text)}
+  .replay-tool-btn.active{background:var(--teal-soft);color:var(--teal)}
+  .replay-tool-sep{height:1px;background:var(--border);margin:4px 2px}
+  .replay-chart-canvas{flex:1;min-width:0;height:640px;border-radius:12px;overflow:hidden;background:#0B0F17}
+
+  /* Ticket de compra/venta estilo TradingView: dos botones grandes con el
+     precio en vivo, VENDER (rojo) a la izquierda y COMPRAR (teal) a la
+     derecha. Los ids/handlers de abajo no cambiaron, solo el armado visual. */
   .replay-dir-row{display:flex;gap:12px;margin-top:16px}
-  .replay-dir-btn{flex:1;background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
-  .replay-dir-btn.buy.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
-  .replay-dir-btn.sell.active{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  .replay-dir-btn{flex:1;background:var(--surface-2);color:var(--text);border:1px solid var(--border);
+    border-radius:12px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;
+    cursor:pointer;font-family:var(--font-ui);transition:filter .15s,transform .1s}
+  .replay-dir-btn:hover{filter:brightness(1.08)}
+  .replay-dir-btn:active{transform:translateY(1px)}
+  .replay-dir-btn:disabled{opacity:0.4;cursor:not-allowed}
+  .replay-dir-label{font-size:12.5px;font-weight:700;letter-spacing:0.03em}
+  .replay-dir-price{font-family:var(--font-mono);font-size:21px;font-weight:700}
+  .replay-dir-btn.sell{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  .replay-dir-btn.buy{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .replay-dir-btn.buy.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+  .replay-dir-btn.sell.active{background:var(--danger-soft);border-color:var(--danger);color:var(--danger);box-shadow:0 0 0 2px var(--danger) inset}
   .replay-open-info,.replay-result-info{margin-top:16px;padding:14px 16px;border-radius:12px;
     background:var(--surface-2);border:1px solid var(--border);font-size:14px;line-height:1.6}
   .replay-result-info.win{border-color:var(--accent);background:var(--accent-soft)}
@@ -2030,8 +2066,32 @@
     </section>
 
     <section id="replayChartSection" style="display:none">
-      <h2>Repaso vela por vela</h2>
-      <div id="replayChart" style="width:100%;height:440px;border-radius:12px;overflow:hidden"></div>
+      <div class="replay-chart-topbar">
+        <h2>Repaso vela por vela</h2>
+        <div class="replay-tf-row" id="replayTimeframeRow">
+          <button type="button" class="replay-tf-btn" data-tf="M1">1m</button>
+          <button type="button" class="replay-tf-btn" data-tf="M5">5m</button>
+          <button type="button" class="replay-tf-btn active" data-tf="M15">15m</button>
+          <button type="button" class="replay-tf-btn" data-tf="M30">30m</button>
+          <button type="button" class="replay-tf-btn" data-tf="H1">1h</button>
+          <button type="button" class="replay-tf-btn" data-tf="H4">4h</button>
+          <button type="button" class="replay-tf-btn" data-tf="D1">1D</button>
+        </div>
+      </div>
+      <div class="replay-chart-area">
+        <div class="replay-draw-toolbar" id="replayDrawToolbar">
+          <button type="button" class="replay-tool-btn active" data-tool="" title="Cursor (sin dibujar)">↖</button>
+          <button type="button" class="replay-tool-btn" data-tool="segment" title="Línea de tendencia">╱</button>
+          <button type="button" class="replay-tool-btn" data-tool="horizontalStraightLine" title="Línea horizontal">—</button>
+          <button type="button" class="replay-tool-btn" data-tool="rayLine" title="Rayo">↗</button>
+          <button type="button" class="replay-tool-btn" data-tool="rect" title="Rectángulo">▭</button>
+          <button type="button" class="replay-tool-btn" data-tool="circle" title="Círculo">◯</button>
+          <button type="button" class="replay-tool-btn" data-tool="fibonacciLine" title="Retroceso de Fibonacci">Fib</button>
+          <div class="replay-tool-sep"></div>
+          <button type="button" class="replay-tool-btn" id="replayClearDrawingsBtn" title="Borrar todos los dibujos">🗑</button>
+        </div>
+        <div id="replayChart" class="replay-chart-canvas"></div>
+      </div>
       <div class="replay-playback-row">
         <button class="btn secondary" id="replayStepBackBtn" type="button" title="Retroceder una vela">⏮</button>
         <button class="btn" id="replayPlayBtn" type="button">▶ Reproducir</button>
@@ -2062,8 +2122,14 @@
       </div>
 
       <div class="replay-dir-row">
-        <button class="btn replay-dir-btn buy" id="replayBuyBtn" type="button">▲ Comprar</button>
-        <button class="btn replay-dir-btn sell" id="replaySellBtn" type="button">▼ Vender</button>
+        <button class="replay-dir-btn sell" id="replaySellBtn" type="button">
+          <span class="replay-dir-label">▼ VENDER</span>
+          <span class="replay-dir-price" id="replaySellPrice">—</span>
+        </button>
+        <button class="replay-dir-btn buy" id="replayBuyBtn" type="button">
+          <span class="replay-dir-label">▲ COMPRAR</span>
+          <span class="replay-dir-price" id="replayBuyPrice">—</span>
+        </button>
       </div>
 
       <div id="replayOpenInfo" class="replay-open-info" style="display:none"></div>
@@ -2086,11 +2152,14 @@
 
   <div class="toast" id="toast">Cambios guardados</div>
 
-<!-- TradingView Lightweight Charts (Apache-2.0, https://github.com/tradingview/lightweight-charts) -->
-<!-- Para el gráfico de velas del módulo de Replay/Backtesting. Se carga local -->
-<!-- (no desde un CDN) para que el replay funcione también sin internet una vez -->
-<!-- que las velas ya están en el caché local. -->
-<script src="vendor/lightweight-charts.standalone.production.js"></script>
+<!-- KLineChart (Apache-2.0, https://github.com/klinecharts/KLineChart) -->
+<!-- Para el gráfico de velas del módulo de Replay/Backtesting: a diferencia de -->
+<!-- Lightweight Charts (lo que usaba antes), esta trae herramientas de dibujo -->
+<!-- nativas (línea de tendencia, rectángulo, fibonacci, etc.) con una UX de -->
+<!-- click-y-dibujar muy parecida a TradingView. Se carga local (no desde un -->
+<!-- CDN) para que el replay funcione también sin internet una vez que las -->
+<!-- velas ya están en el caché local. -->
+<script src="vendor/klinecharts.standalone.production.js"></script>
 
 <!-- fix-webm-duration (MIT, https://github.com/yusitnikov/fix-webm-duration) -->
 <!-- Corrige la duracion del webm grabado en vivo para que se pueda adelantar/atrasar -->
@@ -7478,10 +7547,10 @@
   // mezclarse con las estadísticas reales — ver renderDashboardWidgets,
   // renderResumen y renderCalendar más arriba).
   // =======================================================================
-  // El timeframe ya no lo elige el usuario en el formulario (se sacó el
-  // desplegable para simplificar el flujo a "activo + fecha"): se usa un
-  // valor fijo razonable para repasar vela por vela.
-  const REPLAY_DEFAULT_TIMEFRAME = 'M15';
+  // El timeframe ya no se elige en el formulario de arriba (se sacó ese
+  // desplegable para simplificar el flujo a "activo + fecha"): ahora se
+  // elige con los botones de timeframe arriba del gráfico ya cargado (ver
+  // replayTimeframe y replayTimeframeRow más abajo).
   const replayFromInput = document.getElementById('replayFrom');
   const replayToInput = document.getElementById('replayTo');
   const replayFromPicker = createDatePicker('replayFrom');
@@ -7493,6 +7562,11 @@
   const replayStatus = document.getElementById('replayStatus');
   const replayChartSection = document.getElementById('replayChartSection');
   const replayChartEl = document.getElementById('replayChart');
+  const replayTimeframeRow = document.getElementById('replayTimeframeRow');
+  const replayDrawToolbar = document.getElementById('replayDrawToolbar');
+  const replayClearDrawingsBtn = document.getElementById('replayClearDrawingsBtn');
+  const replaySellPriceEl = document.getElementById('replaySellPrice');
+  const replayBuyPriceEl = document.getElementById('replayBuyPrice');
   const replayPlayBtn = document.getElementById('replayPlayBtn');
   const replayStepBtn = document.getElementById('replayStepBtn');
   const replayStepBackBtn = document.getElementById('replayStepBackBtn');
@@ -7512,13 +7586,14 @@
   const replayDiscardBtn = document.getElementById('replayDiscardBtn');
 
   let replayChart = null;
-  let replayCandleSeries = null;
   let replayCandles = [];
   let replayIndex = -1;
   let replayPlaying = false;
   let replayTimer = null;
   let replayPosition = null;         // posición simulada abierta, o null
   let replayLastClosedResult = null; // última posición cerrada, pendiente de guardar o descartar
+  let replayTimeframe = 'M15';       // timeframe activo — ahora se elige con los botones del gráfico, no en el formulario de arriba
+  let replayActiveDrawTool = '';     // nombre de overlay de KLineChart en curso ('' = cursor, sin dibujar)
 
   function formatReplayTime(ts){
     return new Date(ts * 1000).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
@@ -7587,41 +7662,96 @@
   }
   replayFromInput.addEventListener('change', updateReplayLoadBtnState);
 
+  // Paleta compartida por el gráfico (klinecharts) y por el panel de
+  // compra/venta, para que las velas alcistas/bajistas coincidan con el
+  // color de los botones VENDER/COMPRAR.
+  const REPLAY_UP_COLOR = '#22C55E';
+  const REPLAY_DOWN_COLOR = '#F04438';
+  const REPLAY_AXIS_COLOR = '#242C3B';
+  const REPLAY_GRID_COLOR = '#1C2330';
+  const REPLAY_TEXT_COLOR = '#8B93A7';
+
   function createReplayChartIfNeeded(){
-    if (replayChart || !window.LightweightCharts) return;
-    replayChart = LightweightCharts.createChart(replayChartEl, {
-      layout: { background: { color: 'transparent' }, textColor: '#8B93A7' },
-      grid: { vertLines: { color: '#1C2330' }, horzLines: { color: '#1C2330' } },
-      timeScale: { timeVisible: true, secondsVisible: false },
-      rightPriceScale: { borderColor: '#242C3B' }
+    if (replayChart || !window.klinecharts) return;
+    replayChart = window.klinecharts.init(replayChartEl, {
+      styles: {
+        grid: {
+          horizontal: { color: REPLAY_GRID_COLOR },
+          vertical: { color: REPLAY_GRID_COLOR }
+        },
+        candle: {
+          bar: {
+            upColor: REPLAY_UP_COLOR, downColor: REPLAY_DOWN_COLOR, noChangeColor: REPLAY_TEXT_COLOR,
+            upBorderColor: REPLAY_UP_COLOR, downBorderColor: REPLAY_DOWN_COLOR, noChangeBorderColor: REPLAY_TEXT_COLOR,
+            upWickColor: REPLAY_UP_COLOR, downWickColor: REPLAY_DOWN_COLOR, noChangeWickColor: REPLAY_TEXT_COLOR
+          },
+          priceMark: {
+            high: { color: REPLAY_TEXT_COLOR },
+            low: { color: REPLAY_TEXT_COLOR },
+            last: { upColor: REPLAY_UP_COLOR, downColor: REPLAY_DOWN_COLOR, noChangeColor: REPLAY_TEXT_COLOR }
+          }
+        },
+        xAxis: { axisLine: { color: REPLAY_AXIS_COLOR }, tickLine: { color: REPLAY_AXIS_COLOR }, tickText: { color: REPLAY_TEXT_COLOR } },
+        yAxis: { axisLine: { color: REPLAY_AXIS_COLOR }, tickLine: { color: REPLAY_AXIS_COLOR }, tickText: { color: REPLAY_TEXT_COLOR } },
+        crosshair: {
+          horizontal: { line: { color: '#3A4255' }, text: { backgroundColor: '#1C2330', color: '#C9D1E0' } },
+          vertical: { line: { color: '#3A4255' }, text: { backgroundColor: '#1C2330', color: '#C9D1E0' } }
+        },
+        separator: { color: REPLAY_GRID_COLOR }
+      }
     });
-    replayCandleSeries = replayChart.addCandlestickSeries({
-      upColor: '#22C55E', downColor: '#F04438', borderVisible: false,
-      wickUpColor: '#22C55E', wickDownColor: '#F04438'
-    });
+    if (!replayChart) return;
     window.addEventListener('resize', () => {
       if (replayChart && views.replay.style.display !== 'none'){
-        try { replayChart.applyOptions({width: replayChartEl.clientWidth}); } catch (e) {}
+        try { replayChart.resize(); } catch (e) {}
       }
     });
   }
 
+  // klinecharts necesita decimales fijos por gráfico (no los infiere vela a
+  // vela como hacía Lightweight Charts): sin esto, un forex como EURUSD
+  // (~1,0800) se vería redondeado a "1.08". Se calcula una vez por carga de
+  // velas, a partir de la magnitud del precio.
+  function decimalsForReplayCandles(candles){
+    const sample = candles.find((c) => c && c.close != null && isFinite(c.close));
+    const price = sample ? Math.abs(sample.close) : 100;
+    if (price < 1) return 5;
+    if (price < 10) return 4;
+    return 2;
+  }
+
+  function formatReplayPrice(price){
+    if (price == null || !isFinite(price)) return '—';
+    const abs = Math.abs(price);
+    const decimals = abs < 1 ? 5 : (abs < 10 ? 4 : 2);
+    return price.toFixed(decimals);
+  }
+
+  function updateTicketPriceDisplay(){
+    const candle = replayIndex >= 0 ? replayCandles[replayIndex] : null;
+    const text = candle ? formatReplayPrice(candle.close) : '—';
+    if (replaySellPriceEl) replaySellPriceEl.textContent = text;
+    if (replayBuyPriceEl) replayBuyPriceEl.textContent = text;
+  }
+
   function updateReplayChartView(){
-    if (!replayCandleSeries || replayIndex < 0) return;
-    const visible = replayCandles.slice(0, replayIndex + 1).map(c => ({
-      time: c.time, open: c.open, high: c.high, low: c.low, close: c.close
+    if (!replayChart || replayIndex < 0) return;
+    const visible = replayCandles.slice(0, replayIndex + 1).map((c) => ({
+      timestamp: c.time * 1000, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume || 0
     }));
-    replayCandleSeries.setData(visible);
+    replayChart.applyNewData(visible);
     const current = replayCandles[replayIndex];
     replayPosLabel.textContent = 'Vela ' + (replayIndex + 1) + ' / ' + replayCandles.length + ' — ' + formatReplayTime(current.time);
+    updateTicketPriceDisplay();
     updateOpenPositionInfo();
   }
 
   function resetReplayToStart(){
     if (!replayCandles.length) return;
+    if (replayChart) replayChart.setPriceVolumePrecision(decimalsForReplayCandles(replayCandles), 2);
     replayIndex = Math.min(60, replayCandles.length - 1);
     updateReplayChartView();
-    if (replayChart) replayChart.timeScale().fitContent();
+    if (replayChart) replayChart.scrollToRealTime();
   }
 
   function stopReplayPlayback(){
@@ -7730,7 +7860,7 @@
       replayMeta: {
         source: replaySelectedAsset ? replaySelectedAsset.source : '',
         symbol: replaySelectedAsset ? replaySelectedAsset.symbol : '',
-        timeframe: REPLAY_DEFAULT_TIMEFRAME,
+        timeframe: replayTimeframe,
         direction: r.direction,
         size: r.size,
         entryTime: r.entryTime,
@@ -7753,7 +7883,8 @@
     replayJournalRow.style.display = 'none';
   });
 
-  async function loadReplayCandles(){
+  async function loadReplayCandles(opts){
+    const scrollToChart = !opts || opts.scrollToChart !== false;
     stopReplayPlayback();
     replayPosition = null;
     replayLastClosedResult = null;
@@ -7765,7 +7896,7 @@
     if (!replaySelectedAsset){ replayStatus.textContent = 'Elegí un activo primero.'; return; }
     const source = replaySelectedAsset.source;
     const symbol = replaySelectedAsset.symbol;
-    const timeframe = REPLAY_DEFAULT_TIMEFRAME;
+    const timeframe = replayTimeframe;
     const fromStr = replayFromInput.value;
     const toStr = replayToInput.value;
 
@@ -7808,16 +7939,52 @@
       replayTicketSection.style.display = 'block';
       createReplayChartIfNeeded();
       resetReplayToStart();
-      // Flujo "un paso": apenas el gráfico está listo, bajamos solos hasta
-      // él para que el usuario no tenga que buscar la sección a mano.
-      setTimeout(() => { replayChartSection.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 50);
+      if (scrollToChart){
+        // Flujo "un paso": apenas el gráfico está listo, bajamos solos hasta
+        // él para que el usuario no tenga que buscar la sección a mano. Esto
+        // no pasa cuando el que disparó la carga fue un cambio de timeframe
+        // (el usuario ya está mirando el gráfico, no hace falta moverlo).
+        setTimeout(() => { replayChartSection.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 50);
+      }
     } catch (e) {
       replayStatus.textContent = 'Error inesperado: ' + e.message;
     } finally {
       updateReplayLoadBtnState();
     }
   }
-  replayLoadBtn.addEventListener('click', loadReplayCandles);
+  replayLoadBtn.addEventListener('click', () => loadReplayCandles());
+
+  replayTimeframeRow.querySelectorAll('.replay-tf-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('active')) return;
+      replayTimeframeRow.querySelectorAll('.replay-tf-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      replayTimeframe = btn.dataset.tf;
+      if (replaySelectedAsset) loadReplayCandles({ scrollToChart: false });
+    });
+  });
+
+  // Toolbar de dibujo (línea de tendencia, horizontal, rayo, rectángulo,
+  // círculo, fibonacci): cada botón arranca una figura nativa de klinecharts
+  // — el usuario la termina haciendo click sobre el gráfico — y el toolbar
+  // vuelve solo al "cursor" después, para no quedar "armado" sin querer.
+  const replayDrawToolBtns = Array.from(replayDrawToolbar.querySelectorAll('.replay-tool-btn[data-tool]'));
+  function setActiveReplayDrawTool(tool){
+    replayDrawToolBtns.forEach((b) => b.classList.toggle('active', b.dataset.tool === tool));
+  }
+  replayDrawToolBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tool = btn.dataset.tool;
+      setActiveReplayDrawTool(tool);
+      if (tool && replayChart){
+        replayChart.createOverlay(tool);
+        setTimeout(() => setActiveReplayDrawTool(''), 50);
+      }
+    });
+  });
+  replayClearDrawingsBtn.addEventListener('click', () => {
+    if (replayChart) replayChart.removeOverlay();
+  });
 
   enhanceNumberInputs();
 

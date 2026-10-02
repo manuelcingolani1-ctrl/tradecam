@@ -189,10 +189,14 @@ plano, en la carpeta de datos de la app — no en `localStorage`, por el
 volumen de datos), para no tener que volver a pedirlas cada vez que abrís
 el mismo símbolo/timeframe.
 
-El gráfico de velas usa [Lightweight Charts](https://github.com/tradingview/lightweight-charts)
-de TradingView (código abierto, licencia Apache-2.0), cargado desde
-`vendor/` local — no depende de internet una vez que las velas ya están
-en el caché.
+El gráfico de velas usa [KLineChart](https://github.com/klinecharts/KLineChart)
+(código abierto, licencia Apache-2.0), cargado desde `vendor/` local — no
+depende de internet una vez que las velas ya están en el caché. Se eligió
+por encima de Lightweight Charts (lo que usaba antes) porque trae
+herramientas de dibujo nativas (línea de tendencia, horizontal, rayo,
+rectángulo, círculo, Fibonacci) con una UX de click-y-dibujar parecida a
+TradingView, además de un timeframe seleccionable arriba del gráfico
+(M1 a D1) sin tener que volver al buscador de activo.
 
 ## Desarrollo local
 
