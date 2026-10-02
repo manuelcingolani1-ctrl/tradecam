@@ -177,6 +177,8 @@ El Replay ya no tiene un desplegable de "Fuente" separado de un campo de
   la fuente (Yahoo/Binance/MT5) — con la ✕ podés cambiarlo cuando quieras.
 - Con el activo y la fecha "Desde" elegidos, el botón "Analizar" te lleva
   directo al gráfico ya cargado, listo para repasar vela por vela.
+- El timeframe ya no se elige en el formulario (se simplificó a solo
+  activo + fecha): se usa M15 fijo para todo el replay.
 
 Las velas que se traen quedan guardadas en un caché local en disco (JSON
 plano, en la carpeta de datos de la app — no en `localStorage`, por el

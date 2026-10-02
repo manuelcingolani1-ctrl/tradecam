@@ -2008,18 +2008,6 @@
 
       <div class="row" style="margin-top:14px">
         <div>
-          <label for="replayTimeframe">Timeframe</label>
-          <select id="replayTimeframe">
-            <option value="M1">M1 (1 minuto)</option>
-            <option value="M5" selected>M5 (5 minutos)</option>
-            <option value="M15">M15 (15 minutos)</option>
-            <option value="M30">M30 (30 minutos)</option>
-            <option value="H1">H1 (1 hora)</option>
-            <option value="H4">H4 (4 horas)</option>
-            <option value="D1">D1 (diario)</option>
-          </select>
-        </div>
-        <div>
           <label for="replayFrom">Desde</label>
           <input type="date" id="replayFrom">
         </div>
@@ -7479,7 +7467,10 @@
   // mezclarse con las estadísticas reales — ver renderDashboardWidgets,
   // renderResumen y renderCalendar más arriba).
   // =======================================================================
-  const replayTimeframeSel = document.getElementById('replayTimeframe');
+  // El timeframe ya no lo elige el usuario en el formulario (se sacó el
+  // desplegable para simplificar el flujo a "activo + fecha"): se usa un
+  // valor fijo razonable para repasar vela por vela.
+  const REPLAY_DEFAULT_TIMEFRAME = 'M15';
   const replayFromInput = document.getElementById('replayFrom');
   const replayToInput = document.getElementById('replayTo');
   const replayFromPicker = createDatePicker('replayFrom');
@@ -7728,7 +7719,7 @@
       replayMeta: {
         source: replaySelectedAsset ? replaySelectedAsset.source : '',
         symbol: replaySelectedAsset ? replaySelectedAsset.symbol : '',
-        timeframe: replayTimeframeSel.value,
+        timeframe: REPLAY_DEFAULT_TIMEFRAME,
         direction: r.direction,
         size: r.size,
         entryTime: r.entryTime,
@@ -7763,7 +7754,7 @@
     if (!replaySelectedAsset){ replayStatus.textContent = 'Elegí un activo primero.'; return; }
     const source = replaySelectedAsset.source;
     const symbol = replaySelectedAsset.symbol;
-    const timeframe = replayTimeframeSel.value;
+    const timeframe = REPLAY_DEFAULT_TIMEFRAME;
     const fromStr = replayFromInput.value;
     const toStr = replayToInput.value;
 
