@@ -151,9 +151,12 @@ Es 100% gratis, sin ninguna API paga:
 - **Acciones, índices y metales (Yahoo Finance)**: se trae del endpoint
   público "chart" de Yahoo Finance, sin cuenta ni API key. Funciona en
   Windows, Mac y Linux.
-  - Acciones: el ticker tal cual (`AAPL`, `MSFT`, `SPY`).
-  - Índices "cash": `^GSPC` (S&P 500), `^NDX` (Nasdaq 100), `^DJI` (Dow Jones).
-  - Metales (futuro continuo, no spot): `GC=F` (oro), `SI=F` (plata).
+  - El campo Símbolo tiene un desplegable con ejemplos por categoría:
+    índices (`^GSPC`, `^NDX`, `^DJI`, `^RUT`, `^VIX`), forex (`EURUSD=X`,
+    `GBPUSD=X`, ...), metales/commodities (`GC=F` oro, `SI=F` plata,
+    `CL=F` petróleo, ...), cripto (`BTC-USD`, `ETH-USD`, ...) y acciones
+    (`AAPL`, `MSFT`, ...). También podés escribir cualquier otro ticker
+    que no esté en la lista, con la misma notación de Yahoo.
   - En D1 (diario) el historial llega décadas atrás. En M1/M5/M15/M30/H1/H4
     Yahoo solo entrega entre ~7 días (M1) y ~60 días (el resto) de
     historial intradía — es una limitación real de Yahoo, no de TradeCam;

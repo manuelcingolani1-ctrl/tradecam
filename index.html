@@ -7230,8 +7230,45 @@
       if (!replaySymbolInput.value) replaySymbolInput.value = 'NAS100';
     } else if (source === 'yahoo'){
       replayPythonRow.style.display = 'none';
-      replaySourceHint.textContent = 'Datos públicos de Yahoo Finance, sin cuenta ni API key. Acciones: símbolo tal cual (AAPL, MSFT, SPY). Índices: ^GSPC (S&P 500), ^NDX (Nasdaq 100), ^DJI (Dow Jones). Metales (futuro continuo): GC=F (oro), SI=F (plata). En M1/M5/M15/M30/H1/H4 el historial real está limitado a los últimos ~7-60 días (límite de Yahoo, no de la app); para historial de años usá D1.';
-      replaySymbolPresets.innerHTML = '<option value="AAPL"><option value="SPY"><option value="^GSPC"><option value="^NDX"><option value="GC=F"><option value="SI=F">';
+      replaySourceHint.textContent = 'Datos públicos de Yahoo Finance, sin cuenta ni API key. Abrí el desplegable de Símbolo para ver ejemplos por categoría (índices, forex, metales/commodities, cripto, acciones) — también podés escribir cualquier otro ticker que no esté en la lista. En M1/M5/M15/M30/H1/H4 el historial real está limitado a los últimos ~7-60 días (límite de Yahoo, no de la app); para historial de años usá D1.';
+      // No hay forma nativa de poner encabezados de categoría dentro de un
+      // <datalist> (los navegadores no los muestran), así que se simula
+      // agrupando el orden de las opciones por categoría y usando el
+      // atributo "label" de cada <option>, que Chrome/Electron sí muestra
+      // como texto secundario junto al símbolo en el desplegable.
+      const YAHOO_PRESETS = [
+        ['^GSPC', 'Índice · S&P 500'],
+        ['^NDX', 'Índice · Nasdaq 100'],
+        ['^DJI', 'Índice · Dow Jones'],
+        ['^RUT', 'Índice · Russell 2000'],
+        ['^VIX', 'Índice · VIX (volatilidad)'],
+        ['EURUSD=X', 'Forex · Euro / Dólar'],
+        ['GBPUSD=X', 'Forex · Libra / Dólar'],
+        ['USDJPY=X', 'Forex · Dólar / Yen'],
+        ['AUDUSD=X', 'Forex · Dólar australiano / Dólar'],
+        ['USDCHF=X', 'Forex · Dólar / Franco suizo'],
+        ['USDCAD=X', 'Forex · Dólar / Dólar canadiense'],
+        ['GC=F', 'Metal · Oro (futuro continuo)'],
+        ['SI=F', 'Metal · Plata (futuro continuo)'],
+        ['HG=F', 'Metal · Cobre (futuro continuo)'],
+        ['CL=F', 'Commodity · Petróleo WTI (futuro)'],
+        ['NG=F', 'Commodity · Gas natural (futuro)'],
+        ['BTC-USD', 'Cripto · Bitcoin'],
+        ['ETH-USD', 'Cripto · Ethereum'],
+        ['SOL-USD', 'Cripto · Solana'],
+        ['XRP-USD', 'Cripto · XRP'],
+        ['BNB-USD', 'Cripto · BNB'],
+        ['AAPL', 'Acción · Apple'],
+        ['MSFT', 'Acción · Microsoft'],
+        ['GOOGL', 'Acción · Alphabet (Google)'],
+        ['AMZN', 'Acción · Amazon'],
+        ['NVDA', 'Acción · Nvidia'],
+        ['TSLA', 'Acción · Tesla'],
+        ['META', 'Acción · Meta'],
+        ['SPY', 'ETF · S&P 500 (SPY)'],
+        ['QQQ', 'ETF · Nasdaq 100 (QQQ)']
+      ];
+      replaySymbolPresets.innerHTML = YAHOO_PRESETS.map((p) => '<option value="' + p[0] + '" label="' + p[1] + '">').join('');
       if (!replaySymbolInput.value || replaySymbolInput.value === 'NAS100' || replaySymbolInput.value === 'BTCUSDT') replaySymbolInput.value = 'AAPL';
     } else {
       replayPythonRow.style.display = 'none';
