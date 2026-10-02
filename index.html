@@ -4569,13 +4569,28 @@
     floatPipBtn.title = 'Flotar notas y cámara en una ventana aparte';
   }
 
+  // "pipOpening" tapa una condición de carrera: requestWindow() es async, y
+  // "pipWindow" recién se completa cuando termina de resolver. Si se tocaba
+  // el botón varias veces rápido (por ej. porque la ventana tardaba un toque
+  // en aparecer), cada click pasaba el chequeo "!pipWindow" de arriba antes
+  // de que el primero terminara, y se abría una ventana flotante nueva por
+  // cada click — por eso se apilaban varias en cascada. Este flag se pone en
+  // true de forma sincrónica, antes del await, así el segundo click ya no
+  // pasa el chequeo.
+  let pipOpening = false;
+
   async function openFloatingPanel(){
-    if (!pipSupported || pipWindow || !floatPipBtn) return;
+    if (!pipSupported || pipWindow || pipOpening || !floatPipBtn) return;
+    pipOpening = true;
+    floatPipBtn.disabled = true;
     try {
       pipWindow = await documentPictureInPicture.requestWindow({width: 300, height: 480});
     } catch (e) {
       pipWindow = null;
       return;
+    } finally {
+      pipOpening = false;
+      floatPipBtn.disabled = false;
     }
     // Copia el CSS de la app (tipografías, colores, componentes) así el
     // panel flotante se ve exactamente igual, en vez de reconstruirlo a mano.
