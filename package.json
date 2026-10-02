@@ -35,6 +35,8 @@
       "preload.js",
       "index.html",
       "cloud/**/*",
+      "vendor/**/*",
+      "python/**/*",
       "build/icon.png"
     ],
     "directories": {

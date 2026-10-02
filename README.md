@@ -114,6 +114,51 @@ Mismo tope de seguridad configurable que R2 (`safetyCapGB` dentro de
 `"b2"`, 9.5 GB por defecto) y la misma limitación de 5 GB por archivo
 (sin subida multipart todavía).
 
+## Replay / Backtesting (velas históricas)
+
+En el menú **Replay / Backtesting** se pueden repasar velas históricas
+vela por vela (sin ver el futuro) y practicar una entrada/salida simulada,
+que después se puede guardar en el journal marcada como `backtest` (no se
+mezcla con las estadísticas de tus sesiones reales — Dashboard, Resumen
+semanal y Calendario solo cuentan operaciones reales; en el Journal podés
+filtrar para verlas o no).
+
+Es 100% gratis, sin ninguna API paga:
+
+- **NAS100 (y cualquier otro símbolo de tu bróker en MT5)**: se trae con la
+  librería `MetaTrader5` de Python, hablando directo con la terminal de
+  MetaTrader 5 que ya tenés instalada.
+  - **Importante: esa librería solo funciona en Windows.** Es una
+    limitación de MetaTrader, no de TradeCam — si usás Mac o Linux, la
+    fuente "MetaTrader 5" del Replay no va a poder conectar por ahora
+    (vas a ver un error claro al intentarlo). Bitcoin vía Binance sí
+    funciona en cualquier sistema operativo.
+  - En Windows: instalá Python 3 (de [python.org](https://python.org), tildando
+    "Add Python to PATH" en el instalador) y después, en una terminal (cmd):
+    ```
+    pip install MetaTrader5
+    ```
+  - Abrí y logueate en tu terminal de MetaTrader 5 antes de usar el Replay
+    (TradeCam se conecta a esa sesión ya abierta, no abre una propia).
+  - El nombre del símbolo tiene que ser exactamente el que usa tu bróker en
+    el Market Watch de MT5 (puede ser `NAS100`, `US100`, `NAS100.cash`, etc.
+    — si no funciona el que probaste, fijate el nombre exacto ahí).
+  - Si tu Python no se llama `python` en el PATH (por ejemplo si usás
+    `python3`), podés indicarlo en el campo "Comando de Python" del Replay.
+- **Bitcoin (y cualquier otro par de Binance)**: se trae de la API pública
+  de Binance (`/api/v3/klines`), de solo lectura de mercado, sin cuenta ni
+  API key. Funciona en Windows, Mac y Linux.
+
+Las velas que se traen quedan guardadas en un caché local en disco (JSON
+plano, en la carpeta de datos de la app — no en `localStorage`, por el
+volumen de datos), para no tener que volver a pedirlas cada vez que abrís
+el mismo símbolo/timeframe.
+
+El gráfico de velas usa [Lightweight Charts](https://github.com/tradingview/lightweight-charts)
+de TradingView (código abierto, licencia Apache-2.0), cargado desde
+`vendor/` local — no depende de internet una vez que las velas ya están
+en el caché.
+
 ## Desarrollo local
 
 ```

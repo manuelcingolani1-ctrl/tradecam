@@ -15,3 +15,10 @@ contextBridge.exposeInMainWorld('cloudAPI', {
   uploadFile: (provider, fileName, mimeType, arrayBuffer) =>
     ipcRenderer.invoke('cloud:upload', provider, fileName, mimeType, arrayBuffer)
 });
+
+// Puente para el módulo de Replay/Backtesting: pide velas históricas (MT5
+// vía Python, o Binance vía HTTPS) al proceso principal, que es el único
+// que puede ejecutar procesos externos y guardar el caché en disco.
+contextBridge.exposeInMainWorld('replayAPI', {
+  getCandles: (params) => ipcRenderer.invoke('replay:getCandles', params)
+});

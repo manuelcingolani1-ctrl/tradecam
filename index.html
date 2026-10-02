@@ -717,6 +717,19 @@
   .tilt-picker-mini .tilt-btn .tilt-num{font-size:14px}
   .tilt-picker-mini .tilt-btn .tilt-label{display:none}
   .tilt-saved-hint{font-size:11px;color:var(--text-2);margin-top:8px}
+  /* ---------- Replay / Backtesting ---------- */
+  .replay-playback-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .replay-pos-label{font-size:13px;color:var(--text-2);font-family:var(--font-mono);margin-left:auto}
+  .replay-ticket-card{padding:24px 28px}
+  .replay-dir-row{display:flex;gap:12px;margin-top:16px}
+  .replay-dir-btn{flex:1;background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+  .replay-dir-btn.buy.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .replay-dir-btn.sell.active{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  .replay-open-info,.replay-result-info{margin-top:16px;padding:14px 16px;border-radius:12px;
+    background:var(--surface-2);border:1px solid var(--border);font-size:14px;line-height:1.6}
+  .replay-result-info.win{border-color:var(--accent);background:var(--accent-soft)}
+  .replay-result-info.loss{border-color:var(--danger);background:var(--danger-soft)}
+  .hist-badge.backtest{background:rgba(167,139,250,0.16);color:#A78BFA}
   .hist-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
     padding:3px 9px;border-radius:999px;margin-top:8px;font-family:var(--font-mono)}
   .hist-badge.win{background:var(--accent-soft);color:var(--accent)}
@@ -941,6 +954,10 @@
       <button class="navlink" id="navResumen" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
         Resumen semanal
+      </button>
+      <button class="navlink" id="navReplay" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 21v-3M16 21v-3"/></svg>
+        Replay / Backtesting
       </button>
       <button class="navlink" id="navConfig" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
@@ -1313,6 +1330,14 @@
             <option value="none">Sin agrupar</option>
             <option value="week" selected>Semana</option>
             <option value="month">Mes</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterBacktest">Backtests (Replay)</label>
+          <select id="filterBacktest">
+            <option value="hide" selected>Ocultar backtests</option>
+            <option value="only">Solo backtests</option>
+            <option value="all">Mostrar todo</option>
           </select>
         </div>
       </div>
@@ -1895,10 +1920,128 @@
     </div>
   </div>
 
+  <!-- ============ VIEW: REPLAY / BACKTESTING ============ -->
+  <div id="view-replay" class="wrap" style="display:none">
+    <div class="dash-topbar">
+      <div>
+        <h1 style="margin:0 0 4px">Replay / Backtesting</h1>
+        <p class="sub" style="margin:0">Repasá velas históricas vela por vela y practicá tu entrada/salida sin arriesgar nada real.</p>
+      </div>
+    </div>
+
+    <section>
+      <h2>Elegí qué velas repasar</h2>
+      <div class="row">
+        <div>
+          <label for="replaySource">Fuente de datos</label>
+          <select id="replaySource">
+            <option value="mt5">MetaTrader 5 (NAS100, forex, etc.)</option>
+            <option value="binance">Binance (Bitcoin y otras cripto)</option>
+          </select>
+        </div>
+        <div>
+          <label for="replaySymbol">Símbolo</label>
+          <input type="text" id="replaySymbol" placeholder="Ej. NAS100" list="replaySymbolPresets">
+          <datalist id="replaySymbolPresets"></datalist>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="replayTimeframe">Timeframe</label>
+          <select id="replayTimeframe">
+            <option value="M1">M1 (1 minuto)</option>
+            <option value="M5" selected>M5 (5 minutos)</option>
+            <option value="M15">M15 (15 minutos)</option>
+            <option value="M30">M30 (30 minutos)</option>
+            <option value="H1">H1 (1 hora)</option>
+            <option value="H4">H4 (4 horas)</option>
+            <option value="D1">D1 (diario)</option>
+          </select>
+        </div>
+        <div>
+          <label for="replayFrom">Desde</label>
+          <input type="date" id="replayFrom">
+        </div>
+        <div>
+          <label for="replayTo">Hasta</label>
+          <input type="date" id="replayTo">
+        </div>
+      </div>
+      <div class="row" id="replayPythonRow" style="margin-top:14px">
+        <div>
+          <label for="replayPythonPath">Comando de Python en tu compu (opcional)</label>
+          <input type="text" id="replayPythonPath" placeholder="python">
+        </div>
+      </div>
+      <p class="hint" id="replaySourceHint" style="margin-top:12px"></p>
+      <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
+        <button class="btn" id="replayLoadBtn" type="button">Cargar velas</button>
+        <span id="replayStatus" style="font-size:13px;color:var(--text-2)"></span>
+      </div>
+    </section>
+
+    <section id="replayChartSection" style="display:none">
+      <h2>Repaso vela por vela</h2>
+      <div id="replayChart" style="width:100%;height:440px;border-radius:12px;overflow:hidden"></div>
+      <div class="replay-playback-row">
+        <button class="btn secondary" id="replayStepBackBtn" type="button" title="Retroceder una vela">⏮</button>
+        <button class="btn" id="replayPlayBtn" type="button">▶ Reproducir</button>
+        <button class="btn secondary" id="replayStepBtn" type="button">Avanzar una vela ⏭</button>
+        <select id="replaySpeed">
+          <option value="1">1x</option>
+          <option value="2">2x</option>
+          <option value="4">4x</option>
+        </select>
+        <button class="btn secondary" id="replayResetBtn" type="button">Reiniciar</button>
+        <span id="replayPosLabel" class="replay-pos-label">—</span>
+      </div>
+    </section>
+
+    <section id="replayTicketSection" class="card replay-ticket-card" style="display:none">
+      <h2>Ticket simulado</h2>
+      <p class="hint" style="margin-top:0">Marcá una entrada sobre la vela actual del replay, seguí avanzando, y cerrala cuando quieras. No es una operación real, es solo para practicar.</p>
+
+      <div class="row">
+        <div>
+          <label for="replayTicketAsset">Activo (para tu journal)</label>
+          <select id="replayTicketAsset"></select>
+        </div>
+        <div>
+          <label for="replayTicketSize">Tamaño simulado</label>
+          <input type="text" id="replayTicketSize" inputmode="decimal" placeholder="Ej. 1" value="1">
+        </div>
+      </div>
+
+      <div class="replay-dir-row">
+        <button class="btn replay-dir-btn buy" id="replayBuyBtn" type="button">▲ Comprar</button>
+        <button class="btn replay-dir-btn sell" id="replaySellBtn" type="button">▼ Vender</button>
+      </div>
+
+      <div id="replayOpenInfo" class="replay-open-info" style="display:none"></div>
+
+      <div id="replayResultInfo" class="replay-result-info" style="display:none"></div>
+
+      <div id="replayJournalRow" style="display:none;margin-top:14px">
+        <label for="replayTicketNotes">Notas de esta operación simulada</label>
+        <textarea id="replayTicketNotes" rows="3" placeholder="¿Qué viste? ¿Seguiste tu plan?"></textarea>
+        <div style="margin-top:12px;display:flex;gap:10px">
+          <button class="btn" id="replaySaveJournalBtn" type="button">Guardar en journal como backtest</button>
+          <button class="btn secondary" id="replayDiscardBtn" type="button">Descartar</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
   </div><!-- /main -->
   </div><!-- /shell -->
 
   <div class="toast" id="toast">Cambios guardados</div>
+
+<!-- TradingView Lightweight Charts (Apache-2.0, https://github.com/tradingview/lightweight-charts) -->
+<!-- Para el gráfico de velas del módulo de Replay/Backtesting. Se carga local -->
+<!-- (no desde un CDN) para que el replay funcione también sin internet una vez -->
+<!-- que las velas ya están en el caché local. -->
+<script src="vendor/lightweight-charts.standalone.production.js"></script>
 
 <!-- fix-webm-duration (MIT, https://github.com/yusitnikov/fix-webm-duration) -->
 <!-- Corrige la duracion del webm grabado en vivo para que se pueda adelantar/atrasar -->
@@ -2940,7 +3083,8 @@
     detalle: document.getElementById('view-detalle'),
     sesion: document.getElementById('view-sesion'),
     post: document.getElementById('view-post'),
-    done: document.getElementById('view-done')
+    done: document.getElementById('view-done'),
+    replay: document.getElementById('view-replay')
   };
   const navInicio = document.getElementById('navInicio');
   const navConfig = document.getElementById('navConfig');
@@ -2948,12 +3092,15 @@
   const navCalendario = document.getElementById('navCalendario');
   const navResumen = document.getElementById('navResumen');
   const navGrabacionEl = document.getElementById('navGrabacion');
+  const navReplay = document.getElementById('navReplay');
 
   // Vistas que se restauran al recargar la página. "post" y "done" quedan
   // afuera a propósito: dependen de datos en memoria (video/foto pendientes)
   // que no sobreviven a un F5. "sesion" (Grabación) sí se guarda, pero
   // bootApp() la maneja distinto (ver más abajo): no puede retomar la
   // grabación en sí, solo dejar esa pantalla lista para arrancar de nuevo.
+  // "replay" tampoco se restaura: el estado del replay (velas cargadas,
+  // posición simulada abierta) vive solo en memoria y no sobrevive a un F5.
   const RESTORABLE_VIEWS = ['inicio', 'config', 'historial', 'calendario', 'resumen', 'sesion'];
 
   function showView(name){
@@ -2964,6 +3111,7 @@
     navCalendario.classList.toggle('active', name === 'calendario');
     navResumen.classList.toggle('active', name === 'resumen');
     navGrabacionEl.classList.toggle('active', name === 'sesion');
+    navReplay.classList.toggle('active', name === 'replay');
     if (RESTORABLE_VIEWS.includes(name)){
       try { localStorage.setItem(LAST_VIEW_KEY, name); } catch (e) {}
     }
@@ -2971,12 +3119,14 @@
     if (name === 'historial') renderHistorial();
     if (name === 'calendario') renderCalendar();
     if (name === 'resumen') renderResumen();
+    if (name === 'replay') initReplayView();
   }
   navInicio.addEventListener('click', () => showView('inicio'));
   navConfig.addEventListener('click', () => { showView('config'); refreshDeviceOptions(); });
   navHistorial.addEventListener('click', () => showView('historial'));
   navCalendario.addEventListener('click', () => showView('calendario'));
   navResumen.addEventListener('click', () => showView('resumen'));
+  navReplay.addEventListener('click', () => showView('replay'));
 
   // =======================================================================
   // CONFIGURACIÓN VIEW
@@ -3889,7 +4039,9 @@
   }
 
   function renderDashboardWidgets(){
-    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    // Las operaciones simuladas de Replay/Backtesting no entran en las
+    // estadísticas reales del dashboard — ver el comentario en renderResumen.
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]').filter(e => !e.backtest);
     const {dowKey: todayKey} = todayInfo();
 
     // ---- Esquema semanal ----
@@ -5474,6 +5626,7 @@
   const filterAccount = document.getElementById('filterAccount');
   const filterResult = document.getElementById('filterResult');
   const filterGroupBy = document.getElementById('filterGroupBy');
+  const filterBacktest = document.getElementById('filterBacktest');
   const filterClearBtn = document.getElementById('filterClearBtn');
   const filterCount = document.getElementById('filterCount');
   const filterFromPicker = createDatePicker('filterFrom');
@@ -5489,12 +5642,12 @@
     if (values.includes(current)) select.value = current;
   }
 
-  [filterFrom, filterTo, filterAsset, filterAccount, filterResult, filterGroupBy].forEach(el => {
+  [filterFrom, filterTo, filterAsset, filterAccount, filterResult, filterGroupBy, filterBacktest].forEach(el => {
     el.addEventListener('change', renderHistorial);
   });
   filterClearBtn.addEventListener('click', () => {
     filterFrom.value = ''; filterTo.value = ''; filterAsset.value = '';
-    filterAccount.value = ''; filterResult.value = '';
+    filterAccount.value = ''; filterResult.value = ''; filterBacktest.value = 'hide';
     filterFromPicker.sync(); filterToPicker.sync();
     renderHistorial();
   });
@@ -5681,8 +5834,12 @@
 
   function renderHistorial(){
     const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
-    renderStats(journal);
-    renderJournalCalendar(journal);
+    // Las estadísticas (racha, winrate, etc.) y el calendario de journaling
+    // de arriba son sobre sesiones reales — los backtests de Replay se ven
+    // más abajo, en la lista, con su propio filtro.
+    const realJournal = journal.filter(e => !e.backtest);
+    renderStats(realJournal);
+    renderJournalCalendar(realJournal);
 
     const assetValues = Array.from(new Set(journal.map(e => e.asset).filter(Boolean))).sort();
     const accountValues = Array.from(new Set(journal.map(e => e.account).filter(Boolean))).sort();
@@ -5695,10 +5852,12 @@
       if (filterAsset.value && e.asset !== filterAsset.value) return false;
       if (filterAccount.value && e.account !== filterAccount.value) return false;
       if (filterResult.value && e.result !== filterResult.value) return false;
+      if (filterBacktest.value === 'hide' && e.backtest) return false;
+      if (filterBacktest.value === 'only' && !e.backtest) return false;
       return true;
     });
 
-    const hasFilters = filterFrom.value || filterTo.value || filterAsset.value || filterAccount.value || filterResult.value;
+    const hasFilters = filterFrom.value || filterTo.value || filterAsset.value || filterAccount.value || filterResult.value || filterBacktest.value !== 'hide';
     filterCount.textContent = hasFilters ? (filtered.length + ' de ' + journal.length + ' sesiones') : '';
 
     historialList.innerHTML = '';
@@ -5865,7 +6024,10 @@
     const endKey = dateToKey(weekEnd);
     resumenWeekLabel.textContent = 'Semana del ' + formatDayMonth(weekStart) + ' al ' + formatDayMonth(weekEnd);
 
-    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    // Las sesiones de backtest (Replay) no se mezclan con tu resumen real:
+    // se practican y revisan desde el Journal (con su propio filtro), pero
+    // no cuentan para tu winrate, P&L ni racha real.
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]').filter(e => !e.backtest);
     const weekEntries = journal.filter(e => e.date && e.date >= startKey && e.date <= endKey);
 
     const daysRecorded = new Set(weekEntries.map(e => e.date)).size;
@@ -5910,6 +6072,9 @@
 
   function resultBadgeHtml(entry){
     const parts = [];
+    if (entry.backtest){
+      parts.push('<span class="hist-badge backtest">⟲ Backtest</span>');
+    }
     if (entry.result === 'win' || entry.result === 'loss' || entry.result === 'neutral'){
       const label = entry.result === 'win' ? '▲ Ganador' : entry.result === 'loss' ? '▼ Perdedor' : '● Neutro';
       parts.push('<span class="hist-badge ' + entry.result + '">' + label + '</span>');
@@ -6128,7 +6293,9 @@
 
   function renderCalendar(){
     if (!calBody) return;
-    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    // Mismo criterio que el resumen semanal: el calendario muestra tus
+    // sesiones reales, no las simuladas de Replay/Backtesting.
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]').filter(e => !e.backtest);
     if (calMode === 'year'){
       calLabel.textContent = String(calDate.getFullYear());
       renderCalYear(calBody, journal);
@@ -6998,6 +7165,330 @@
       wrap.appendChild(stepper);
     });
   }
+  enhanceNumberInputs();
+
+  // =======================================================================
+  // REPLAY / BACKTESTING: repasar velas históricas vela por vela, con un
+  // ticket simulado de compra/venta, y guardar el resultado en el mismo
+  // journal que las sesiones reales (marcado con backtest:true para no
+  // mezclarse con las estadísticas reales — ver renderDashboardWidgets,
+  // renderResumen y renderCalendar más arriba).
+  // =======================================================================
+  const replaySourceSel = document.getElementById('replaySource');
+  const replaySymbolInput = document.getElementById('replaySymbol');
+  const replaySymbolPresets = document.getElementById('replaySymbolPresets');
+  const replayTimeframeSel = document.getElementById('replayTimeframe');
+  const replayFromInput = document.getElementById('replayFrom');
+  const replayToInput = document.getElementById('replayTo');
+  const replayFromPicker = createDatePicker('replayFrom');
+  const replayToPicker = createDatePicker('replayTo');
+  const replayPythonRow = document.getElementById('replayPythonRow');
+  const replayPythonPathInput = document.getElementById('replayPythonPath');
+  const replaySourceHint = document.getElementById('replaySourceHint');
+  const replayLoadBtn = document.getElementById('replayLoadBtn');
+  const replayStatus = document.getElementById('replayStatus');
+  const replayChartSection = document.getElementById('replayChartSection');
+  const replayChartEl = document.getElementById('replayChart');
+  const replayPlayBtn = document.getElementById('replayPlayBtn');
+  const replayStepBtn = document.getElementById('replayStepBtn');
+  const replayStepBackBtn = document.getElementById('replayStepBackBtn');
+  const replaySpeedSel = document.getElementById('replaySpeed');
+  const replayResetBtn = document.getElementById('replayResetBtn');
+  const replayPosLabel = document.getElementById('replayPosLabel');
+  const replayTicketSection = document.getElementById('replayTicketSection');
+  const replayTicketAssetSel = document.getElementById('replayTicketAsset');
+  const replayTicketSizeInput = document.getElementById('replayTicketSize');
+  const replayBuyBtn = document.getElementById('replayBuyBtn');
+  const replaySellBtn = document.getElementById('replaySellBtn');
+  const replayOpenInfo = document.getElementById('replayOpenInfo');
+  const replayResultInfo = document.getElementById('replayResultInfo');
+  const replayJournalRow = document.getElementById('replayJournalRow');
+  const replayTicketNotes = document.getElementById('replayTicketNotes');
+  const replaySaveJournalBtn = document.getElementById('replaySaveJournalBtn');
+  const replayDiscardBtn = document.getElementById('replayDiscardBtn');
+
+  let replayChart = null;
+  let replayCandleSeries = null;
+  let replayCandles = [];
+  let replayIndex = -1;
+  let replayPlaying = false;
+  let replayTimer = null;
+  let replayPosition = null;         // posición simulada abierta, o null
+  let replayLastClosedResult = null; // última posición cerrada, pendiente de guardar o descartar
+
+  function formatReplayTime(ts){
+    return new Date(ts * 1000).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  }
+
+  function updateReplaySourceUI(){
+    const source = replaySourceSel.value;
+    if (source === 'mt5'){
+      replayPythonRow.style.display = '';
+      replaySourceHint.textContent = 'Necesita Python instalado en esta computadora (pip install MetaTrader5) y la terminal de MetaTrader 5 abierta y logueada en tu cuenta. El símbolo tiene que ser el nombre exacto que usa tu bróker en el Market Watch (ej. NAS100, NAS100.cash, US100 — puede variar).';
+      replaySymbolPresets.innerHTML = '<option value="NAS100"><option value="US100"><option value="XAUUSD">';
+      if (!replaySymbolInput.value) replaySymbolInput.value = 'NAS100';
+    } else {
+      replayPythonRow.style.display = 'none';
+      replaySourceHint.textContent = 'Datos públicos de Binance, de solo lectura, sin cuenta ni API key. Usá el símbolo tal como lo escribe Binance (ej. BTCUSDT, ETHUSDT).';
+      replaySymbolPresets.innerHTML = '<option value="BTCUSDT"><option value="ETHUSDT">';
+      if (!replaySymbolInput.value || replaySymbolInput.value === 'NAS100') replaySymbolInput.value = 'BTCUSDT';
+    }
+  }
+  replaySourceSel.addEventListener('change', updateReplaySourceUI);
+
+  function initReplayView(){
+    const currentAsset = replayTicketAssetSel.value;
+    replayTicketAssetSel.innerHTML = '';
+    (config.assets || []).forEach(a => {
+      const opt = document.createElement('option'); opt.value = a; opt.textContent = a;
+      replayTicketAssetSel.appendChild(opt);
+    });
+    if ((config.assets || []).includes(currentAsset)) replayTicketAssetSel.value = currentAsset;
+
+    updateReplaySourceUI();
+
+    if (!replayFromInput.value){
+      const d = new Date(); d.setDate(d.getDate() - 14);
+      replayFromInput.value = dateToKey(d);
+    }
+    if (!replayToInput.value){
+      replayToInput.value = dateToKey(new Date());
+    }
+    if (replayFromPicker) replayFromPicker.sync();
+    if (replayToPicker) replayToPicker.sync();
+    if (replayChart){
+      setTimeout(() => { try { replayChart.applyOptions({width: replayChartEl.clientWidth}); } catch (e) {} }, 0);
+    }
+  }
+
+  function createReplayChartIfNeeded(){
+    if (replayChart || !window.LightweightCharts) return;
+    replayChart = LightweightCharts.createChart(replayChartEl, {
+      layout: { background: { color: 'transparent' }, textColor: '#8B93A7' },
+      grid: { vertLines: { color: '#1C2330' }, horzLines: { color: '#1C2330' } },
+      timeScale: { timeVisible: true, secondsVisible: false },
+      rightPriceScale: { borderColor: '#242C3B' }
+    });
+    replayCandleSeries = replayChart.addCandlestickSeries({
+      upColor: '#22C55E', downColor: '#F04438', borderVisible: false,
+      wickUpColor: '#22C55E', wickDownColor: '#F04438'
+    });
+    window.addEventListener('resize', () => {
+      if (replayChart && views.replay.style.display !== 'none'){
+        try { replayChart.applyOptions({width: replayChartEl.clientWidth}); } catch (e) {}
+      }
+    });
+  }
+
+  function updateReplayChartView(){
+    if (!replayCandleSeries || replayIndex < 0) return;
+    const visible = replayCandles.slice(0, replayIndex + 1).map(c => ({
+      time: c.time, open: c.open, high: c.high, low: c.low, close: c.close
+    }));
+    replayCandleSeries.setData(visible);
+    const current = replayCandles[replayIndex];
+    replayPosLabel.textContent = 'Vela ' + (replayIndex + 1) + ' / ' + replayCandles.length + ' — ' + formatReplayTime(current.time);
+    updateOpenPositionInfo();
+  }
+
+  function resetReplayToStart(){
+    if (!replayCandles.length) return;
+    replayIndex = Math.min(60, replayCandles.length - 1);
+    updateReplayChartView();
+    if (replayChart) replayChart.timeScale().fitContent();
+  }
+
+  function stopReplayPlayback(){
+    replayPlaying = false;
+    if (replayTimer){ clearInterval(replayTimer); replayTimer = null; }
+    replayPlayBtn.textContent = '▶ Reproducir';
+  }
+
+  function startReplayPlayback(){
+    if (!replayCandles.length || replayIndex >= replayCandles.length - 1) return;
+    replayPlaying = true;
+    replayPlayBtn.textContent = '⏸ Pausar';
+    const speed = parseInt(replaySpeedSel.value, 10) || 1;
+    const intervalMs = Math.max(120, 600 / speed);
+    replayTimer = setInterval(() => { stepReplay(1); }, intervalMs);
+  }
+
+  function stepReplay(n){
+    if (!replayCandles.length) return;
+    replayIndex = Math.max(0, Math.min(replayCandles.length - 1, replayIndex + n));
+    updateReplayChartView();
+    if (replayIndex >= replayCandles.length - 1) stopReplayPlayback();
+  }
+
+  replayPlayBtn.addEventListener('click', () => { replayPlaying ? stopReplayPlayback() : startReplayPlayback(); });
+  replaySpeedSel.addEventListener('change', () => { if (replayPlaying){ stopReplayPlayback(); startReplayPlayback(); } });
+  replayStepBtn.addEventListener('click', () => { stopReplayPlayback(); stepReplay(1); });
+  replayStepBackBtn.addEventListener('click', () => { stopReplayPlayback(); stepReplay(-1); });
+  replayResetBtn.addEventListener('click', () => { stopReplayPlayback(); resetReplayToStart(); });
+
+  function selectedReplaySize(){
+    const v = parseFloat(String(replayTicketSizeInput.value).replace(',', '.'));
+    return (isFinite(v) && v > 0) ? v : 1;
+  }
+
+  function openReplayPosition(direction){
+    if (!replayCandles.length || replayIndex < 0 || replayPosition) return;
+    const candle = replayCandles[replayIndex];
+    replayPosition = { direction, entryPrice: candle.close, entryTime: candle.time, size: selectedReplaySize() };
+    replayBuyBtn.disabled = true; replaySellBtn.disabled = true;
+    replayResultInfo.style.display = 'none';
+    replayJournalRow.style.display = 'none';
+    updateOpenPositionInfo();
+  }
+  replayBuyBtn.addEventListener('click', () => openReplayPosition('buy'));
+  replaySellBtn.addEventListener('click', () => openReplayPosition('sell'));
+
+  function updateOpenPositionInfo(){
+    if (!replayPosition){ replayOpenInfo.style.display = 'none'; return; }
+    const candle = replayCandles[replayIndex];
+    const current = candle ? candle.close : replayPosition.entryPrice;
+    const diff = replayPosition.direction === 'buy' ? (current - replayPosition.entryPrice) : (replayPosition.entryPrice - current);
+    const pnl = diff * replayPosition.size;
+    replayOpenInfo.style.display = 'block';
+    replayOpenInfo.innerHTML =
+      '<strong>' + (replayPosition.direction === 'buy' ? '▲ Compra' : '▼ Venta') + ' abierta</strong> en ' + replayPosition.entryPrice +
+      ' (' + formatReplayTime(replayPosition.entryTime) + ')<br>' +
+      'P&amp;L flotante: <span style="color:' + (pnl >= 0 ? 'var(--accent)' : 'var(--danger)') + '">' + (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + '</span> ' +
+      '<button class="btn secondary" id="replayCloseBtnInline" type="button" style="margin-left:10px">Cerrar posición</button>';
+    const closeBtn = document.getElementById('replayCloseBtnInline');
+    if (closeBtn) closeBtn.addEventListener('click', closeReplayPosition);
+  }
+
+  function closeReplayPosition(){
+    if (!replayPosition) return;
+    const candle = replayCandles[replayIndex];
+    const exitPrice = candle.close;
+    const diff = replayPosition.direction === 'buy' ? (exitPrice - replayPosition.entryPrice) : (replayPosition.entryPrice - exitPrice);
+    const pnl = diff * replayPosition.size;
+    replayLastClosedResult = Object.assign({}, replayPosition, { exitPrice, exitTime: candle.time, pnl });
+    replayPosition = null;
+    replayBuyBtn.disabled = false; replaySellBtn.disabled = false;
+    replayOpenInfo.style.display = 'none';
+
+    const resultClass = pnl > 0 ? 'win' : (pnl < 0 ? 'loss' : '');
+    replayResultInfo.className = 'replay-result-info' + (resultClass ? ' ' + resultClass : '');
+    replayResultInfo.style.display = 'block';
+    replayResultInfo.innerHTML =
+      '<strong>' + (replayLastClosedResult.direction === 'buy' ? '▲ Compra' : '▼ Venta') + '</strong> — entrada ' + replayLastClosedResult.entryPrice +
+      ' (' + formatReplayTime(replayLastClosedResult.entryTime) + '), salida ' + exitPrice + ' (' + formatReplayTime(replayLastClosedResult.exitTime) + ')<br>' +
+      'Resultado simulado: <strong>' + (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + '</strong>';
+    replayJournalRow.style.display = 'block';
+    replayTicketNotes.value = '';
+  }
+
+  replaySaveJournalBtn.addEventListener('click', () => {
+    if (!replayLastClosedResult) return;
+    const r = replayLastClosedResult;
+    const result = r.pnl > 0 ? 'win' : (r.pnl < 0 ? 'loss' : 'neutral');
+    const entry = {
+      createdAt: Date.now(),
+      backtest: true,
+      date: dateToKey(new Date(r.entryTime * 1000)),
+      asset: replayTicketAssetSel.value || '',
+      account: 'Backtest (simulado)',
+      notes: replayTicketNotes.value || '',
+      result: result,
+      pnl: Math.round(r.pnl * 100) / 100,
+      tradesTotal: 1,
+      tradesWin: result === 'win' ? 1 : 0,
+      tradesLoss: result === 'loss' ? 1 : 0,
+      entryPrice: r.entryPrice,
+      exitPrice: r.exitPrice,
+      riskReward: null,
+      commissions: null,
+      replayMeta: {
+        source: replaySourceSel.value,
+        symbol: replaySymbolInput.value.trim(),
+        timeframe: replayTimeframeSel.value,
+        direction: r.direction,
+        size: r.size,
+        entryTime: r.entryTime,
+        exitTime: r.exitTime
+      }
+    };
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    journal.push(entry);
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+    showToast('Operación simulada guardada en tu journal como backtest ✓');
+    replayLastClosedResult = null;
+    replayResultInfo.style.display = 'none';
+    replayJournalRow.style.display = 'none';
+    refreshJournalViews();
+  });
+
+  replayDiscardBtn.addEventListener('click', () => {
+    replayLastClosedResult = null;
+    replayResultInfo.style.display = 'none';
+    replayJournalRow.style.display = 'none';
+  });
+
+  async function loadReplayCandles(){
+    stopReplayPlayback();
+    replayPosition = null;
+    replayLastClosedResult = null;
+    replayBuyBtn.disabled = false; replaySellBtn.disabled = false;
+    replayOpenInfo.style.display = 'none';
+    replayResultInfo.style.display = 'none';
+    replayJournalRow.style.display = 'none';
+
+    const source = replaySourceSel.value;
+    const symbol = replaySymbolInput.value.trim();
+    const timeframe = replayTimeframeSel.value;
+    const fromStr = replayFromInput.value;
+    const toStr = replayToInput.value;
+
+    if (!symbol){ replayStatus.textContent = 'Ingresá un símbolo.'; return; }
+    if (!fromStr){ replayStatus.textContent = 'Elegí una fecha de inicio.'; return; }
+
+    const fromTs = Math.floor(parseDateStrLocal(fromStr).getTime() / 1000);
+    const toDate = toStr ? parseDateStrLocal(toStr) : new Date();
+    toDate.setHours(23, 59, 59, 0);
+    const toTs = Math.floor(toDate.getTime() / 1000);
+    if (toTs <= fromTs){ replayStatus.textContent = 'La fecha "Hasta" tiene que ser posterior a "Desde".'; return; }
+
+    if (!window.replayAPI){
+      replayStatus.textContent = 'Este módulo necesita la app de escritorio (no funciona en el navegador).';
+      return;
+    }
+
+    replayLoadBtn.disabled = true; replayLoadBtn.textContent = 'Cargando...';
+    replayStatus.textContent = 'Pidiendo velas' + (source === 'mt5' ? ' a MetaTrader 5...' : ' a Binance...');
+    try {
+      const res = await window.replayAPI.getCandles({
+        source, symbol, timeframe, fromTs, toTs,
+        pythonPath: replayPythonPathInput.value.trim() || undefined
+      });
+      if (!res || !res.ok){
+        replayStatus.textContent = (res && res.error) ? res.error : 'No se pudieron cargar las velas.';
+        replayChartSection.style.display = 'none';
+        replayTicketSection.style.display = 'none';
+        return;
+      }
+      if (!res.candles || !res.candles.length){
+        replayStatus.textContent = 'No hay velas para ese rango. Probá otra fecha o símbolo.';
+        replayChartSection.style.display = 'none';
+        replayTicketSection.style.display = 'none';
+        return;
+      }
+      replayCandles = res.candles;
+      replayStatus.textContent = (res.warning ? '⚠ ' + res.warning + ' — ' : '') + replayCandles.length + ' velas cargadas.';
+      replayChartSection.style.display = 'block';
+      replayTicketSection.style.display = 'block';
+      createReplayChartIfNeeded();
+      resetReplayToStart();
+    } catch (e) {
+      replayStatus.textContent = 'Error inesperado: ' + e.message;
+    } finally {
+      replayLoadBtn.disabled = false; replayLoadBtn.textContent = 'Cargar velas';
+    }
+  }
+  replayLoadBtn.addEventListener('click', loadReplayCandles);
+
   enhanceNumberInputs();
 
   // =======================================================================
