@@ -219,6 +219,33 @@
     font-family:var(--font-ui);padding:4px}
   .dp-link:hover{text-decoration:underline}
 
+  /* ---------- Selector de activos a medida (reemplaza el <datalist> nativo
+     del campo Símbolo del Replay): panel con chips de categoría, búsqueda
+     en vivo y lista agrupada, estilo similar a un buscador de instrumentos
+     de una plataforma de trading. ---------- */
+  .assetpicker-pop{position:fixed;z-index:100;width:380px;max-width:calc(100vw - 16px);
+    max-height:420px;display:none;flex-direction:column;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,0.5);overflow:hidden}
+  .assetpicker-pop.show{display:flex}
+  .ap-filters{display:flex;flex-wrap:wrap;gap:6px;padding:12px 12px 10px;border-bottom:1px solid var(--border);flex:none}
+  .ap-filter-chip{background:var(--surface-3);border:1px solid var(--border);color:var(--text-2);
+    border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;
+    font-family:var(--font-ui);white-space:nowrap;transition:background .12s,color .12s,border-color .12s}
+  .ap-filter-chip:hover{color:var(--text);border-color:var(--text-2)}
+  .ap-filter-chip.active{background:var(--teal);border-color:var(--teal);color:#04201C}
+  .ap-list{overflow-y:auto;flex:1;padding:6px;min-height:60px}
+  .ap-group-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;
+    color:var(--text-2);padding:10px 10px 4px}
+  .ap-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;
+    border-radius:9px;cursor:pointer}
+  .ap-item:hover,.ap-item.highlighted{background:var(--surface-3)}
+  .ap-item-left{display:flex;align-items:baseline;gap:8px;min-width:0}
+  .ap-item-symbol{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--text);white-space:nowrap}
+  .ap-item-cat{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.03em;white-space:nowrap}
+  .ap-item-name{font-size:12px;color:var(--text-2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ap-empty{padding:28px 14px;text-align:center;color:var(--text-2);font-size:13px}
+  .ap-freeform{padding:8px 12px;border-top:1px solid var(--border);font-size:11.5px;color:var(--text-2);flex:none}
+
   .row{display:flex;gap:12px}
   .row > *{flex:1;min-width:0}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
@@ -1942,8 +1969,7 @@
         </div>
         <div>
           <label for="replaySymbol">Símbolo</label>
-          <input type="text" id="replaySymbol" placeholder="Ej. NAS100" list="replaySymbolPresets">
-          <datalist id="replaySymbolPresets"></datalist>
+          <input type="text" id="replaySymbol" placeholder="Ej. NAS100" autocomplete="off">
         </div>
       </div>
       <div class="row" style="margin-top:14px">
@@ -4801,6 +4827,167 @@
     return {sync};
   }
 
+  // ---- Selector de activos a medida (campo Símbolo del Replay): panel con
+  // chips de categoría ("Todos", "Índices", "Forex", ...), búsqueda en vivo
+  // (filtra por símbolo o nombre mientras se escribe en el propio input) y
+  // lista agrupada por categoría. El <input> original sigue siendo 100%
+  // editable a mano (hace falta para símbolos de bróker en MT5 que no están
+  // en ningún catálogo), el panel es solo una ayuda para elegir rápido.
+  function createAssetPicker(input){
+    const pop = document.createElement('div');
+    pop.className = 'assetpicker-pop';
+    document.body.appendChild(pop);
+
+    let catalog = [];       // [{symbol, name, category}]
+    let activeCategory = 'Todos';
+    let highlighted = -1;
+
+    function categories(){
+      const seen = [];
+      catalog.forEach((item) => { if (!seen.includes(item.category)) seen.push(item.category); });
+      return seen;
+    }
+
+    function filtered(){
+      const q = input.value.trim().toLowerCase();
+      return catalog.filter((item) => {
+        if (activeCategory !== 'Todos' && item.category !== activeCategory) return false;
+        if (!q) return true;
+        return item.symbol.toLowerCase().includes(q) || item.name.toLowerCase().includes(q);
+      });
+    }
+
+    function selectItem(item){
+      input.value = item.symbol;
+      input.dispatchEvent(new Event('change', {bubbles: true}));
+      close();
+    }
+
+    function render(){
+      const cats = categories();
+      const chipsHtml = ['Todos'].concat(cats).map((c) =>
+        '<button type="button" class="ap-filter-chip' + (c === activeCategory ? ' active' : '') + '" data-cat="' + c + '">' + c + '</button>'
+      ).join('');
+
+      const items = filtered();
+      highlighted = items.length ? 0 : -1;
+
+      let listHtml = '';
+      if (!items.length){
+        listHtml = '<div class="ap-empty">Sin resultados acá — pero igual podés escribir cualquier símbolo a mano y usarlo tal cual.</div>';
+      } else if (activeCategory !== 'Todos' || input.value.trim()){
+        // Con filtro de categoría o búsqueda activa, lista plana (ya está acotada).
+        listHtml = items.map((item, i) => assetItemHtml(item, i)).join('');
+      } else {
+        // Sin filtro: agrupado por categoría, en el orden del catálogo.
+        let lastCat = null;
+        items.forEach((item, i) => {
+          if (item.category !== lastCat){
+            listHtml += '<div class="ap-group-label">' + item.category + '</div>';
+            lastCat = item.category;
+          }
+          listHtml += assetItemHtml(item, i);
+        });
+      }
+
+      pop.innerHTML =
+        '<div class="ap-filters">' + chipsHtml + '</div>' +
+        '<div class="ap-list">' + listHtml + '</div>' +
+        '<div class="ap-freeform">Tip: también podés escribir cualquier otro símbolo que no esté en la lista.</div>';
+
+      pop.querySelectorAll('.ap-filter-chip').forEach((chip) => {
+        chip.addEventListener('click', (e) => {
+          e.stopPropagation();
+          activeCategory = chip.dataset.cat;
+          render();
+        });
+      });
+      pop.querySelectorAll('.ap-item').forEach((el, i) => {
+        el.addEventListener('mouseenter', () => setHighlighted(i, false));
+        el.addEventListener('click', () => selectItem(items[i]));
+      });
+      updateHighlightClass();
+    }
+
+    function assetItemHtml(item){
+      return '<div class="ap-item">' +
+        '<div class="ap-item-left"><span class="ap-item-symbol">' + item.symbol + '</span>' +
+        '<span class="ap-item-cat">' + item.category + '</span></div>' +
+        '<span class="ap-item-name">' + item.name + '</span></div>';
+    }
+
+    function updateHighlightClass(){
+      const els = pop.querySelectorAll('.ap-item');
+      els.forEach((el, i) => el.classList.toggle('highlighted', i === highlighted));
+      if (highlighted >= 0 && els[highlighted]) els[highlighted].scrollIntoView({block: 'nearest'});
+    }
+    function setHighlighted(i, scroll){
+      highlighted = i;
+      updateHighlightClass();
+    }
+
+    function position(){
+      const r = input.getBoundingClientRect();
+      const popW = Math.max(r.width, 320);
+      let left = r.left;
+      if (left + popW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - popW - 8);
+      let top = r.bottom + 6;
+      const popH = pop.offsetHeight || 300;
+      if (top + popH > window.innerHeight - 8) top = Math.max(8, r.top - popH - 6);
+      pop.style.width = popW + 'px';
+      pop.style.top = top + 'px';
+      pop.style.left = left + 'px';
+    }
+    function onScrollOrResize(){ close(); }
+    function open(){
+      activeCategory = 'Todos';
+      render();
+      pop.classList.add('show');
+      position();
+      window.addEventListener('scroll', onScrollOrResize, true);
+      window.addEventListener('resize', onScrollOrResize);
+    }
+    function close(){
+      pop.classList.remove('show');
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    }
+    function isOpen(){ return pop.classList.contains('show'); }
+
+    input.addEventListener('focus', () => open());
+    input.addEventListener('click', (e) => { e.stopPropagation(); if (!isOpen()) open(); });
+    input.addEventListener('input', () => { if (isOpen()) render(); else open(); });
+    input.addEventListener('keydown', (e) => {
+      if (!isOpen()){
+        if (e.key === 'ArrowDown') open();
+        return;
+      }
+      const items = filtered();
+      if (e.key === 'ArrowDown'){
+        e.preventDefault();
+        if (items.length) setHighlighted(Math.min(highlighted + 1, items.length - 1), true);
+      } else if (e.key === 'ArrowUp'){
+        e.preventDefault();
+        if (items.length) setHighlighted(Math.max(highlighted - 1, 0), true);
+      } else if (e.key === 'Enter'){
+        if (highlighted >= 0 && items[highlighted]){ e.preventDefault(); selectItem(items[highlighted]); }
+      } else if (e.key === 'Escape'){
+        close();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (!input.contains(e.target) && !pop.contains(e.target)) close();
+    });
+
+    return {
+      setCatalog(newCatalog){
+        catalog = newCatalog;
+        activeCategory = 'Todos';
+        if (isOpen()) render();
+      }
+    };
+  }
+
   function parseIntOrNull(str){
     if (str === '' || str === null || str === undefined) return null;
     const n = parseInt(str, 10);
@@ -7177,7 +7364,6 @@
   // =======================================================================
   const replaySourceSel = document.getElementById('replaySource');
   const replaySymbolInput = document.getElementById('replaySymbol');
-  const replaySymbolPresets = document.getElementById('replaySymbolPresets');
   const replayTimeframeSel = document.getElementById('replayTimeframe');
   const replayFromInput = document.getElementById('replayFrom');
   const replayToInput = document.getElementById('replayTo');
@@ -7221,59 +7407,86 @@
     return new Date(ts * 1000).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
   }
 
+  // Catálogo del selector de activos (ver createAssetPicker más arriba),
+  // uno por fuente. Cada item: {symbol, name, category}. El orden de los
+  // items decide el orden de los grupos cuando no hay filtro activo.
+  const REPLAY_ASSET_CATALOGS = {
+    mt5: [
+      {symbol: 'NAS100', name: 'Nasdaq 100 (CFD)', category: 'Índices'},
+      {symbol: 'US100', name: 'Nasdaq 100 (CFD, otro nombre de bróker)', category: 'Índices'},
+      {symbol: 'US500', name: 'S&P 500 (CFD)', category: 'Índices'},
+      {symbol: 'US30', name: 'Dow Jones (CFD)', category: 'Índices'},
+      {symbol: 'GER40', name: 'DAX alemán (CFD)', category: 'Índices'},
+      {symbol: 'EURUSD', name: 'Euro / Dólar', category: 'Forex'},
+      {symbol: 'GBPUSD', name: 'Libra / Dólar', category: 'Forex'},
+      {symbol: 'USDJPY', name: 'Dólar / Yen', category: 'Forex'},
+      {symbol: 'AUDUSD', name: 'Dólar australiano / Dólar', category: 'Forex'},
+      {symbol: 'USDCAD', name: 'Dólar / Dólar canadiense', category: 'Forex'},
+      {symbol: 'XAUUSD', name: 'Oro / Dólar', category: 'Metales'},
+      {symbol: 'XAGUSD', name: 'Plata / Dólar', category: 'Metales'},
+      {symbol: 'BTCUSD', name: 'Bitcoin / Dólar (si tu bróker lo ofrece)', category: 'Cripto'}
+    ],
+    binance: [
+      {symbol: 'BTCUSDT', name: 'Bitcoin / Tether', category: 'Cripto'},
+      {symbol: 'ETHUSDT', name: 'Ethereum / Tether', category: 'Cripto'},
+      {symbol: 'SOLUSDT', name: 'Solana / Tether', category: 'Cripto'},
+      {symbol: 'BNBUSDT', name: 'BNB / Tether', category: 'Cripto'},
+      {symbol: 'XRPUSDT', name: 'XRP / Tether', category: 'Cripto'},
+      {symbol: 'ADAUSDT', name: 'Cardano / Tether', category: 'Cripto'},
+      {symbol: 'DOGEUSDT', name: 'Dogecoin / Tether', category: 'Cripto'},
+      {symbol: 'AVAXUSDT', name: 'Avalanche / Tether', category: 'Cripto'},
+      {symbol: 'LINKUSDT', name: 'Chainlink / Tether', category: 'Cripto'},
+      {symbol: 'MATICUSDT', name: 'Polygon / Tether', category: 'Cripto'}
+    ],
+    yahoo: [
+      {symbol: '^GSPC', name: 'S&P 500', category: 'Índices'},
+      {symbol: '^NDX', name: 'Nasdaq 100', category: 'Índices'},
+      {symbol: '^DJI', name: 'Dow Jones', category: 'Índices'},
+      {symbol: '^RUT', name: 'Russell 2000', category: 'Índices'},
+      {symbol: '^VIX', name: 'VIX (volatilidad)', category: 'Índices'},
+      {symbol: 'EURUSD=X', name: 'Euro / Dólar', category: 'Forex'},
+      {symbol: 'GBPUSD=X', name: 'Libra / Dólar', category: 'Forex'},
+      {symbol: 'USDJPY=X', name: 'Dólar / Yen', category: 'Forex'},
+      {symbol: 'AUDUSD=X', name: 'Dólar australiano / Dólar', category: 'Forex'},
+      {symbol: 'USDCHF=X', name: 'Dólar / Franco suizo', category: 'Forex'},
+      {symbol: 'USDCAD=X', name: 'Dólar / Dólar canadiense', category: 'Forex'},
+      {symbol: 'GC=F', name: 'Oro (futuro continuo)', category: 'Metales'},
+      {symbol: 'SI=F', name: 'Plata (futuro continuo)', category: 'Metales'},
+      {symbol: 'HG=F', name: 'Cobre (futuro continuo)', category: 'Metales'},
+      {symbol: 'CL=F', name: 'Petróleo WTI (futuro)', category: 'Energía'},
+      {symbol: 'NG=F', name: 'Gas natural (futuro)', category: 'Energía'},
+      {symbol: 'BTC-USD', name: 'Bitcoin', category: 'Cripto'},
+      {symbol: 'ETH-USD', name: 'Ethereum', category: 'Cripto'},
+      {symbol: 'SOL-USD', name: 'Solana', category: 'Cripto'},
+      {symbol: 'XRP-USD', name: 'XRP', category: 'Cripto'},
+      {symbol: 'BNB-USD', name: 'BNB', category: 'Cripto'},
+      {symbol: 'AAPL', name: 'Apple', category: 'Acciones'},
+      {symbol: 'MSFT', name: 'Microsoft', category: 'Acciones'},
+      {symbol: 'GOOGL', name: 'Alphabet (Google)', category: 'Acciones'},
+      {symbol: 'AMZN', name: 'Amazon', category: 'Acciones'},
+      {symbol: 'NVDA', name: 'Nvidia', category: 'Acciones'},
+      {symbol: 'TSLA', name: 'Tesla', category: 'Acciones'},
+      {symbol: 'META', name: 'Meta', category: 'Acciones'},
+      {symbol: 'SPY', name: 'ETF S&P 500', category: 'Acciones'},
+      {symbol: 'QQQ', name: 'ETF Nasdaq 100', category: 'Acciones'}
+    ]
+  };
+  const replayAssetPicker = createAssetPicker(replaySymbolInput);
+
   function updateReplaySourceUI(){
     const source = replaySourceSel.value;
+    replayAssetPicker.setCatalog(REPLAY_ASSET_CATALOGS[source] || []);
     if (source === 'mt5'){
       replayPythonRow.style.display = '';
-      replaySourceHint.textContent = 'Necesita Python instalado en esta computadora (pip install MetaTrader5) y la terminal de MetaTrader 5 abierta y logueada en tu cuenta. El símbolo tiene que ser el nombre exacto que usa tu bróker en el Market Watch (ej. NAS100, NAS100.cash, US100 — puede variar).';
-      replaySymbolPresets.innerHTML = '<option value="NAS100"><option value="US100"><option value="XAUUSD">';
+      replaySourceHint.textContent = 'Necesita Python instalado en esta computadora (pip install MetaTrader5) y la terminal de MetaTrader 5 abierta y logueada en tu cuenta. El símbolo tiene que ser el nombre exacto que usa tu bróker en el Market Watch (ej. NAS100, NAS100.cash, US100 — puede variar) — los del selector son solo ejemplos comunes.';
       if (!replaySymbolInput.value) replaySymbolInput.value = 'NAS100';
     } else if (source === 'yahoo'){
       replayPythonRow.style.display = 'none';
-      replaySourceHint.textContent = 'Datos públicos de Yahoo Finance, sin cuenta ni API key. Abrí el desplegable de Símbolo para ver ejemplos por categoría (índices, forex, metales/commodities, cripto, acciones) — también podés escribir cualquier otro ticker que no esté en la lista. En M1/M5/M15/M30/H1/H4 el historial real está limitado a los últimos ~7-60 días (límite de Yahoo, no de la app); para historial de años usá D1.';
-      // No hay forma nativa de poner encabezados de categoría dentro de un
-      // <datalist> (los navegadores no los muestran), así que se simula
-      // agrupando el orden de las opciones por categoría y usando el
-      // atributo "label" de cada <option>, que Chrome/Electron sí muestra
-      // como texto secundario junto al símbolo en el desplegable.
-      const YAHOO_PRESETS = [
-        ['^GSPC', 'Índice · S&P 500'],
-        ['^NDX', 'Índice · Nasdaq 100'],
-        ['^DJI', 'Índice · Dow Jones'],
-        ['^RUT', 'Índice · Russell 2000'],
-        ['^VIX', 'Índice · VIX (volatilidad)'],
-        ['EURUSD=X', 'Forex · Euro / Dólar'],
-        ['GBPUSD=X', 'Forex · Libra / Dólar'],
-        ['USDJPY=X', 'Forex · Dólar / Yen'],
-        ['AUDUSD=X', 'Forex · Dólar australiano / Dólar'],
-        ['USDCHF=X', 'Forex · Dólar / Franco suizo'],
-        ['USDCAD=X', 'Forex · Dólar / Dólar canadiense'],
-        ['GC=F', 'Metal · Oro (futuro continuo)'],
-        ['SI=F', 'Metal · Plata (futuro continuo)'],
-        ['HG=F', 'Metal · Cobre (futuro continuo)'],
-        ['CL=F', 'Commodity · Petróleo WTI (futuro)'],
-        ['NG=F', 'Commodity · Gas natural (futuro)'],
-        ['BTC-USD', 'Cripto · Bitcoin'],
-        ['ETH-USD', 'Cripto · Ethereum'],
-        ['SOL-USD', 'Cripto · Solana'],
-        ['XRP-USD', 'Cripto · XRP'],
-        ['BNB-USD', 'Cripto · BNB'],
-        ['AAPL', 'Acción · Apple'],
-        ['MSFT', 'Acción · Microsoft'],
-        ['GOOGL', 'Acción · Alphabet (Google)'],
-        ['AMZN', 'Acción · Amazon'],
-        ['NVDA', 'Acción · Nvidia'],
-        ['TSLA', 'Acción · Tesla'],
-        ['META', 'Acción · Meta'],
-        ['SPY', 'ETF · S&P 500 (SPY)'],
-        ['QQQ', 'ETF · Nasdaq 100 (QQQ)']
-      ];
-      replaySymbolPresets.innerHTML = YAHOO_PRESETS.map((p) => '<option value="' + p[0] + '" label="' + p[1] + '">').join('');
+      replaySourceHint.textContent = 'Datos públicos de Yahoo Finance, sin cuenta ni API key. Hacé clic en el campo Símbolo para abrir el selector por categoría (índices, forex, metales, energía, cripto, acciones) — también podés escribir cualquier otro ticker que no esté en la lista. En M1/M5/M15/M30/H1/H4 el historial real está limitado a los últimos ~7-60 días (límite de Yahoo, no de la app); para historial de años usá D1.';
       if (!replaySymbolInput.value || replaySymbolInput.value === 'NAS100' || replaySymbolInput.value === 'BTCUSDT') replaySymbolInput.value = 'AAPL';
     } else {
       replayPythonRow.style.display = 'none';
       replaySourceHint.textContent = 'Datos públicos de Binance, de solo lectura, sin cuenta ni API key. Usá el símbolo tal como lo escribe Binance (ej. BTCUSDT, ETHUSDT).';
-      replaySymbolPresets.innerHTML = '<option value="BTCUSDT"><option value="ETHUSDT">';
       if (!replaySymbolInput.value || replaySymbolInput.value === 'NAS100') replaySymbolInput.value = 'BTCUSDT';
     }
   }
