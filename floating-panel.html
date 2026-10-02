@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CamTrader · notas y cámara</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* Mismas variables y clases que index.html para que el panel flotante se
+     vea exactamente igual — es una ventana de Electron aparte (proceso de
+     renderer distinto), así que no puede compartir el <style> de la
+     principal como hacía la vieja documentPictureInPicture; se copian las
+     piezas que realmente usa este panel. */
+  :root{
+    --bg:#0A0D12; --surface:#12161D; --surface-2:#171C25; --surface-3:#1C2330; --border:#242C3B;
+    --text:#F2F4F7; --text-2:#8B93A7; --accent:#22C55E; --accent-soft:rgba(34,197,94,0.14);
+    --teal:#2DD4BF; --teal-soft:rgba(45,212,191,0.14);
+    --danger:#F04438; --danger-soft:rgba(240,68,56,0.14);
+    --info:#60A5FA; --info-soft:rgba(96,165,250,0.14);
+    --font-ui:'Manrope',system-ui,sans-serif; --font-display:'Space Grotesk','Manrope',system-ui,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-ui);overflow:hidden}
+
+  .cam-placeholder{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#1b2530,#222c38);font-family:var(--font-display);font-weight:800;
+    color:var(--teal);z-index:1;user-select:none}
+  .cam-placeholder.show{display:flex}
+
+  .pip-body{margin:0;padding:12px;display:flex;flex-direction:column;gap:10px;height:100%;
+    box-sizing:border-box;background:var(--bg)}
+  .pip-cam{position:relative;flex:none;width:100%;aspect-ratio:4/3;max-height:45vh;border-radius:12px;
+    overflow:hidden;border:2px solid var(--teal);background:#1a2029}
+  .pip-cam video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
+  .pip-cam .cam-placeholder{font-size:30px}
+  .pip-notes{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface);
+    border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .pip-notes-title{flex:none;font-family:var(--font-display);font-size:11px;font-weight:700;
+    padding:10px 12px 0;color:var(--text-2);text-transform:uppercase;letter-spacing:0.04em}
+  .pip-notes .note-tags{padding:8px 12px 0}
+  .pip-notes .notes-list{padding:8px 12px 8px 28px}
+  .pip-notes .notes-input-row{padding:8px 10px}
+
+  .note-tags{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 0}
+  .note-tag-chip{border-radius:999px;border:1px solid var(--border);background:var(--surface-2);
+    color:var(--text-2);font-size:11px;font-weight:700;padding:5px 11px;cursor:pointer;font-family:var(--font-ui);
+    transition:background .15s,border-color .15s,color .15s}
+  .note-tag-chip:hover{background:var(--surface-3);color:var(--text)}
+  .note-tag-chip[data-tag="Error"]{border-color:rgba(240,68,56,0.4);color:var(--danger)}
+  .note-tag-chip[data-tag="Error"]:hover{background:var(--danger-soft);color:var(--danger)}
+  .note-tag-chip.active[data-tag="Setup"]{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+  .note-tag-chip.active[data-tag="Entrada"]{background:var(--info-soft);border-color:var(--info);color:var(--info)}
+  .note-tag-chip.active[data-tag="Gestión"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .note-tag-chip.active[data-tag="Error"]{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  .notes-list{padding:10px 14px 10px 32px;font-size:13px;line-height:1.5;color:var(--text);outline:none;
+    overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;position:relative}
+  .notes-list-empty{color:var(--text-2)}
+  .notes-list.has-notes::before{content:'';position:absolute;left:19px;top:5px;bottom:5px;width:2px;background:var(--border)}
+  .note-item{display:flex;flex-direction:column;gap:3px;position:relative}
+  .note-item-meta{display:flex;align-items:center;gap:6px}
+  .note-item-dot{position:absolute;left:-19px;top:3px;width:11px;height:11px;border-radius:50%;
+    background:var(--surface);border:2px solid var(--text-2);z-index:1;box-sizing:border-box}
+  .note-item-dot.tag-setup{border-color:var(--teal)}
+  .note-item-dot.tag-entrada{border-color:var(--info)}
+  .note-item-dot.tag-gestion{border-color:var(--accent)}
+  .note-item-dot.tag-error{border-color:var(--danger)}
+  .note-item-dot.latest{background:var(--text-2)}
+  .note-item-dot.tag-setup.latest{background:var(--teal)}
+  .note-item-dot.tag-entrada.latest{background:var(--info)}
+  .note-item-dot.tag-gestion.latest{background:var(--accent)}
+  .note-item-dot.tag-error.latest{background:var(--danger)}
+  .note-item-time{font-family:var(--font-mono);font-size:10px;color:var(--text-2)}
+  .note-tag-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;
+    background:var(--surface-3);color:var(--text-2)}
+  .note-tag-pill.tag-setup{background:var(--teal-soft);color:var(--teal)}
+  .note-tag-pill.tag-entrada{background:var(--info-soft);color:var(--info)}
+  .note-tag-pill.tag-gestion{background:var(--accent-soft);color:var(--accent)}
+  .note-tag-pill.tag-error{background:var(--danger-soft);color:var(--danger)}
+  .note-item-text{font-size:13px;color:var(--text);word-break:break-word}
+  .notes-input-row{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px;
+    border-top:1px solid var(--border)}
+  .notes-input{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;font-family:var(--font-ui);outline:none}
+  .notes-input:focus{border-color:var(--teal)}
+  .notes-send-btn{flex:none;width:32px;height:32px;border-radius:8px;background:var(--teal);
+    border:none;color:#08110f;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .notes-send-btn:hover{background:#3fe0c8}
+</style>
+</head>
+<body>
+  <div class="pip-body">
+    <div class="pip-cam">
+      <video id="pipCamVideo" autoplay muted playsinline></video>
+      <div class="cam-placeholder" id="pipCamPlaceholder"></div>
+    </div>
+    <div class="pip-notes">
+      <div class="pip-notes-title">Notas de la sesión</div>
+      <div class="note-tags" id="pipNoteTags">
+        <button class="note-tag-chip" data-tag="Setup" type="button">Setup</button>
+        <button class="note-tag-chip" data-tag="Entrada" type="button">Entrada</button>
+        <button class="note-tag-chip" data-tag="Gestión" type="button">Gestión</button>
+        <button class="note-tag-chip" data-tag="Error" type="button">Error</button>
+      </div>
+      <div class="notes-list" id="pipNotesList">
+        <div class="notes-list-empty" id="pipNotesListEmpty">Escribí tu plan y lo que vayas viendo...</div>
+      </div>
+      <div class="notes-input-row">
+        <input type="text" id="pipNotesInput" class="notes-input" placeholder="Escribir nota..." autocomplete="off">
+        <button class="notes-send-btn" id="pipNotesSendBtn" type="button" title="Agregar nota">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Panel flotante "remoto": no guarda su propia copia de las notas ni de
+    // la etiqueta seleccionada — solo pinta lo que le llega desde la
+    // ventana principal (pushState) y avisa las acciones del usuario
+    // (submitNote/toggleTag) para que la principal, que es la única fuente
+    // de verdad, las aplique y le devuelva el estado ya actualizado.
+    const camVideo = document.getElementById('pipCamVideo');
+    const camPlaceholder = document.getElementById('pipCamPlaceholder');
+    const noteTags = document.getElementById('pipNoteTags');
+    const notesList = document.getElementById('pipNotesList');
+    const notesInput = document.getElementById('pipNotesInput');
+    const notesSendBtn = document.getElementById('pipNotesSendBtn');
+
+    let camStream = null;
+    let currentDeviceId = '';
+
+    // La cámara de la ventana flotante es una conexión independiente a la
+    // misma webcam (no se puede pasar el MediaStream de la ventana
+    // principal por IPC: cada BrowserWindow es un proceso de renderer
+    // distinto). Solo se abre una vez, la primera vez que llega el
+    // deviceId — cambiar cámara en Configuración requiere reabrir el panel.
+    async function ensureCamStream(deviceId){
+      if (camStream && (deviceId || '') === currentDeviceId) return;
+      currentDeviceId = deviceId || '';
+      try {
+        if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+        const constraints = currentDeviceId ? {deviceId: {exact: currentDeviceId}} : true;
+        camStream = await navigator.mediaDevices.getUserMedia({video: constraints, audio: false});
+        camVideo.srcObject = camStream;
+      } catch (e) {
+        console.error('[CamTrader] El panel flotante no pudo abrir su propia cámara:', e);
+      }
+    }
+
+    function applyState(state){
+      if (!state) return;
+      if (state.cameraDeviceId !== undefined) ensureCamStream(state.cameraDeviceId);
+      if (state.userInitial !== undefined) camPlaceholder.textContent = state.userInitial;
+      if (state.camEnabled !== undefined){
+        camVideo.style.visibility = state.camEnabled ? 'visible' : 'hidden';
+        camPlaceholder.classList.toggle('show', !state.camEnabled);
+      }
+      if (state.selectedNoteTag !== undefined){
+        noteTags.querySelectorAll('.note-tag-chip').forEach(c => {
+          c.classList.toggle('active', c.dataset.tag === state.selectedNoteTag);
+        });
+      }
+      if (state.notesHTML !== undefined){
+        notesList.innerHTML = state.notesHTML;
+      }
+    }
+
+    if (window.floatingAPI){
+      window.floatingAPI.onState(applyState);
+    }
+
+    function sendNote(){
+      const text = notesInput.value.trim();
+      if (!text) return;
+      window.floatingAPI.submitNote(text);
+      notesInput.value = '';
+    }
+    notesSendBtn.addEventListener('click', sendNote);
+    notesInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter'){ e.preventDefault(); sendNote(); }
+    });
+    noteTags.querySelectorAll('.note-tag-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        window.floatingAPI.toggleTag(chip.dataset.tag);
+        notesInput.focus();
+      });
+    });
+
+    window.addEventListener('pagehide', () => {
+      if (camStream) camStream.getTracks().forEach(t => t.stop());
+    });
+  </script>
+</body>
+</html>

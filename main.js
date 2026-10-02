@@ -414,7 +414,87 @@ function createWindow() {
     shell.openExternal(url);
     return { action: 'deny' };
   });
+
+  // Si se cierra la ventana principal, la flotante (si quedó abierta) se va
+  // con ella — no tendría sentido que sobreviva sin la app detrás.
+  mainWindow.on('closed', () => {
+    if (floatingWindow && !floatingWindow.isDestroyed()) floatingWindow.close();
+    mainWindow = null;
+  });
 }
+
+// ---- Ventana flotante "notas + cámara" ----
+// Reemplaza al viejo mecanismo basado en documentPictureInPicture (API web
+// que no está bien implementada en Electron: requestWindow() tira "Internal
+// error: no window" al invocarla, aunque figure como soportada). Esta es la
+// forma correcta de hacer una ventana "siempre encima" en una app de
+// escritorio: un BrowserWindow real, independiente, con su propio preload y
+// su propia conexión de cámara (un MediaStream no se puede mandar por IPC
+// entre ventanas — cada BrowserWindow es un proceso de renderer separado).
+let floatingWindow = null;
+
+function createFloatingWindow() {
+  if (floatingWindow && !floatingWindow.isDestroyed()) return floatingWindow;
+  floatingWindow = new BrowserWindow({
+    width: 300,
+    height: 480,
+    minWidth: 240,
+    minHeight: 320,
+    alwaysOnTop: true,
+    title: 'CamTrader · notas y cámara',
+    backgroundColor: '#0A0D12',
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
+  floatingWindow.setMenuBarVisibility(false);
+  floatingWindow.loadFile(path.join(__dirname, 'floating-panel.html'));
+  floatingWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  floatingWindow.on('closed', () => {
+    floatingWindow = null;
+    // Avisa a la ventana principal para que el botón vuelva a su estado
+    // normal, tanto si se cerró con el botón de la app como si el usuario
+    // cerró la ventana flotante directamente (la cruz del sistema).
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('floating:closed');
+    }
+  });
+  return floatingWindow;
+}
+
+ipcMain.handle('floating:open', () => {
+  createFloatingWindow();
+  return { ok: true };
+});
+
+ipcMain.handle('floating:close', () => {
+  if (floatingWindow && !floatingWindow.isDestroyed()) floatingWindow.close();
+  return { ok: true };
+});
+
+// Relés simples de estado: la ventana principal es la única fuente de
+// verdad (sessionNoteLog, selectedNoteTag, etc.) — la flotante es un
+// "control remoto" que solo muestra lo que le llega y avisa acciones.
+ipcMain.on('floating:push-state', (event, state) => {
+  if (floatingWindow && !floatingWindow.isDestroyed()) {
+    floatingWindow.webContents.send('floating:state', state);
+  }
+});
+
+ipcMain.on('floating:note-submit', (event, text) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('floating:note-submit', text);
+  }
+});
+
+ipcMain.on('floating:tag-toggle', (event, tag) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('floating:tag-toggle', tag);
+  }
+});
 
 app.whenReady().then(async () => {
   // macOS pide permiso de cámara/micrófono a nivel de sistema operativo

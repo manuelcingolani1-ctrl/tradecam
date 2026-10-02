@@ -4359,6 +4359,10 @@
   let sessionNoteLog = [];
   let selectedNoteTag = null;
   let currentElapsedMs = 0;
+  // Inicial del usuario para el placeholder de "cámara apagada" — se
+  // recalcula al arrancar cada sesión (startSession), pero vive en este
+  // scope más amplio porque el panel flotante también la necesita.
+  let liveUserInitial = '?';
   const CAM_SHAPES = ['rounded', 'circle', 'square'];
   let camShape = 'rounded';
   const MARKER_DURATION_MS = 2200;
@@ -4443,10 +4447,11 @@
   }
 
   // Repinta todos los lugares donde se muestran las notas: la columna de
-  // siempre, y además la ventana flotante cuando está abierta.
+  // siempre, y además la ventana flotante cuando está abierta (recibe una
+  // copia del HTML ya renderizado, así no duplicamos la lógica de pintado).
   function renderNotesList(){
     renderNotesListInto(notesList, notesListEmpty);
-    if (pipNotesList) renderNotesListInto(pipNotesList, pipNotesListEmpty);
+    syncFloatingPanel();
   }
 
   function addSessionNote(inputEl){
@@ -4477,11 +4482,7 @@
     noteTags.querySelectorAll('.note-tag-chip').forEach(c => {
       c.classList.toggle('active', c.dataset.tag === selectedNoteTag);
     });
-    if (pipNoteTags){
-      pipNoteTags.querySelectorAll('.note-tag-chip').forEach(c => {
-        c.classList.toggle('active', c.dataset.tag === selectedNoteTag);
-      });
-    }
+    syncFloatingPanel();
   }
   bindNoteTagChips(noteTags, notesInput);
 
@@ -4491,136 +4492,101 @@
   });
 
   // ---- Panel flotante: notas + cámara en una ventana aparte ----
-  // Document Picture-in-Picture abre una ventana real del sistema operativo
-  // que queda siempre arriba de todo lo demás (el bróker, TradingView,
-  // cualquier otra app), no solo arriba de otras pestañas. Así se puede
-  // anotar y verse a cámara mientras se opera, sin volver a la pestaña de
-  // CamTrader. En navegadores que no la soportan (Firefox, Safari) el botón
-  // queda deshabilitado en vez de romper algo.
+  // Antes usaba documentPictureInPicture (API web para ventanas "siempre
+  // encima" dentro del mismo documento/realm de JS). Resultó que esa API no
+  // está bien implementada en Electron: figura como "soportada"
+  // ('documentPictureInPicture' in window da true) pero requestWindow()
+  // tira "Internal error: no window" al invocarla de verdad — una
+  // limitación conocida del motor (Electron no implementa la capa de
+  // gestor de ventanas del navegador completo que esa API necesita).
+  //
+  // El reemplazo es una ventana de Electron de verdad (BrowserWindow, en
+  // main.js, con alwaysOnTop) manejada por IPC a través de window.floatingAPI
+  // (preload.js). La ventana principal sigue siendo la única fuente de
+  // verdad de sessionNoteLog/selectedNoteTag/etc.; la flotante es un
+  // "control remoto" que solo pinta lo que le llega (syncFloatingPanel) y
+  // avisa lo que el usuario hace allá (nota enviada, chip tocado). La
+  // cámara no se puede compartir por IPC (un MediaStream no cruza el
+  // límite entre procesos de renderer), así que la ventana flotante abre
+  // su propia conexión independiente a la misma webcam.
   const floatPipBtn = document.getElementById('floatPipBtn');
-  const pipSupported = 'documentPictureInPicture' in window;
-  let pipWindow = null;
-  let pipCamVideo = null, pipCamPlaceholder = null;
-  let pipNoteTags = null, pipNotesList = null, pipNotesListEmpty = null, pipNotesInput = null;
+  const floatingSupported = !!(window.floatingAPI);
+  let floatingOpen = false;
+  let floatingOpening = false;
 
-  if (!pipSupported){
+  if (!floatingSupported){
     floatPipBtn.disabled = true;
-    floatPipBtn.title = 'Tu navegador no soporta ventanas flotantes (probá con Chrome o Edge)';
+    floatPipBtn.title = 'La ventana flotante no está disponible en este entorno';
   }
 
-  function buildPipContent(pipDoc){
-    const body = pipDoc.body;
-    body.className = 'pip-body';
-
-    const cam = pipDoc.createElement('div');
-    cam.className = 'pip-cam';
-    pipCamVideo = pipDoc.createElement('video');
-    pipCamVideo.autoplay = true; pipCamVideo.muted = true; pipCamVideo.playsInline = true;
-    pipCamPlaceholder = pipDoc.createElement('div');
-    pipCamPlaceholder.className = 'cam-placeholder';
-    pipCamPlaceholder.textContent = camPlaceholderPip.textContent;
-    cam.appendChild(pipCamVideo);
-    cam.appendChild(pipCamPlaceholder);
-    body.appendChild(cam);
-
-    const notes = pipDoc.createElement('div');
-    notes.className = 'pip-notes';
-    notes.innerHTML =
-      '<div class="pip-notes-title">Notas de la sesión</div>' +
-      '<div class="note-tags" id="pipNoteTags">' +
-        '<button class="note-tag-chip" data-tag="Setup" type="button">Setup</button>' +
-        '<button class="note-tag-chip" data-tag="Entrada" type="button">Entrada</button>' +
-        '<button class="note-tag-chip" data-tag="Gestión" type="button">Gestión</button>' +
-        '<button class="note-tag-chip" data-tag="Error" type="button">Error</button>' +
-      '</div>' +
-      '<div class="notes-list" id="pipNotesList">' +
-        '<div class="notes-list-empty" id="pipNotesListEmpty">Escribí tu plan y lo que vayas viendo...</div>' +
-      '</div>' +
-      '<div class="notes-input-row">' +
-        '<input type="text" id="pipNotesInput" class="notes-input" placeholder="Escribir nota..." autocomplete="off">' +
-        '<button class="notes-send-btn" id="pipNotesSendBtn" type="button" title="Agregar nota">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>' +
-        '</button>' +
-      '</div>';
-    body.appendChild(notes);
-
-    pipNoteTags = notes.querySelector('#pipNoteTags');
-    pipNotesList = notes.querySelector('#pipNotesList');
-    pipNotesListEmpty = notes.querySelector('#pipNotesListEmpty');
-    pipNotesInput = notes.querySelector('#pipNotesInput');
-    const pipNotesSendBtn = notes.querySelector('#pipNotesSendBtn');
-
-    bindNoteTagChips(pipNoteTags, pipNotesInput);
-    pipNotesSendBtn.addEventListener('click', () => addSessionNote(pipNotesInput));
-    pipNotesInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter'){ e.preventDefault(); addSessionNote(pipNotesInput); }
+  // Junta el estado actual y se lo empuja a la ventana flotante (si está
+  // abierta). Se llama cada vez que algo de lo que muestra cambia: notas
+  // nuevas, chip de etiqueta, cámara prendida/apagada, etc. No hace nada si
+  // el panel está cerrado.
+  function syncFloatingPanel(){
+    if (!floatingOpen || !window.floatingAPI) return;
+    window.floatingAPI.pushState({
+      cameraDeviceId: config.cameraDeviceId || '',
+      camEnabled: camEnabled,
+      userInitial: liveUserInitial,
+      selectedNoteTag: selectedNoteTag,
+      notesHTML: notesList.innerHTML
     });
-
-    syncNoteTagChipsUI();
-    renderNotesListInto(pipNotesList, pipNotesListEmpty);
-    updateCamVisualState();
   }
-
-  function clearPipRefs(){
-    pipWindow = null;
-    pipCamVideo = null; pipCamPlaceholder = null;
-    pipNoteTags = null; pipNotesList = null; pipNotesListEmpty = null; pipNotesInput = null;
-    floatPipBtn.classList.remove('active');
-    floatPipBtn.title = 'Flotar notas y cámara en una ventana aparte';
-  }
-
-  // "pipOpening" tapa una condición de carrera: requestWindow() es async, y
-  // "pipWindow" recién se completa cuando termina de resolver. Si se tocaba
-  // el botón varias veces rápido (por ej. porque la ventana tardaba un toque
-  // en aparecer), cada click pasaba el chequeo "!pipWindow" de arriba antes
-  // de que el primero terminara, y se abría una ventana flotante nueva por
-  // cada click — por eso se apilaban varias en cascada. Este flag se pone en
-  // true de forma sincrónica, antes del await, así el segundo click ya no
-  // pasa el chequeo.
-  let pipOpening = false;
 
   async function openFloatingPanel(){
-    if (!pipSupported || pipWindow || pipOpening || !floatPipBtn) return;
-    pipOpening = true;
+    if (!floatingSupported || floatingOpen || floatingOpening || !floatPipBtn) return;
+    floatingOpening = true;
     floatPipBtn.disabled = true;
     try {
-      pipWindow = await documentPictureInPicture.requestWindow({width: 300, height: 480});
+      await window.floatingAPI.open();
     } catch (e) {
-      // Antes este error se tragaba en silencio (sin loguearlo), así que si
-      // requestWindow() fallaba no quedaba ningún rastro en la consola — el
-      // botón simplemente "no hacía nada". Ahora se loguea el motivo real y
-      // se avisa con un toast, para no tener que adivinar.
-      console.error('[CamTrader] No se pudo abrir la ventana flotante (documentPictureInPicture.requestWindow):', e);
-      pipWindow = null;
-      pipOpening = false;
+      console.error('[CamTrader] No se pudo abrir la ventana flotante:', e);
+      floatingOpening = false;
       floatPipBtn.disabled = false;
       if (typeof showToast === 'function'){
         showToast('No se pudo abrir la ventana flotante: ' + (e && e.message ? e.message : 'error desconocido'));
       }
       return;
     }
-    pipOpening = false;
+    floatingOpening = false;
+    floatingOpen = true;
     floatPipBtn.disabled = false;
-    // Copia el CSS de la app (tipografías, colores, componentes) así el
-    // panel flotante se ve exactamente igual, en vez de reconstruirlo a mano.
-    const pipDoc = pipWindow.document;
-    pipDoc.title = 'CamTrader · notas y cámara';
-    document.querySelectorAll('link[rel="stylesheet"], style').forEach(el => {
-      pipDoc.head.appendChild(el.cloneNode(true));
-    });
-    buildPipContent(pipDoc);
-    if (activeCamStream) pipCamVideo.srcObject = activeCamStream;
     floatPipBtn.classList.add('active');
     floatPipBtn.title = 'Volver a mostrar las notas y la cámara acá';
-    pipWindow.addEventListener('pagehide', clearPipRefs, {once: true});
+    // Le manda el estado inicial ya mismo; la ventana flotante también
+    // puede tardar un instante en terminar de cargar, pero floatingAPI.onState
+    // queda escuchando desde su primer script, así que no se pierde.
+    syncFloatingPanel();
   }
 
   function closeFloatingPanel(){
-    if (pipWindow) pipWindow.close();
+    if (!floatingSupported || !floatingOpen) return;
+    window.floatingAPI.close();
+  }
+
+  // La ventana flotante avisa cuando el usuario la cierra directamente
+  // (la cruz del sistema), no solo cuando se cierra desde este botón.
+  if (floatingSupported){
+    window.floatingAPI.onClosed(() => {
+      floatingOpen = false;
+      floatPipBtn.classList.remove('active');
+      floatPipBtn.title = 'Flotar notas y cámara en una ventana aparte';
+    });
+    window.floatingAPI.onNoteSubmit((text) => {
+      if (!text || !text.trim()) return;
+      sessionNoteLog.push({ text: text.trim(), tag: selectedNoteTag, atMs: currentElapsedMs, at: Date.now() });
+      renderNotesList();
+      syncNotesBodyText();
+    });
+    window.floatingAPI.onTagToggle((tag) => {
+      selectedNoteTag = (selectedNoteTag === tag) ? null : tag;
+      syncNoteTagChipsUI();
+    });
   }
 
   floatPipBtn.addEventListener('click', () => {
-    if (pipWindow) closeFloatingPanel();
+    if (floatingOpen) closeFloatingPanel();
     else openFloatingPanel();
   });
 
@@ -4646,12 +4612,11 @@
       camVideo.style.visibility = camEnabled ? 'visible' : 'hidden';
       camPlaceholderPip.classList.toggle('show', !camEnabled);
     }
-    // La cámara de la ventana flotante siempre muestra el mismo stream crudo,
-    // sin importar si en el stage se está compartiendo pantalla o no.
-    if (pipCamVideo){
-      pipCamVideo.style.visibility = camEnabled ? 'visible' : 'hidden';
-      pipCamPlaceholder.classList.toggle('show', !camEnabled);
-    }
+    // La cámara de la ventana flotante siempre muestra el mismo stream crudo
+    // (su propia conexión independiente a la webcam), sin importar si en el
+    // stage se está compartiendo pantalla o no — solo necesita saber si está
+    // prendida o apagada.
+    syncFloatingPanel();
   }
 
   toggleCamBtn.addEventListener('click', () => {
@@ -5104,6 +5069,7 @@
     const userInitial = ((currentUser && (currentUser.name || currentUser.email)) || '?').trim().charAt(0).toUpperCase();
     camPlaceholderPip.textContent = userInitial;
     camPlaceholderFull.textContent = userInitial;
+    liveUserInitial = userInitial;
 
     // reiniciar el estado de pausa para esta nueva sesión
     recDot.classList.remove('paused');
@@ -5340,6 +5306,10 @@
       clearInterval(timerId);
       if (autosaveTimerId) clearInterval(autosaveTimerId);
       activeCamStream = null;
+      // La cámara de la sesión ya se cortó — la ventana flotante, si estaba
+      // abierta, se cierra con ella (su propia conexión a la webcam también
+      // se corta sola al cerrarse, en floating-panel.html).
+      closeFloatingPanel();
 
       // Guardamos el journal de esta sesión YA, apenas termina de grabar —
       // así las notas y el video quedan a salvo aunque cierres la pestaña
