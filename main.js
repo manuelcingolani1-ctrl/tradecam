@@ -233,10 +233,14 @@ function aggregateCandles(candles, groupSize) {
 
 // Trae velas de Yahoo Finance (sin API key, endpoint público "chart" que
 // usa la propia web de Yahoo). Sirve para acciones de EE.UU. (AAPL, SPY),
-// índices "cash" (^GSPC = S&P 500, ^NDX = Nasdaq 100, ^DJI = Dow Jones) y
-// metales como futuro continuo (GC=F = oro, SI=F = plata). Yahoo cambia
-// esta API sin aviso de tanto en tanto (ver notas del repo) — si deja de
-// funcionar, es lo primero a revisar.
+// índices "cash" (^GSPC = S&P 500, ^NDX = Nasdaq 100, ^DJI = Dow Jones),
+// metales y commodities como futuro continuo (GC=F = oro, SI=F = plata,
+// CL=F = petróleo), y de yapa también forex (EURUSD=X) y cripto (BTC-USD)
+// con la misma notación de Yahoo — útil como fuente alternativa a MT5/
+// Binance para esos dos casos, aunque MT5 y Binance siguen siendo la
+// fuente principal recomendada ahí. Yahoo cambia esta API sin aviso de
+// tanto en tanto (ver notas del repo) — si deja de funcionar, es lo
+// primero a revisar.
 async function fetchFromYahoo(symbol, timeframe, fromTs, toTs) {
   const interval = YAHOO_INTERVAL_MAP[timeframe];
   if (!interval) return { ok: false, error: 'Timeframe inválido: ' + timeframe };
