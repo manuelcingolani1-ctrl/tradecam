@@ -293,10 +293,12 @@
     text-transform:uppercase;color:var(--text-2);white-space:nowrap}
   .storage-fallback-rule{flex:1 1 auto;height:1px;background:repeating-linear-gradient(90deg,var(--border) 0 6px,transparent 6px 12px)}
   .storage-fallback-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .storage-fallback-grid-single{grid-template-columns:1fr}
   .storage-fallback-card{text-align:left;border-radius:13px;padding:18px;border:1.5px solid var(--border);
     background:var(--surface-2);display:flex;flex-direction:column;gap:12px;cursor:pointer;font-family:var(--font-ui)}
   .storage-fallback-card:hover{border-color:var(--teal)}
   .storage-fallback-card.active{border-color:var(--teal);background:var(--teal-soft)}
+  .storage-fallback-card-toggle{cursor:default;max-width:420px}
   .storage-fallback-icon{width:34px;height:34px;border-radius:9px;background:var(--surface-3);display:flex;
     align-items:center;justify-content:center;color:var(--text-2)}
   .storage-fallback-title{font-size:13.5px;font-weight:700;color:var(--text)}
@@ -1183,31 +1185,19 @@
 
       <div style="margin-top:22px">
         <div class="storage-fallback-label"><span>Si se llenan todas</span><div class="storage-fallback-rule"></div></div>
-        <div class="storage-fallback-grid">
-          <button type="button" class="storage-fallback-card" id="fallbackLocalBtn">
+        <div class="storage-fallback-grid storage-fallback-grid-single">
+          <div class="storage-fallback-card storage-fallback-card-toggle">
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div class="storage-fallback-icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="14" x2="21" y2="14"/></svg>
               </div>
-              <span class="storage-fallback-radio"></span>
+              <label class="switch"><input type="checkbox" id="fallbackLocalToggle"><span class="slider"></span></label>
             </div>
             <div>
               <div class="storage-fallback-title">Guardar en esta computadora</div>
-              <div class="storage-fallback-sub">Sigue grabando y guarda los archivos en el disco local hasta que liberes espacio en la nube.</div>
+              <div class="storage-fallback-sub">Si está prendido, al terminar cada grabación se guarda directo en esta computadora, sin preguntar si querés borrarla de la carpeta (como sí pasa cuando se sube a la nube).</div>
             </div>
-          </button>
-          <button type="button" class="storage-fallback-card" id="fallbackCloudBtn">
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <div class="storage-fallback-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
-              </div>
-              <span class="storage-fallback-radio"></span>
-            </div>
-            <div>
-              <div class="storage-fallback-title">Comprar más espacio en la nube</div>
-              <div class="storage-fallback-sub">Te avisamos cuándo una cuenta está por llenarse y te llevamos a ampliar el plan de ese proveedor.</div>
-            </div>
-          </button>
+          </div>
         </div>
       </div>
     </section>
@@ -2419,7 +2409,9 @@
       r2: {connected: false},
       b2: {connected: false}
     },
-    storageFallback: 'local'
+    // true: al subir una grabación a la nube, NO se pregunta si borrar la
+    // copia local — se mantiene automáticamente en esta computadora.
+    storageFallback: true
   });
 
   let config = defaultConfig(); // se reemplaza por loadConfig() recién después del login
@@ -2471,6 +2463,13 @@
       } else {
         merged.storageOrder = merged.storageOrder.filter(id => base.storageOrder.includes(id));
         base.storageOrder.forEach(id => { if (!merged.storageOrder.includes(id)) merged.storageOrder.push(id); });
+      }
+      // Config guardada antes de que "Comprar más espacio en la nube" se
+      // sacara de la app: storageFallback era el string 'local'/'cloud' en
+      // vez del booleano actual. 'cloud' ya no existe como opción, así que
+      // se migra a true (mantener la copia local sin preguntar).
+      if (typeof merged.storageFallback === 'string'){
+        merged.storageFallback = true;
       }
       // Completa horario por día y accountMeta que puedan faltar en
       // configuraciones guardadas antes de este rediseño.
@@ -3348,23 +3347,27 @@
       showToast('Subiendo la grabación a ' + providerName + '…');
       const res = await window.cloudAPI.uploadFile(providerId, filename, 'video/webm', arrayBuffer);
       if (res && res.ok) {
-        showToast('Grabación subida a ' + providerName + ' ✓');
         refreshStorageStatuses();
-        // Se pregunta por sesión (no hay un "borrar siempre" automático):
-        // así cada trader decide caso a caso si quiere liberar espacio ya
-        // mismo o conservar la copia local para revisarla sin depender de
-        // internet.
-        const borrar = confirm(
-          'Ya se subió a ' + providerName + '. ¿Querés borrar la copia local de tu computadora para liberar espacio?\n\n' +
-          '(El video va a seguir disponible en ' + providerName + '; esto solo borra el archivo de esta compu.)'
-        );
-        if (borrar) {
-          try {
-            await folderHandle.removeEntry(filename);
-            showToast('Copia local borrada. El video queda disponible en ' + providerName + '.');
-          } catch (e) {
-            showToast('No se pudo borrar la copia local, pero el video ya está a salvo en ' + providerName + '.');
+        // "Guardar en esta computadora" (Configuración > Almacenamiento en
+        // la nube) prendido = nunca preguntar: la copia local se mantiene
+        // directo, sin interrumpir con un diálogo de confirmación.
+        if (config.storageFallback === false) {
+          const borrar = confirm(
+            'Ya se subió a ' + providerName + '. ¿Querés borrar la copia local de tu computadora para liberar espacio?\n\n' +
+            '(El video va a seguir disponible en ' + providerName + '; esto solo borra el archivo de esta compu.)'
+          );
+          if (borrar) {
+            try {
+              await folderHandle.removeEntry(filename);
+              showToast('Copia local borrada. El video queda disponible en ' + providerName + '.');
+            } catch (e) {
+              showToast('No se pudo borrar la copia local, pero el video ya está a salvo en ' + providerName + '.');
+            }
+          } else {
+            showToast('Grabación subida a ' + providerName + ' ✓');
           }
+        } else {
+          showToast('Grabación subida a ' + providerName + ' y guardada también en esta computadora ✓');
         }
       } else {
         console.error('[uploadRecordingToCloud] respuesta no ok', res);
@@ -3476,12 +3479,8 @@
       btn.addEventListener('click', () => toggleStorageProvider(btn.getAttribute('data-storage-toggle')));
     });
 
-    const localBtn = document.getElementById('fallbackLocalBtn');
-    const cloudBtn = document.getElementById('fallbackCloudBtn');
-    if (localBtn && cloudBtn){
-      localBtn.classList.toggle('active', config.storageFallback !== 'cloud');
-      cloudBtn.classList.toggle('active', config.storageFallback === 'cloud');
-    }
+    const localToggle = document.getElementById('fallbackLocalToggle');
+    if (localToggle) localToggle.checked = config.storageFallback !== false;
   }
   function moveStorageProvider(id, dir){
     const order = config.storageOrder;
@@ -3491,10 +3490,8 @@
     const tmp = order[i]; order[i] = order[j]; order[j] = tmp;
     renderStorageSection();
   }
-  const fallbackLocalBtn = document.getElementById('fallbackLocalBtn');
-  const fallbackCloudBtn = document.getElementById('fallbackCloudBtn');
-  if (fallbackLocalBtn) fallbackLocalBtn.addEventListener('click', () => { config.storageFallback = 'local'; renderStorageSection(); });
-  if (fallbackCloudBtn) fallbackCloudBtn.addEventListener('click', () => { config.storageFallback = 'cloud'; renderStorageSection(); });
+  const fallbackLocalToggle = document.getElementById('fallbackLocalToggle');
+  if (fallbackLocalToggle) fallbackLocalToggle.addEventListener('change', () => { config.storageFallback = fallbackLocalToggle.checked; });
 
   document.getElementById('addAccountBtn').addEventListener('click', () => {
     const input = document.getElementById('accountInput');
