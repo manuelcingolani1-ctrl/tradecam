@@ -2412,12 +2412,14 @@
     // real (OAuth) y la subida con fallback automático todavía no están
     // implementadas: esto es la interfaz y el orden, listos para cuando se
     // sume ese flujo por proveedor.
-    storageOrder: ['gdrive', 'dropbox', 'r2', 'b2'],
+    storageOrder: ['gdrive', 'dropbox', 'onedrive', 'r2', 'b2', 'firebase'],
     storageProviders: {
       gdrive: {connected: false},
       dropbox: {connected: false},
+      onedrive: {connected: false},
       r2: {connected: false},
-      b2: {connected: false}
+      b2: {connected: false},
+      firebase: {connected: false}
     },
     storageFallback: 'local'
   });
@@ -2451,25 +2453,16 @@
       const base = defaultConfig();
       if (!raw) return base;
       const parsed = JSON.parse(raw);
-      const mergedStorageProviders = Object.assign({}, base.storageProviders, parsed.storageProviders || {});
-      // Descarta proveedores que ya no existen (por ejemplo, si una config
-      // vieja guardada tenía uno que después se sacó de la app) — solo se
-      // conservan los que siguen en defaultConfig().
-      Object.keys(mergedStorageProviders).forEach(id => {
-        if (!(id in base.storageProviders)) delete mergedStorageProviders[id];
-      });
       const merged = Object.assign(base, parsed, {
         schedule: Object.assign({}, base.schedule, parsed.schedule || {}),
         accountMeta: Object.assign({}, base.accountMeta, parsed.accountMeta || {}),
-        storageProviders: mergedStorageProviders
+        storageProviders: Object.assign({}, base.storageProviders, parsed.storageProviders || {})
       });
       // Config guardada antes de este agregado: completa el orden de
-      // prioridad con los proveedores nuevos que falten, al final, y
-      // descarta los que ya no existen.
+      // prioridad con los proveedores nuevos que falten, al final.
       if (!Array.isArray(merged.storageOrder) || !merged.storageOrder.length){
         merged.storageOrder = base.storageOrder.slice();
       } else {
-        merged.storageOrder = merged.storageOrder.filter(id => base.storageOrder.includes(id));
         base.storageOrder.forEach(id => { if (!merged.storageOrder.includes(id)) merged.storageOrder.push(id); });
       }
       // Completa horario por día y accountMeta que puedan faltar en
@@ -3230,8 +3223,10 @@
   const STORAGE_PROVIDERS_META = {
     gdrive:   {name: 'Google Drive',     tint: 'rgba(66,133,244,0.16)', fg: '#7AA7F2'},
     dropbox:  {name: 'Dropbox',          tint: 'rgba(0,97,255,0.16)',   fg: '#6E8FFF'},
+    onedrive: {name: 'OneDrive',         tint: 'rgba(40,168,234,0.16)', fg: '#6FC2EE'},
     r2:       {name: 'Cloudflare R2',    tint: 'rgba(246,130,31,0.16)', fg: '#F4A361'},
-    b2:       {name: 'Backblaze B2',     tint: 'rgba(140,82,255,0.16)', fg: '#AD8CFF'}
+    b2:       {name: 'Backblaze B2',     tint: 'rgba(140,82,255,0.16)', fg: '#AD8CFF'},
+    firebase: {name: 'Firebase Storage', tint: 'rgba(255,202,40,0.16)', fg: '#E8C25E'}
   };
   function storageCloudIcon(fg){
     return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + fg + '" stroke-width="1.8" ' +
@@ -3375,11 +3370,7 @@
   function renderStorageSection(){
     const list = document.getElementById('storageList');
     if (!list) return;
-    // Filtro de seguridad: si por lo que sea config.storageOrder trae un id
-    // que ya no existe en STORAGE_PROVIDERS_META (por ejemplo, de una config
-    // vieja guardada antes de sacar un proveedor de la app), se descarta acá
-    // en vez de romper el resto del dibujo de la lista.
-    const order = config.storageOrder.filter(id => STORAGE_PROVIDERS_META[id]);
+    const order = config.storageOrder;
     const connectedCount = order.filter(id => config.storageProviders[id] && config.storageProviders[id].connected).length;
     const countEl = document.getElementById('storageConnectedCount');
     if (countEl) countEl.textContent = connectedCount + ' de ' + order.length + ' conectadas';
