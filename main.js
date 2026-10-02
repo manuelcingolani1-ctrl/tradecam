@@ -7,7 +7,8 @@ const path = require('path');
 // en silencio.
 const cloudProviders = {
   gdrive: require('./cloud/google-drive'),
-  dropbox: require('./cloud/dropbox')
+  dropbox: require('./cloud/dropbox'),
+  r2: require('./cloud/r2')
 };
 
 ipcMain.handle('cloud:connect', async (event, provider) => {

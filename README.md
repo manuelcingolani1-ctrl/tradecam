@@ -71,6 +71,38 @@ Storage) todavía no tienen la conexión real implementada — el botón
 "Conectar" avisa que falta esa integración hasta que se sume, siguiendo
 el mismo patrón que `cloud/google-drive.js` y `cloud/dropbox.js`.
 
+## Conectar Cloudflare R2 (almacenamiento en la nube)
+
+A diferencia de Google Drive y Dropbox, R2 no usa un login por
+navegador: se conecta con una API key fija que generás una sola vez.
+Igual que los otros, esa credencial nunca se sube a git — vive en
+`cloud/credentials.local.json` (gitignoreado) y en el secret de GitHub
+Actions.
+
+1. Entrá a [dash.cloudflare.com](https://dash.cloudflare.com) (creá una cuenta si no tenés) y andá a **"R2 Object Storage"** en el menú de la izquierda.
+2. Si es la primera vez, activá R2 (tiene un nivel gratis de 10 GB/mes; no te cobra nada mientras te quedes debajo de eso).
+3. **"Create bucket"** → nombre en minúsculas, por ejemplo `camtrader` → "Create bucket".
+4. Volvé a la pantalla principal de R2 y buscá **"Manage R2 API Tokens"** → **"Create Account API token"**.
+5. Nombre: `CamTrader`. Permisos: **"Object Read & Write"**. Aplicalo al bucket que creaste (o a todos si no te deja elegir uno solo). **"Create API Token"**.
+6. Te va a mostrar un **Access Key ID** y un **Secret Access Key** (copialos, el secret no se puede volver a ver después) y un endpoint tipo `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` — el `ACCOUNT_ID` es esa parte de la URL.
+7. Copiá `cloud/credentials.local.json.example` a `cloud/credentials.local.json` si todavía no existe, y completá dentro de `"r2"`: `accountId`, `accessKeyId`, `secretAccessKey` y `bucketName` (el nombre exacto del bucket, en minúsculas).
+8. Actualizá el secret `CLOUD_CREDENTIALS_JSON` en GitHub con el JSON completo (`gdrive`, `dropbox` y `r2` juntos).
+
+**Tope de seguridad para no generar cargos:** como R2 cobra por arriba de
+los 10 GB gratis mensuales, CamTrader calcula cuánto ocupan ya las
+grabaciones subidas y, si la próxima subida haría que el total supere el
+`safetyCapGB` configurado (9.5 GB por defecto, dejando un margen), **no
+sube a R2** y prueba automáticamente con el siguiente proveedor
+conectado en la lista de prioridad de Configuración — nunca se arriesga
+a pasarse del límite gratis solo. Para cambiar ese tope (por ejemplo si
+contrataste más espacio a propósito), agregá `"safetyCapGB": 50` (o el
+número que quieras) dentro de `"r2"` en `credentials.local.json`.
+
+Las grabaciones quedan dentro de una carpeta lógica `CamTrader/` en el
+bucket. Una grabación de más de 5 GB no se puede subir todavía (hace
+falta "subida multipart", que no está implementada) — en ese caso la app
+avisa con un error claro y el video queda solo en tu computadora.
+
 ## Desarrollo local
 
 ```

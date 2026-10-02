@@ -3234,7 +3234,7 @@
   }
   // Proveedores con conexión real ya enchufada en main.js/cloud/*.js.
   // Los demás siguen siendo un toggle de interfaz hasta que se sumen.
-  const STORAGE_PROVIDERS_WITH_REAL_API = ['gdrive', 'dropbox'];
+  const STORAGE_PROVIDERS_WITH_REAL_API = ['gdrive', 'dropbox', 'r2'];
   function formatGB(bytes){
     return (bytes / 1e9).toFixed(1) + ' GB';
   }
@@ -3262,15 +3262,35 @@
   // sube el video recién grabado. Si no hay ninguno conectado, no hace nada.
   async function uploadRecordingToCloud(folderHandle, filename){
     if (!window.cloudAPI) return;
-    const providerId = (config.storageOrder || []).find(id =>
-      STORAGE_PROVIDERS_WITH_REAL_API.includes(id) &&
-      config.storageProviders[id] && config.storageProviders[id].connected
-    );
-    if (!providerId) return;
-    const providerName = STORAGE_PROVIDERS_META[providerId].name;
+    let file;
     try {
       const fileHandleForUpload = await folderHandle.getFileHandle(filename);
-      const file = await fileHandleForUpload.getFile();
+      file = await fileHandleForUpload.getFile();
+    } catch (e) {
+      console.error('[uploadRecordingToCloud] no se pudo leer el archivo grabado', e);
+      return;
+    }
+    // Elige el primer proveedor conectado, en orden de prioridad, que
+    // tenga espacio libre suficiente para este archivo. Si un proveedor
+    // muestra un total conocido (totalBytes — para Google Drive/Dropbox es
+    // su cuota real, para R2 es el "tope de seguridad" configurado) y
+    // usedBytes + el tamaño del archivo lo superaría, se lo salta y prueba
+    // con el siguiente. Así nunca se intenta subir a algo lleno, y en el
+    // caso de R2 nunca se arriesga a pasarse del nivel gratuito y generar
+    // cargos.
+    const providerId = (config.storageOrder || []).find(id => {
+      if (!STORAGE_PROVIDERS_WITH_REAL_API.includes(id)) return false;
+      const st = config.storageProviders[id];
+      if (!st || !st.connected) return false;
+      if (st.totalBytes && st.usedBytes != null && (st.usedBytes + file.size) > st.totalBytes) return false;
+      return true;
+    });
+    if (!providerId) {
+      showToast('No hay ningún proveedor conectado con espacio libre suficiente — la grabación quedó solo en tu computadora.', 8000);
+      return;
+    }
+    const providerName = STORAGE_PROVIDERS_META[providerId].name;
+    try {
       // Se manda el contenido ya leído (no una ruta): los videos grabados
       // con la File System Access API no tienen una ruta real que el
       // proceso principal pueda abrir con fs.
