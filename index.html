@@ -1996,7 +1996,7 @@
         <button type="button" class="ap-cat-chip" data-cat="energy">Energías</button>
       </div>
       <div class="asset-selector" id="assetSelectorWrap">
-        <input type="text" id="assetSearchInput" autocomplete="off" placeholder="Buscar activo (ej. EURUSD, BTC, NAS100, AAPL)...">
+        <input type="text" id="assetSearchInput" autocomplete="off" placeholder="Tocá para ver sugeridos, o escribí para buscar (ej. EURUSD, BTC, NAS100, AAPL)...">
         <div class="chip" id="assetSelectedChip" style="display:none">
           <span class="ap-chip-symbol" id="assetSelectedSymbol"></span>
           <span class="ap-chip-name" id="assetSelectedName"></span>
@@ -4957,7 +4957,7 @@
 
     function isReady(){ return !!(window.replayAPI && window.replayAPI.searchSymbols); }
 
-    function renderPanel(items, state){
+    function renderPanel(items, state, isDefault){
       if (state === 'loading'){
         panel.innerHTML = '<div class="ap-panel-loading">Buscando...</div>';
         return;
@@ -4966,7 +4966,10 @@
         panel.innerHTML = '<div class="ap-panel-empty">Sin resultados. Probá otro término o categoría.</div>';
         return;
       }
-      panel.innerHTML = items.map((r, i) => {
+      const groupLabel = isDefault
+        ? '<div class="ap-panel-group">Sugeridos — escribí para buscar cualquier otro</div>'
+        : '';
+      panel.innerHTML = groupLabel + items.map((r, i) => {
         const badge = ASSET_SOURCE_BADGE[r.source] || r.source;
         const parts = r.label.split(' — ');
         const symbol = parts[0] || r.symbol;
@@ -5014,12 +5017,11 @@
         openPanel();
         return;
       }
+      // El query puede venir vacío a propósito: así es como se pide la
+      // lista de "sugeridos" para navegar sin escribir (ver más abajo el
+      // listener de foco/click y el de los chips de categoría). El backend
+      // (replay:searchSymbols) sabe devolver algo navegable en ese caso.
       const query = input.value.trim();
-      if (!query){
-        lastResults = [];
-        closePanel();
-        return;
-      }
       const seq = ++requestSeq;
       renderPanel([], 'loading');
       openPanel();
@@ -5028,7 +5030,7 @@
         if (seq !== requestSeq) return; // llegó una búsqueda más nueva mientras esperábamos ésta
         lastResults = (res && res.ok && res.results) ? res.results : [];
         highlighted = -1;
-        renderPanel(lastResults, 'done');
+        renderPanel(lastResults, 'done', !!(res && res.isDefault));
         position();
       } catch (e) {
         if (seq !== requestSeq) return;
@@ -5064,7 +5066,14 @@
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(runSearch, 300);
     });
-    input.addEventListener('focus', () => { if (lastResults.length || input.value.trim()) openPanel(); });
+    // Al hacer foco (o click) en el buscador, aunque todavía no haya nada
+    // escrito, se muestra de una la lista de sugeridos — así el panel nunca
+    // abre vacío y el usuario puede elegir un activo sin tener que escribir.
+    input.addEventListener('focus', () => {
+      if (lastResults.length){ openPanel(); return; }
+      clearTimeout(debounceTimer);
+      runSearch();
+    });
     input.addEventListener('keydown', (e) => {
       if (!panel.classList.contains('show') || !lastResults.length) return;
       if (e.key === 'ArrowDown'){ e.preventDefault(); highlighted = Math.min(highlighted + 1, lastResults.length - 1); updateHighlight(); }
@@ -5078,7 +5087,9 @@
         catChipsEl.querySelectorAll('.ap-cat-chip').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         category = btn.dataset.cat;
-        if (input.value.trim()) runSearch();
+        // Siempre se re-busca (haya o no texto escrito): con el campo vacío
+        // esto refresca la lista de sugeridos para la nueva categoría.
+        runSearch();
       });
     });
     document.addEventListener('click', (e) => {

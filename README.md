@@ -166,13 +166,17 @@ Es 100% gratis, sin ninguna API paga:
 El Replay ya no tiene un desplegable de "Fuente" separado de un campo de
 "Símbolo" fijo: hay un único buscador de activos arriba de la fecha.
 
+- Tocá el buscador sin escribir nada y ya aparece una lista de activos
+  sugeridos para elegir (los índices/forex/acciones más conocidos, los
+  pares de cripto más usados y la lista de MT5) — no hace falta escribir
+  para empezar a navegar.
 - Escribí cualquier texto (`EURUSD`, `BTC`, `NAS100`, `AAPL`, `oro`, ...) y
   el buscador trae resultados en vivo: de Yahoo Finance (forex, índices,
   acciones, ETFs, metales/commodities), del listado completo de pares de
   Binance (cripto — se cachea una vez por sesión de la app, no en cada
   letra que escribís) y de una lista curada de símbolos comunes de MT5.
 - Los chips de categoría (Todos/Forex/Cripto/Índices/Acciones/Metales/
-  Energías) filtran los resultados que ya trajiste, sin volver a pedirlos.
+  Energías) filtran tanto los sugeridos como los resultados de búsqueda.
 - Al elegir un resultado queda como una "ficha" con el ticker, el nombre y
   la fuente (Yahoo/Binance/MT5) — con la ✕ podés cambiarlo cuando quieras.
 - Con el activo y la fecha "Desde" elegidos, el botón "Analizar" te lleva
