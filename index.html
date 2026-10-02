@@ -1308,12 +1308,6 @@
     </div>
     <div id="historialList"></div>
 
-    <section style="margin-top:8px">
-      <h2>¿Un video viejo no se puede adelantar?</h2>
-      <p class="hint">Los videos grabados antes de este arreglo se guardaron sin la duración total, por eso no dejan mover la barra de reproducción. Elegilo acá y se lo arreglamos, sin perder nada del contenido.</p>
-      <button class="btn secondary" id="repairPickBtn" type="button">Elegir video para reparar</button>
-      <div id="repairStatus" style="margin-top:12px;font-size:13px;color:var(--text-2)"></div>
-    </section>
   </div>
 
   <!-- ============ VISOR DE VIDEO / FOTO ============ -->
@@ -6725,7 +6719,10 @@
     });
   }
 
-  repairPickBtn.addEventListener('click', async () => {
+  // El cuadro de "reparar video viejo" se sacó de Historial (ya no queda
+  // ningún video grabado antes de ese arreglo sin reparar), pero la función
+  // queda acá sin usarse por si hiciera falta reactivarla.
+  if (repairPickBtn) repairPickBtn.addEventListener('click', async () => {
     if (!window.showOpenFilePicker){
       repairStatus.textContent = 'Tu navegador no soporta elegir un archivo para editarlo directo. Usá Chrome o Edge.';
       return;
