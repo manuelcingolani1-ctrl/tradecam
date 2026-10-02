@@ -226,6 +226,37 @@
     font-family:var(--font-ui);padding:4px}
   .dp-link:hover{text-decoration:underline}
 
+  /* ---------- Selector de activo unificado (reemplaza fuente+símbolo) ---------- */
+  .ap-cats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .ap-cat-chip{background:var(--surface-2);border:1px solid var(--border);border-radius:999px;
+    padding:7px 14px;text-align:center;font-size:12.5px;font-weight:700;color:var(--text-2);cursor:pointer;
+    font-family:var(--font-ui);white-space:nowrap;transition:border-color .15s,color .15s,background-color .15s}
+  .ap-cat-chip:hover{color:var(--text)}
+  .ap-cat-chip.active{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+  .asset-selector{position:relative}
+  .asset-selector .chip{width:100%;box-sizing:border-box;padding:10px 10px 10px 14px;font-size:14px}
+  .asset-selector .chip .ap-chip-symbol{font-family:var(--font-mono);font-weight:700;color:var(--text)}
+  .asset-selector .chip .ap-chip-name{color:var(--text-2);font-weight:500;margin-left:6px}
+  .asset-selector .chip .ap-chip-badge{margin-left:auto}
+  .ap-panel{position:fixed;z-index:100;max-height:340px;overflow-y:auto;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:6px;
+    box-shadow:0 16px 40px rgba(0,0,0,0.5);display:none}
+  .ap-panel.show{display:block}
+  .ap-result-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;
+    cursor:pointer;transition:background-color .1s}
+  .ap-result-item:hover,.ap-result-item.highlighted{background:var(--surface-3)}
+  .ap-result-symbol{font-family:var(--font-mono);font-weight:700;font-size:13.5px;color:var(--text);flex:none}
+  .ap-result-name{font-size:12.5px;color:var(--text-2);flex:1;min-width:0;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .ap-result-badge{flex:none;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;
+    background:var(--surface-3);color:var(--text-2)}
+  .ap-result-badge.src-yahoo{background:var(--info-soft);color:var(--info)}
+  .ap-result-badge.src-binance{background:var(--accent-soft);color:var(--accent)}
+  .ap-result-badge.src-mt5{background:var(--teal-soft);color:var(--teal)}
+  .ap-panel-empty,.ap-panel-loading{padding:16px 10px;text-align:center;font-size:13px;color:var(--text-2)}
+  .ap-panel-group{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;
+    color:var(--text-2);padding:8px 10px 4px}
+
   .row{display:flex;gap:12px}
   .row > *{flex:1;min-width:0}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
@@ -1952,21 +1983,29 @@
 
     <section>
       <h2>Elegí qué velas repasar</h2>
-      <div class="row">
-        <div>
-          <label for="replaySource">Fuente de datos</label>
-          <select id="replaySource">
-            <option value="mt5">MetaTrader 5 (NAS100, forex, etc.)</option>
-            <option value="binance">Binance (Bitcoin y otras cripto)</option>
-            <option value="yahoo">Yahoo Finance (acciones, índices, oro/plata)</option>
-          </select>
-        </div>
-        <div>
-          <label for="replaySymbol">Símbolo</label>
-          <input type="text" id="replaySymbol" placeholder="Ej. NAS100" list="replaySymbolPresets">
-          <datalist id="replaySymbolPresets"></datalist>
-        </div>
+      <p class="hint">Buscá cualquier activo (forex, cripto, índices, acciones, metales, energías) y elegí la fecha de inicio — el gráfico se carga solo.</p>
+
+      <label for="assetSearchInput">Activo</label>
+      <div class="ap-cats" id="assetCatChips">
+        <button type="button" class="ap-cat-chip active" data-cat="all">Todos</button>
+        <button type="button" class="ap-cat-chip" data-cat="forex">Forex</button>
+        <button type="button" class="ap-cat-chip" data-cat="crypto">Cripto</button>
+        <button type="button" class="ap-cat-chip" data-cat="index">Índices</button>
+        <button type="button" class="ap-cat-chip" data-cat="equity">Acciones</button>
+        <button type="button" class="ap-cat-chip" data-cat="metal">Metales</button>
+        <button type="button" class="ap-cat-chip" data-cat="energy">Energías</button>
       </div>
+      <div class="asset-selector" id="assetSelectorWrap">
+        <input type="text" id="assetSearchInput" autocomplete="off" placeholder="Buscar activo (ej. EURUSD, BTC, NAS100, AAPL)...">
+        <div class="chip" id="assetSelectedChip" style="display:none">
+          <span class="ap-chip-symbol" id="assetSelectedSymbol"></span>
+          <span class="ap-chip-name" id="assetSelectedName"></span>
+          <span class="ap-result-badge ap-chip-badge" id="assetSelectedBadge"></span>
+          <button type="button" id="assetSelectedClearBtn" title="Cambiar activo">✕</button>
+        </div>
+        <div class="ap-panel" id="assetResultsPanel"></div>
+      </div>
+
       <div class="row" style="margin-top:14px">
         <div>
           <label for="replayTimeframe">Timeframe</label>
@@ -1989,16 +2028,16 @@
           <input type="date" id="replayTo">
         </div>
       </div>
-      <div class="row" id="replayPythonRow" style="margin-top:14px">
+      <div class="row" id="replayPythonRow" style="margin-top:14px;display:none">
         <div>
           <label for="replayPythonPath">Comando de Python en tu compu (opcional)</label>
           <input type="text" id="replayPythonPath" placeholder="python">
         </div>
       </div>
       <p class="hint" id="replaySourceHint" style="margin-top:12px"></p>
-      <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
-        <button class="btn" id="replayLoadBtn" type="button">Cargar velas</button>
-        <span id="replayStatus" style="font-size:13px;color:var(--text-2)"></span>
+      <div style="margin-top:16px">
+        <button class="btn big" id="replayLoadBtn" type="button" disabled>Elegí un activo y una fecha para analizar</button>
+        <p id="replayStatus" style="font-size:13px;color:var(--text-2);margin:10px 0 0;text-align:center"></p>
       </div>
     </section>
 
@@ -4896,6 +4935,176 @@
     return {sync};
   }
 
+  // ---- Selector de activo unificado (Replay): búsqueda en vivo contra
+  // replayAPI.searchSymbols (Yahoo Finance + caché de pares de Binance +
+  // lista curada de MT5), con chips de categoría, debounce, navegación por
+  // teclado y el activo elegido mostrado como un chip con botón "x" en vez
+  // de un <input> de texto plano. Se cuelga del mismo patrón que
+  // createDatePicker: input original oculto, panel desplegable colgado del
+  // <body> y posicionado a mano para no quedar recortado.
+  const ASSET_CATEGORY_LABELS = {
+    all: 'Todos', forex: 'Forex', crypto: 'Cripto', index: 'Índices',
+    equity: 'Acciones', metal: 'Metales', energy: 'Energías', other: 'Otros'
+  };
+  const ASSET_SOURCE_BADGE = { yahoo: 'Yahoo', binance: 'Binance', mt5: 'MT5' };
+
+  function createAssetSelector(opts){
+    const wrap = document.getElementById(opts.wrapId);
+    const input = document.getElementById(opts.inputId);
+    const panel = document.getElementById(opts.panelId);
+    const catChipsEl = document.getElementById(opts.catChipsId);
+    const selectedChip = document.getElementById(opts.selectedChipId);
+    const selectedSymbolEl = document.getElementById(opts.selectedSymbolId);
+    const selectedNameEl = document.getElementById(opts.selectedNameId);
+    const selectedBadgeEl = document.getElementById(opts.selectedBadgeId);
+    const clearBtn = document.getElementById(opts.clearBtnId);
+    const onChange = opts.onChange || function(){};
+
+    let category = 'all';
+    let lastResults = [];
+    let highlighted = -1;
+    let debounceTimer = null;
+    let requestSeq = 0;
+    let selected = null; // { source, symbol, category, label }
+
+    function isReady(){ return !!(window.replayAPI && window.replayAPI.searchSymbols); }
+
+    function renderPanel(items, state){
+      if (state === 'loading'){
+        panel.innerHTML = '<div class="ap-panel-loading">Buscando...</div>';
+        return;
+      }
+      if (!items.length){
+        panel.innerHTML = '<div class="ap-panel-empty">Sin resultados. Probá otro término o categoría.</div>';
+        return;
+      }
+      panel.innerHTML = items.map((r, i) => {
+        const badge = ASSET_SOURCE_BADGE[r.source] || r.source;
+        const parts = r.label.split(' — ');
+        const symbol = parts[0] || r.symbol;
+        const name = parts.slice(1).join(' — ') || '';
+        return '<div class="ap-result-item' + (i === highlighted ? ' highlighted' : '') + '" data-idx="' + i + '">' +
+          '<span class="ap-result-symbol">' + escapeHtml(symbol) + '</span>' +
+          '<span class="ap-result-name">' + escapeHtml(name) + '</span>' +
+          '<span class="ap-result-badge src-' + r.source + '">' + escapeHtml(badge) + '</span>' +
+        '</div>';
+      }).join('');
+      panel.querySelectorAll('.ap-result-item').forEach((el) => {
+        el.addEventListener('mouseenter', () => { highlighted = parseInt(el.dataset.idx, 10); updateHighlight(); });
+        el.addEventListener('click', () => selectResult(items[parseInt(el.dataset.idx, 10)]));
+      });
+    }
+
+    function updateHighlight(){
+      panel.querySelectorAll('.ap-result-item').forEach((el) => {
+        el.classList.toggle('highlighted', parseInt(el.dataset.idx, 10) === highlighted);
+      });
+    }
+
+    function position(){
+      const r = (selected ? selectedChip : input).getBoundingClientRect();
+      panel.style.width = r.width + 'px';
+      let top = r.bottom + 6;
+      const panelH = Math.min(340, panel.scrollHeight || 340);
+      if (top + panelH > window.innerHeight - 8) top = Math.max(8, r.top - panelH - 6);
+      panel.style.top = top + 'px';
+      panel.style.left = r.left + 'px';
+    }
+
+    function openPanel(){
+      panel.classList.add('show');
+      position();
+    }
+    function closePanel(){
+      panel.classList.remove('show');
+      highlighted = -1;
+    }
+
+    async function runSearch(){
+      if (!isReady()){
+        panel.innerHTML = '<div class="ap-panel-empty">Este selector necesita la app de escritorio (no funciona en el navegador).</div>';
+        openPanel();
+        return;
+      }
+      const query = input.value.trim();
+      if (!query){
+        lastResults = [];
+        closePanel();
+        return;
+      }
+      const seq = ++requestSeq;
+      renderPanel([], 'loading');
+      openPanel();
+      try {
+        const res = await window.replayAPI.searchSymbols(query, category);
+        if (seq !== requestSeq) return; // llegó una búsqueda más nueva mientras esperábamos ésta
+        lastResults = (res && res.ok && res.results) ? res.results : [];
+        highlighted = -1;
+        renderPanel(lastResults, 'done');
+        position();
+      } catch (e) {
+        if (seq !== requestSeq) return;
+        panel.innerHTML = '<div class="ap-panel-empty">No se pudo buscar: ' + escapeHtml(e.message) + '</div>';
+      }
+    }
+
+    function selectResult(r){
+      if (!r) return;
+      selected = r;
+      const parts = r.label.split(' — ');
+      selectedSymbolEl.textContent = parts[0] || r.symbol;
+      selectedNameEl.textContent = parts.slice(1).join(' — ') || '';
+      const badge = ASSET_SOURCE_BADGE[r.source] || r.source;
+      selectedBadgeEl.textContent = badge;
+      selectedBadgeEl.className = 'ap-result-badge ap-chip-badge src-' + r.source;
+      input.style.display = 'none';
+      selectedChip.style.display = 'flex';
+      closePanel();
+      onChange(selected);
+    }
+
+    function clearSelection(){
+      selected = null;
+      selectedChip.style.display = 'none';
+      input.style.display = '';
+      input.value = '';
+      input.focus();
+      onChange(null);
+    }
+
+    input.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runSearch, 300);
+    });
+    input.addEventListener('focus', () => { if (lastResults.length || input.value.trim()) openPanel(); });
+    input.addEventListener('keydown', (e) => {
+      if (!panel.classList.contains('show') || !lastResults.length) return;
+      if (e.key === 'ArrowDown'){ e.preventDefault(); highlighted = Math.min(highlighted + 1, lastResults.length - 1); updateHighlight(); }
+      else if (e.key === 'ArrowUp'){ e.preventDefault(); highlighted = Math.max(highlighted - 1, 0); updateHighlight(); }
+      else if (e.key === 'Enter'){ e.preventDefault(); if (highlighted >= 0) selectResult(lastResults[highlighted]); }
+      else if (e.key === 'Escape'){ closePanel(); }
+    });
+    clearBtn.addEventListener('click', clearSelection);
+    catChipsEl.querySelectorAll('.ap-cat-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        catChipsEl.querySelectorAll('.ap-cat-chip').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        category = btn.dataset.cat;
+        if (input.value.trim()) runSearch();
+      });
+    });
+    document.addEventListener('click', (e) => {
+      if (!wrap.contains(e.target) && !panel.contains(e.target)) closePanel();
+    });
+    window.addEventListener('scroll', () => { if (panel.classList.contains('show')) position(); }, true);
+    window.addEventListener('resize', () => { if (panel.classList.contains('show')) position(); });
+
+    return {
+      getSelected: () => selected,
+      clear: clearSelection
+    };
+  }
+
   function parseIntOrNull(str){
     if (str === '' || str === null || str === undefined) return null;
     const n = parseInt(str, 10);
@@ -7270,9 +7479,6 @@
   // mezclarse con las estadísticas reales — ver renderDashboardWidgets,
   // renderResumen y renderCalendar más arriba).
   // =======================================================================
-  const replaySourceSel = document.getElementById('replaySource');
-  const replaySymbolInput = document.getElementById('replaySymbol');
-  const replaySymbolPresets = document.getElementById('replaySymbolPresets');
   const replayTimeframeSel = document.getElementById('replayTimeframe');
   const replayFromInput = document.getElementById('replayFrom');
   const replayToInput = document.getElementById('replayTo');
@@ -7316,63 +7522,43 @@
     return new Date(ts * 1000).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
   }
 
-  function updateReplaySourceUI(){
-    const source = replaySourceSel.value;
-    if (source === 'mt5'){
-      replayPythonRow.style.display = '';
-      replaySourceHint.textContent = 'Necesita Python instalado en esta computadora (pip install MetaTrader5) y la terminal de MetaTrader 5 abierta y logueada en tu cuenta. El símbolo tiene que ser el nombre exacto que usa tu bróker en el Market Watch (ej. NAS100, NAS100.cash, US100 — puede variar).';
-      replaySymbolPresets.innerHTML = '<option value="NAS100"><option value="US100"><option value="XAUUSD">';
-      if (!replaySymbolInput.value) replaySymbolInput.value = 'NAS100';
-    } else if (source === 'yahoo'){
-      replayPythonRow.style.display = 'none';
-      replaySourceHint.textContent = 'Datos públicos de Yahoo Finance, sin cuenta ni API key. Abrí el desplegable de Símbolo para ver ejemplos por categoría (índices, forex, metales/commodities, cripto, acciones) — también podés escribir cualquier otro ticker que no esté en la lista. En M1/M5/M15/M30/H1/H4 el historial real está limitado a los últimos ~7-60 días (límite de Yahoo, no de la app); para historial de años usá D1.';
-      // No hay forma nativa de poner encabezados de categoría dentro de un
-      // <datalist> (los navegadores no los muestran), así que se simula
-      // agrupando el orden de las opciones por categoría y usando el
-      // atributo "label" de cada <option>, que Chrome/Electron sí muestra
-      // como texto secundario junto al símbolo en el desplegable.
-      const YAHOO_PRESETS = [
-        ['^GSPC', 'Índice · S&P 500'],
-        ['^NDX', 'Índice · Nasdaq 100'],
-        ['^DJI', 'Índice · Dow Jones'],
-        ['^RUT', 'Índice · Russell 2000'],
-        ['^VIX', 'Índice · VIX (volatilidad)'],
-        ['EURUSD=X', 'Forex · Euro / Dólar'],
-        ['GBPUSD=X', 'Forex · Libra / Dólar'],
-        ['USDJPY=X', 'Forex · Dólar / Yen'],
-        ['AUDUSD=X', 'Forex · Dólar australiano / Dólar'],
-        ['USDCHF=X', 'Forex · Dólar / Franco suizo'],
-        ['USDCAD=X', 'Forex · Dólar / Dólar canadiense'],
-        ['GC=F', 'Metal · Oro (futuro continuo)'],
-        ['SI=F', 'Metal · Plata (futuro continuo)'],
-        ['HG=F', 'Metal · Cobre (futuro continuo)'],
-        ['CL=F', 'Commodity · Petróleo WTI (futuro)'],
-        ['NG=F', 'Commodity · Gas natural (futuro)'],
-        ['BTC-USD', 'Cripto · Bitcoin'],
-        ['ETH-USD', 'Cripto · Ethereum'],
-        ['SOL-USD', 'Cripto · Solana'],
-        ['XRP-USD', 'Cripto · XRP'],
-        ['BNB-USD', 'Cripto · BNB'],
-        ['AAPL', 'Acción · Apple'],
-        ['MSFT', 'Acción · Microsoft'],
-        ['GOOGL', 'Acción · Alphabet (Google)'],
-        ['AMZN', 'Acción · Amazon'],
-        ['NVDA', 'Acción · Nvidia'],
-        ['TSLA', 'Acción · Tesla'],
-        ['META', 'Acción · Meta'],
-        ['SPY', 'ETF · S&P 500 (SPY)'],
-        ['QQQ', 'ETF · Nasdaq 100 (QQQ)']
-      ];
-      replaySymbolPresets.innerHTML = YAHOO_PRESETS.map((p) => '<option value="' + p[0] + '" label="' + p[1] + '">').join('');
-      if (!replaySymbolInput.value || replaySymbolInput.value === 'NAS100' || replaySymbolInput.value === 'BTCUSDT') replaySymbolInput.value = 'AAPL';
-    } else {
-      replayPythonRow.style.display = 'none';
-      replaySourceHint.textContent = 'Datos públicos de Binance, de solo lectura, sin cuenta ni API key. Usá el símbolo tal como lo escribe Binance (ej. BTCUSDT, ETHUSDT).';
-      replaySymbolPresets.innerHTML = '<option value="BTCUSDT"><option value="ETHUSDT">';
-      if (!replaySymbolInput.value || replaySymbolInput.value === 'NAS100') replaySymbolInput.value = 'BTCUSDT';
-    }
+  // Estado del activo elegido en el selector unificado — reemplaza al viejo
+  // par replaySourceSel.value/replaySymbolInput.value. Se actualiza desde el
+  // callback onChange de createAssetSelector (más abajo) cada vez que el
+  // usuario elige o borra un resultado.
+  let replaySelectedAsset = null; // { source, symbol, category, label }
+
+  const REPLAY_SOURCE_HINTS = {
+    mt5: 'Necesita Python instalado en esta computadora (pip install MetaTrader5) y la terminal de MetaTrader 5 abierta y logueada en tu cuenta. El símbolo tiene que ser el nombre exacto que usa tu bróker en el Market Watch (puede variar según el bróker).',
+    yahoo: 'Datos públicos de Yahoo Finance, sin cuenta ni API key. En M1/M5/M15/M30/H1/H4 el historial real está limitado a los últimos ~7-60 días (límite de Yahoo, no de la app); para historial de años usá D1.',
+    binance: 'Datos públicos de Binance, de solo lectura, sin cuenta ni API key.'
+  };
+
+  function updateReplayLoadBtnState(){
+    const ready = !!(replaySelectedAsset && replayFromInput.value);
+    replayLoadBtn.disabled = !ready;
+    if (!replaySelectedAsset) replayLoadBtn.textContent = 'Elegí un activo para analizar';
+    else if (!replayFromInput.value) replayLoadBtn.textContent = 'Elegí una fecha "Desde" para analizar';
+    else replayLoadBtn.textContent = 'Analizar';
   }
-  replaySourceSel.addEventListener('change', updateReplaySourceUI);
+
+  const replayAssetSelector = createAssetSelector({
+    wrapId: 'assetSelectorWrap',
+    inputId: 'assetSearchInput',
+    panelId: 'assetResultsPanel',
+    catChipsId: 'assetCatChips',
+    selectedChipId: 'assetSelectedChip',
+    selectedSymbolId: 'assetSelectedSymbol',
+    selectedNameId: 'assetSelectedName',
+    selectedBadgeId: 'assetSelectedBadge',
+    clearBtnId: 'assetSelectedClearBtn',
+    onChange: (asset) => {
+      replaySelectedAsset = asset;
+      replayPythonRow.style.display = (asset && asset.source === 'mt5') ? '' : 'none';
+      replaySourceHint.textContent = asset ? (REPLAY_SOURCE_HINTS[asset.source] || '') : '';
+      updateReplayLoadBtnState();
+    }
+  });
 
   function initReplayView(){
     const currentAsset = replayTicketAssetSel.value;
@@ -7383,8 +7569,6 @@
     });
     if ((config.assets || []).includes(currentAsset)) replayTicketAssetSel.value = currentAsset;
 
-    updateReplaySourceUI();
-
     if (!replayFromInput.value){
       const d = new Date(); d.setDate(d.getDate() - 14);
       replayFromInput.value = dateToKey(d);
@@ -7394,10 +7578,12 @@
     }
     if (replayFromPicker) replayFromPicker.sync();
     if (replayToPicker) replayToPicker.sync();
+    updateReplayLoadBtnState();
     if (replayChart){
       setTimeout(() => { try { replayChart.applyOptions({width: replayChartEl.clientWidth}); } catch (e) {} }, 0);
     }
   }
+  replayFromInput.addEventListener('change', updateReplayLoadBtnState);
 
   function createReplayChartIfNeeded(){
     if (replayChart || !window.LightweightCharts) return;
@@ -7540,8 +7726,8 @@
       riskReward: null,
       commissions: null,
       replayMeta: {
-        source: replaySourceSel.value,
-        symbol: replaySymbolInput.value.trim(),
+        source: replaySelectedAsset ? replaySelectedAsset.source : '',
+        symbol: replaySelectedAsset ? replaySelectedAsset.symbol : '',
         timeframe: replayTimeframeSel.value,
         direction: r.direction,
         size: r.size,
@@ -7574,13 +7760,13 @@
     replayResultInfo.style.display = 'none';
     replayJournalRow.style.display = 'none';
 
-    const source = replaySourceSel.value;
-    const symbol = replaySymbolInput.value.trim();
+    if (!replaySelectedAsset){ replayStatus.textContent = 'Elegí un activo primero.'; return; }
+    const source = replaySelectedAsset.source;
+    const symbol = replaySelectedAsset.symbol;
     const timeframe = replayTimeframeSel.value;
     const fromStr = replayFromInput.value;
     const toStr = replayToInput.value;
 
-    if (!symbol){ replayStatus.textContent = 'Ingresá un símbolo.'; return; }
     if (!fromStr){ replayStatus.textContent = 'Elegí una fecha de inicio.'; return; }
 
     const fromTs = Math.floor(parseDateStrLocal(fromStr).getTime() / 1000);
@@ -7620,10 +7806,13 @@
       replayTicketSection.style.display = 'block';
       createReplayChartIfNeeded();
       resetReplayToStart();
+      // Flujo "un paso": apenas el gráfico está listo, bajamos solos hasta
+      // él para que el usuario no tenga que buscar la sección a mano.
+      setTimeout(() => { replayChartSection.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 50);
     } catch (e) {
       replayStatus.textContent = 'Error inesperado: ' + e.message;
     } finally {
-      replayLoadBtn.disabled = false; replayLoadBtn.textContent = 'Cargar velas';
+      updateReplayLoadBtnState();
     }
   }
   replayLoadBtn.addEventListener('click', loadReplayCandles);

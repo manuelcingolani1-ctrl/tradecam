@@ -151,12 +151,6 @@ Es 100% gratis, sin ninguna API paga:
 - **Acciones, índices y metales (Yahoo Finance)**: se trae del endpoint
   público "chart" de Yahoo Finance, sin cuenta ni API key. Funciona en
   Windows, Mac y Linux.
-  - El campo Símbolo tiene un desplegable con ejemplos por categoría:
-    índices (`^GSPC`, `^NDX`, `^DJI`, `^RUT`, `^VIX`), forex (`EURUSD=X`,
-    `GBPUSD=X`, ...), metales/commodities (`GC=F` oro, `SI=F` plata,
-    `CL=F` petróleo, ...), cripto (`BTC-USD`, `ETH-USD`, ...) y acciones
-    (`AAPL`, `MSFT`, ...). También podés escribir cualquier otro ticker
-    que no esté en la lista, con la misma notación de Yahoo.
   - En D1 (diario) el historial llega décadas atrás. En M1/M5/M15/M30/H1/H4
     Yahoo solo entrega entre ~7 días (M1) y ~60 días (el resto) de
     historial intradía — es una limitación real de Yahoo, no de TradeCam;
@@ -166,6 +160,23 @@ Es 100% gratis, sin ninguna API paga:
     sin aviso. Si falla en D1, TradeCam prueba automáticamente con
     [Stooq](https://stooq.com) como respaldo (solo para acciones de EE.UU.
     con ticker simple, ej. `AAPL`) antes de mostrar un error.
+
+### Selector de activo (búsqueda unificada)
+
+El Replay ya no tiene un desplegable de "Fuente" separado de un campo de
+"Símbolo" fijo: hay un único buscador de activos arriba de la fecha.
+
+- Escribí cualquier texto (`EURUSD`, `BTC`, `NAS100`, `AAPL`, `oro`, ...) y
+  el buscador trae resultados en vivo: de Yahoo Finance (forex, índices,
+  acciones, ETFs, metales/commodities), del listado completo de pares de
+  Binance (cripto — se cachea una vez por sesión de la app, no en cada
+  letra que escribís) y de una lista curada de símbolos comunes de MT5.
+- Los chips de categoría (Todos/Forex/Cripto/Índices/Acciones/Metales/
+  Energías) filtran los resultados que ya trajiste, sin volver a pedirlos.
+- Al elegir un resultado queda como una "ficha" con el ticker, el nombre y
+  la fuente (Yahoo/Binance/MT5) — con la ✕ podés cambiarlo cuando quieras.
+- Con el activo y la fecha "Desde" elegidos, el botón "Analizar" te lleva
+  directo al gráfico ya cargado, listo para repasar vela por vela.
 
 Las velas que se traen quedan guardadas en un caché local en disco (JSON
 plano, en la carpeta de datos de la app — no en `localStorage`, por el

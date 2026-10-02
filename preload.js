@@ -20,5 +20,9 @@ contextBridge.exposeInMainWorld('cloudAPI', {
 // vía Python, o Binance vía HTTPS) al proceso principal, que es el único
 // que puede ejecutar procesos externos y guardar el caché en disco.
 contextBridge.exposeInMainWorld('replayAPI', {
-  getCandles: (params) => ipcRenderer.invoke('replay:getCandles', params)
+  getCandles: (params) => ipcRenderer.invoke('replay:getCandles', params),
+  // Selector de activo unificado: busca en Yahoo Finance (forex/índices/
+  // acciones/metales/energía), en el caché de pares de Binance (cripto) y en
+  // la lista curada de MT5, según la categoría pedida ("all" busca en todas).
+  searchSymbols: (query, category) => ipcRenderer.invoke('replay:searchSymbols', query, category)
 });
