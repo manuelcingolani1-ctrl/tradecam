@@ -4586,12 +4586,21 @@
     try {
       pipWindow = await documentPictureInPicture.requestWindow({width: 300, height: 480});
     } catch (e) {
+      // Antes este error se tragaba en silencio (sin loguearlo), así que si
+      // requestWindow() fallaba no quedaba ningún rastro en la consola — el
+      // botón simplemente "no hacía nada". Ahora se loguea el motivo real y
+      // se avisa con un toast, para no tener que adivinar.
+      console.error('[CamTrader] No se pudo abrir la ventana flotante (documentPictureInPicture.requestWindow):', e);
       pipWindow = null;
-      return;
-    } finally {
       pipOpening = false;
       floatPipBtn.disabled = false;
+      if (typeof showToast === 'function'){
+        showToast('No se pudo abrir la ventana flotante: ' + (e && e.message ? e.message : 'error desconocido'));
+      }
+      return;
     }
+    pipOpening = false;
+    floatPipBtn.disabled = false;
     // Copia el CSS de la app (tipografías, colores, componentes) así el
     // panel flotante se ve exactamente igual, en vez de reconstruirlo a mano.
     const pipDoc = pipWindow.document;
