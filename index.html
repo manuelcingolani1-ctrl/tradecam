@@ -1107,21 +1107,6 @@
 
       <div class="config-col-side">
         <section>
-          <h2>Carpeta de guardado</h2>
-          <p class="hint">Ubicación en este equipo. Cada sesión crea una subcarpeta con fecha y activo.</p>
-          <div id="folderUnsupported" class="unsupported" style="display:none">
-            Tu navegador no soporta elegir una carpeta y guardar directo ahí. Esta función necesita Chrome (o Edge).
-          </div>
-          <div class="folder-row">
-            <div class="folder-status" id="folderStatus" style="margin-bottom:0;flex:1">
-              <span class="dot off"></span>
-              <span id="folderStatusText">No hay carpeta seleccionada todavía.</span>
-            </div>
-            <button class="btn secondary" id="pickFolderBtn" type="button">Elegir carpeta</button>
-          </div>
-        </section>
-
-        <section>
           <h2>Dispositivos de grabación</h2>
           <p class="hint">Se usan la próxima vez que inicies una sesión.</p>
           <div class="device-field">
@@ -1185,7 +1170,7 @@
 
       <div style="margin-top:22px">
         <div class="storage-fallback-label"><span>Si se llenan todas</span><div class="storage-fallback-rule"></div></div>
-        <div class="storage-fallback-grid storage-fallback-grid-single">
+        <div class="storage-fallback-grid">
           <div class="storage-fallback-card storage-fallback-card-toggle">
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div class="storage-fallback-icon">
@@ -1196,6 +1181,22 @@
             <div>
               <div class="storage-fallback-title">Guardar en esta computadora</div>
               <div class="storage-fallback-sub">Si está prendido, al terminar cada grabación se guarda directo en esta computadora, sin preguntar si querés borrarla de la carpeta (como sí pasa cuando se sube a la nube).</div>
+            </div>
+          </div>
+          <div class="storage-fallback-card storage-fallback-card-folder" style="cursor:default">
+            <div>
+              <div class="storage-fallback-title">Carpeta de guardado</div>
+              <div class="storage-fallback-sub">Ubicación en este equipo. Cada sesión crea una subcarpeta con fecha y activo.</div>
+            </div>
+            <div id="folderUnsupported" class="unsupported" style="display:none">
+              Tu navegador no soporta elegir una carpeta y guardar directo ahí. Esta función necesita Chrome (o Edge).
+            </div>
+            <div class="folder-row" style="margin-top:2px;flex-wrap:wrap">
+              <div class="folder-status" id="folderStatus" style="margin-bottom:0;flex:1 1 100%">
+                <span class="dot off"></span>
+                <span id="folderStatusText">No hay carpeta seleccionada todavía.</span>
+              </div>
+              <button class="btn secondary" id="pickFolderBtn" type="button" style="width:100%">Elegir carpeta</button>
             </div>
           </div>
         </div>
