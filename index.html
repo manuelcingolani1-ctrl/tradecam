@@ -4936,7 +4936,15 @@
         '<div class="dp-footer"><button type="button" class="dp-link" data-action="clear">Borrar</button><button type="button" class="dp-link" data-action="today">Hoy</button></div>';
 
       pop.querySelectorAll('.dp-nav').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+          // Importante: frenar la propagación. render() reemplaza pop.innerHTML
+          // (y con eso, el botón "‹"/"›" que acabamos de clickear queda
+          // desconectado del DOM) ANTES de que el click termine de burbujear
+          // hasta el listener global de "click afuera cierra el calendario".
+          // Sin este stopPropagation, ese listener ve que el target ya no
+          // está dentro de "pop" y cierra el popup apenas se cambia de mes —
+          // por eso la flecha "para atrás" parecía no hacer nada.
+          e.stopPropagation();
           viewMonth += parseInt(btn.dataset.nav, 10);
           if (viewMonth < 0){ viewMonth = 11; viewYear--; }
           if (viewMonth > 11){ viewMonth = 0; viewYear++; }
