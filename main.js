@@ -340,6 +340,253 @@ async function fetchFromStooq(symbol, fromTs, toTs) {
   }
 }
 
+// =========================================================================
+// Búsqueda unificada de activos (replay:searchSymbols) — alimenta el
+// selector de activo del módulo Replay. A diferencia de fetchFromYahoo/
+// fetchFromBinance/fetchFromMT5 (que traen VELAS de un símbolo ya elegido),
+// estas funciones buscan QUÉ símbolos existen, para que el usuario no
+// dependa de una lista fija. Siempre devuelven el mismo formato:
+// { symbol, label, category, source }, con category en
+// forex|crypto|index|equity|metal|energy|other.
+// =========================================================================
+
+// Lista curada de MT5: no hay una API pública de búsqueda de símbolos de
+// MetaTrader 5 (depende del bróker), así que se mantiene a mano una lista
+// amplia de los símbolos más comunes. Se muestra igual en el selector
+// unificado, marcada con fuente "mt5" para que el usuario sepa que necesita
+// la terminal de MT5 local corriendo.
+const MT5_CURATED_SYMBOLS = [
+  { symbol: 'NAS100', name: 'Nasdaq 100', category: 'index' },
+  { symbol: 'US30', name: 'Dow Jones 30', category: 'index' },
+  { symbol: 'US100', name: 'Nasdaq 100 (alias US100)', category: 'index' },
+  { symbol: 'SPX500', name: 'S&P 500', category: 'index' },
+  { symbol: 'GER40', name: 'DAX 40 (Alemania)', category: 'index' },
+  { symbol: 'UK100', name: 'FTSE 100 (Reino Unido)', category: 'index' },
+  { symbol: 'JPN225', name: 'Nikkei 225 (Japón)', category: 'index' },
+  { symbol: 'EURUSD', name: 'Euro / Dólar', category: 'forex' },
+  { symbol: 'GBPUSD', name: 'Libra / Dólar', category: 'forex' },
+  { symbol: 'USDJPY', name: 'Dólar / Yen', category: 'forex' },
+  { symbol: 'AUDUSD', name: 'Dólar australiano / Dólar', category: 'forex' },
+  { symbol: 'USDCHF', name: 'Dólar / Franco suizo', category: 'forex' },
+  { symbol: 'USDCAD', name: 'Dólar / Dólar canadiense', category: 'forex' },
+  { symbol: 'NZDUSD', name: 'Dólar neocelandés / Dólar', category: 'forex' },
+  { symbol: 'EURJPY', name: 'Euro / Yen', category: 'forex' },
+  { symbol: 'GBPJPY', name: 'Libra / Yen', category: 'forex' },
+  { symbol: 'EURGBP', name: 'Euro / Libra', category: 'forex' },
+  { symbol: 'XAUUSD', name: 'Oro / Dólar', category: 'metal' },
+  { symbol: 'XAGUSD', name: 'Plata / Dólar', category: 'metal' },
+  { symbol: 'XPTUSD', name: 'Platino / Dólar', category: 'metal' },
+  { symbol: 'USOIL', name: 'Petróleo WTI', category: 'energy' },
+  { symbol: 'UKOIL', name: 'Petróleo Brent', category: 'energy' },
+  { symbol: 'NATGAS', name: 'Gas natural', category: 'energy' }
+];
+
+function searchMt5Symbols(query, category) {
+  const q = (query || '').trim().toUpperCase();
+  return MT5_CURATED_SYMBOLS
+    .filter((s) => !category || category === 'all' || s.category === category)
+    .filter((s) => !q || s.symbol.includes(q) || s.name.toUpperCase().includes(q))
+    .map((s) => ({
+      symbol: s.symbol,
+      label: s.symbol + ' — ' + s.name,
+      category: s.category,
+      source: 'mt5'
+    }));
+}
+
+// Yahoo Finance no tiene una lista pública de "todos los símbolos", pero sí
+// un endpoint de búsqueda libre que cubre forex, índices, acciones, ETFs,
+// metales y energía (como futuros) sin API key.
+function mapYahooQuoteTypeToCategory(quoteType, symbol) {
+  const s = (symbol || '').toUpperCase();
+  switch (quoteType) {
+    case 'CURRENCY': return 'forex';
+    case 'CRYPTOCURRENCY': return 'crypto';
+    case 'INDEX': return 'index';
+    case 'EQUITY':
+    case 'ETF': return 'equity';
+    case 'FUTURE':
+      if (/^(GC|SI|HG|PL|PA)=F/.test(s)) return 'metal';
+      if (/^(CL|BZ|NG|RB|HO)=F/.test(s)) return 'energy';
+      return 'other';
+    default: return 'other';
+  }
+}
+
+// Lista de "sugeridos" de Yahoo para cuando el usuario todavía no escribió
+// nada: el buscador abre mostrando algo navegable en vez de un panel vacío.
+// El endpoint de búsqueda de Yahoo necesita texto (no tiene un "traeme
+// todo"), así que para el estado inicial se usa esta lista curada de los
+// activos más consultados por categoría; apenas el usuario escribe algo,
+// se reemplaza por resultados reales y libres de searchYahooSymbols.
+const YAHOO_POPULAR_SYMBOLS = [
+  { symbol: '^GSPC', name: 'S&P 500', category: 'index' },
+  { symbol: '^NDX', name: 'Nasdaq 100', category: 'index' },
+  { symbol: '^DJI', name: 'Dow Jones', category: 'index' },
+  { symbol: '^RUT', name: 'Russell 2000', category: 'index' },
+  { symbol: '^VIX', name: 'VIX (volatilidad)', category: 'index' },
+  { symbol: '^GDAXI', name: 'DAX 40 (Alemania)', category: 'index' },
+  { symbol: '^FTSE', name: 'FTSE 100 (Reino Unido)', category: 'index' },
+  { symbol: '^N225', name: 'Nikkei 225 (Japón)', category: 'index' },
+  { symbol: 'EURUSD=X', name: 'Euro / Dólar', category: 'forex' },
+  { symbol: 'GBPUSD=X', name: 'Libra / Dólar', category: 'forex' },
+  { symbol: 'USDJPY=X', name: 'Dólar / Yen', category: 'forex' },
+  { symbol: 'AUDUSD=X', name: 'Dólar australiano / Dólar', category: 'forex' },
+  { symbol: 'USDCHF=X', name: 'Dólar / Franco suizo', category: 'forex' },
+  { symbol: 'USDCAD=X', name: 'Dólar / Dólar canadiense', category: 'forex' },
+  { symbol: 'NZDUSD=X', name: 'Dólar neocelandés / Dólar', category: 'forex' },
+  { symbol: 'GC=F', name: 'Oro (futuro continuo)', category: 'metal' },
+  { symbol: 'SI=F', name: 'Plata (futuro continuo)', category: 'metal' },
+  { symbol: 'HG=F', name: 'Cobre (futuro continuo)', category: 'metal' },
+  { symbol: 'PL=F', name: 'Platino (futuro continuo)', category: 'metal' },
+  { symbol: 'CL=F', name: 'Petróleo WTI (futuro)', category: 'energy' },
+  { symbol: 'BZ=F', name: 'Petróleo Brent (futuro)', category: 'energy' },
+  { symbol: 'NG=F', name: 'Gas natural (futuro)', category: 'energy' },
+  { symbol: 'AAPL', name: 'Apple', category: 'equity' },
+  { symbol: 'MSFT', name: 'Microsoft', category: 'equity' },
+  { symbol: 'GOOGL', name: 'Alphabet (Google)', category: 'equity' },
+  { symbol: 'AMZN', name: 'Amazon', category: 'equity' },
+  { symbol: 'NVDA', name: 'Nvidia', category: 'equity' },
+  { symbol: 'TSLA', name: 'Tesla', category: 'equity' },
+  { symbol: 'META', name: 'Meta', category: 'equity' },
+  { symbol: 'SPY', name: 'ETF S&P 500 (SPY)', category: 'equity' },
+  { symbol: 'QQQ', name: 'ETF Nasdaq 100 (QQQ)', category: 'equity' }
+];
+
+function defaultYahooSymbols(category) {
+  return YAHOO_POPULAR_SYMBOLS
+    .filter((s) => !category || category === 'all' || s.category === category)
+    .map((s) => ({ symbol: s.symbol, label: s.symbol + ' — ' + s.name, category: s.category, source: 'yahoo' }));
+}
+
+async function searchYahooSymbols(query) {
+  const q = (query || '').trim();
+  if (!q) return [];
+  const url = 'https://query1.finance.yahoo.com/v1/finance/search?q=' + encodeURIComponent(q) +
+    '&quotesCount=15&newsCount=0&lang=en-US';
+  const body = await httpsGetJson(url, {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
+  });
+  const quotes = (body && body.quotes) || [];
+  return quotes
+    .filter((quote) => quote && quote.symbol)
+    .map((quote) => {
+      const name = quote.shortname || quote.longname || quote.symbol;
+      return {
+        symbol: quote.symbol,
+        label: quote.symbol + ' — ' + name,
+        category: mapYahooQuoteTypeToCategory(quote.quoteType, quote.symbol),
+        source: 'yahoo'
+      };
+    });
+}
+
+// Binance publica la lista completa de pares en un solo endpoint
+// (exchangeInfo, ~2000+ pares). En vez de pedirla en cada letra que tipea el
+// usuario, se cachea una vez por sesión de la app y se filtra en memoria —
+// así el selector tiene TODOS los pares de Binance sin pegarle a la red de
+// nuevo por cada búsqueda.
+let binanceSymbolsCache = null;
+let binanceSymbolsCacheAt = 0;
+const BINANCE_SYMBOLS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora
+
+async function getBinanceSymbolsCached() {
+  const now = Date.now();
+  if (binanceSymbolsCache && (now - binanceSymbolsCacheAt) < BINANCE_SYMBOLS_CACHE_TTL_MS) {
+    return binanceSymbolsCache;
+  }
+  const body = await httpsGetJson('https://api.binance.com/api/v3/exchangeInfo', { 'User-Agent': 'TradeCam' });
+  const allowedQuotes = ['USDT', 'USD', 'BUSD'];
+  const symbols = (body && body.symbols) || [];
+  const filtered = symbols
+    .filter((s) => s.status === 'TRADING' && allowedQuotes.includes(s.quoteAsset))
+    .map((s) => ({ symbol: s.symbol, baseAsset: s.baseAsset, quoteAsset: s.quoteAsset }));
+  binanceSymbolsCache = filtered;
+  binanceSymbolsCacheAt = now;
+  return filtered;
+}
+
+// Orden de prioridad para cuando el usuario todavía no escribió nada: el
+// exchangeInfo de Binance no viene ordenado por volumen/popularidad, así
+// que sin esto el "sugerido" sería alfabético (poco útil). Se arma con los
+// pares USDT de las monedas más conocidas, en este orden, y recién después
+// se completa con el resto si hiciera falta.
+const BINANCE_POPULAR_BASE_ASSETS = [
+  'BTC', 'ETH', 'SOL', 'XRP', 'BNB', 'DOGE', 'ADA', 'AVAX', 'LINK', 'TON',
+  'TRX', 'DOT', 'MATIC', 'LTC', 'SHIB'
+];
+
+function defaultBinanceSymbols(symbols) {
+  const picked = [];
+  const seen = new Set();
+  BINANCE_POPULAR_BASE_ASSETS.forEach((base) => {
+    const match = symbols.find((s) => s.baseAsset === base && s.quoteAsset === 'USDT');
+    if (match && !seen.has(match.symbol)) { picked.push(match); seen.add(match.symbol); }
+  });
+  return picked;
+}
+
+async function searchBinanceSymbols(query) {
+  const symbols = await getBinanceSymbolsCached();
+  const q = (query || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const matches = !q ? defaultBinanceSymbols(symbols) : symbols.filter((s) => s.symbol.includes(q) || s.baseAsset.includes(q));
+  return matches.slice(0, 20).map((s) => ({
+    symbol: s.symbol,
+    label: s.symbol + ' — ' + s.baseAsset + '/' + s.quoteAsset,
+    category: 'crypto',
+    source: 'binance'
+  }));
+}
+
+ipcMain.handle('replay:searchSymbols', async (event, query, category) => {
+  const q = (query || '').trim();
+  const cat = category || 'all';
+  try {
+    const results = [];
+    if (cat === 'crypto') {
+      // searchBinanceSymbols ya devuelve una selección "popular" cuando q
+      // está vacío (ver defaultBinanceSymbols), así que esto sirve tanto
+      // para navegar sin escribir como para buscar.
+      results.push(...(await searchBinanceSymbols(q)));
+    } else {
+      if (q) {
+        // Yahoo cubre forex/índices/acciones/metales/energía con búsqueda
+        // libre real.
+        try {
+          results.push(...(await searchYahooSymbols(q)));
+        } catch (e) {
+          // Yahoo rompe su propia API sin aviso de tanto en tanto (ver
+          // reporte de investigación) — si falla, seguimos con MT5/Binance
+          // en vez de tirar abajo toda la búsqueda.
+        }
+      } else {
+        // Campo vacío (el usuario recién abrió el buscador): mostramos una
+        // lista de sugeridos para que pueda navegar sin tener que escribir.
+        results.push(...defaultYahooSymbols(cat));
+      }
+      results.push(...searchMt5Symbols(q, cat));
+      if (cat === 'all') {
+        try { results.push(...(await searchBinanceSymbols(q))); } catch (e) { /* idem Yahoo */ }
+      }
+    }
+    const filtered = cat === 'all' ? results : results.filter((r) => r.category === cat);
+    // De-duplicar (un mismo símbolo puede aparecer por Yahoo y por la lista
+    // curada de MT5) y limitar el total para que el panel no quede enorme.
+    const seen = new Set();
+    const uniq = [];
+    for (const r of filtered) {
+      const key = r.source + ':' + r.symbol;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      uniq.push(r);
+      if (uniq.length >= 40) break;
+    }
+    return { ok: true, results: uniq, isDefault: !q };
+  } catch (e) {
+    return { ok: false, error: 'No se pudo buscar activos: ' + e.message };
+  }
+});
+
 ipcMain.handle('replay:getCandles', async (event, params) => {
   const { source, symbol, timeframe, fromTs, toTs, pythonPath } = params || {};
   if (!source || !symbol || !timeframe || !fromTs || !toTs) {

@@ -151,12 +151,6 @@ Es 100% gratis, sin ninguna API paga:
 - **Acciones, índices y metales (Yahoo Finance)**: se trae del endpoint
   público "chart" de Yahoo Finance, sin cuenta ni API key. Funciona en
   Windows, Mac y Linux.
-  - El campo Símbolo tiene un desplegable con ejemplos por categoría:
-    índices (`^GSPC`, `^NDX`, `^DJI`, `^RUT`, `^VIX`), forex (`EURUSD=X`,
-    `GBPUSD=X`, ...), metales/commodities (`GC=F` oro, `SI=F` plata,
-    `CL=F` petróleo, ...), cripto (`BTC-USD`, `ETH-USD`, ...) y acciones
-    (`AAPL`, `MSFT`, ...). También podés escribir cualquier otro ticker
-    que no esté en la lista, con la misma notación de Yahoo.
   - En D1 (diario) el historial llega décadas atrás. En M1/M5/M15/M30/H1/H4
     Yahoo solo entrega entre ~7 días (M1) y ~60 días (el resto) de
     historial intradía — es una limitación real de Yahoo, no de TradeCam;
@@ -167,15 +161,42 @@ Es 100% gratis, sin ninguna API paga:
     [Stooq](https://stooq.com) como respaldo (solo para acciones de EE.UU.
     con ticker simple, ej. `AAPL`) antes de mostrar un error.
 
+### Selector de activo (búsqueda unificada)
+
+El Replay ya no tiene un desplegable de "Fuente" separado de un campo de
+"Símbolo" fijo: hay un único buscador de activos arriba de la fecha.
+
+- Tocá el buscador sin escribir nada y ya aparece una lista de activos
+  sugeridos para elegir (los índices/forex/acciones más conocidos, los
+  pares de cripto más usados y la lista de MT5) — no hace falta escribir
+  para empezar a navegar.
+- Escribí cualquier texto (`EURUSD`, `BTC`, `NAS100`, `AAPL`, `oro`, ...) y
+  el buscador trae resultados en vivo: de Yahoo Finance (forex, índices,
+  acciones, ETFs, metales/commodities), del listado completo de pares de
+  Binance (cripto — se cachea una vez por sesión de la app, no en cada
+  letra que escribís) y de una lista curada de símbolos comunes de MT5.
+- Los chips de categoría (Todos/Forex/Cripto/Índices/Acciones/Metales/
+  Energías) filtran tanto los sugeridos como los resultados de búsqueda.
+- Al elegir un resultado queda como una "ficha" con el ticker, el nombre y
+  la fuente (Yahoo/Binance/MT5) — con la ✕ podés cambiarlo cuando quieras.
+- Con el activo y la fecha "Desde" elegidos, el botón "Analizar" te lleva
+  directo al gráfico ya cargado, listo para repasar vela por vela.
+- El timeframe ya no se elige en el formulario (se simplificó a solo
+  activo + fecha): se usa M15 fijo para todo el replay.
+
 Las velas que se traen quedan guardadas en un caché local en disco (JSON
 plano, en la carpeta de datos de la app — no en `localStorage`, por el
 volumen de datos), para no tener que volver a pedirlas cada vez que abrís
 el mismo símbolo/timeframe.
 
-El gráfico de velas usa [Lightweight Charts](https://github.com/tradingview/lightweight-charts)
-de TradingView (código abierto, licencia Apache-2.0), cargado desde
-`vendor/` local — no depende de internet una vez que las velas ya están
-en el caché.
+El gráfico de velas usa [KLineChart](https://github.com/klinecharts/KLineChart)
+(código abierto, licencia Apache-2.0), cargado desde `vendor/` local — no
+depende de internet una vez que las velas ya están en el caché. Se eligió
+por encima de Lightweight Charts (lo que usaba antes) porque trae
+herramientas de dibujo nativas (línea de tendencia, horizontal, rayo,
+rectángulo, círculo, Fibonacci) con una UX de click-y-dibujar parecida a
+TradingView, además de un timeframe seleccionable arriba del gráfico
+(M1 a D1) sin tener que volver al buscador de activo.
 
 ## Desarrollo local
 
