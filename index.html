@@ -771,6 +771,29 @@
   .replay-tf-btn:hover{color:var(--text)}
   .replay-tf-btn.active{background:var(--teal);color:#04201C}
 
+  /* Menú "Indicadores" (MA/EMA/BOLL sobre el precio, MACD/RSI/KDJ/Volumen en panel aparte) */
+  .replay-indicators-wrap{position:relative}
+  .replay-indicators-btn{display:flex;align-items:center;gap:6px;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:10px;color:var(--text-2);font-family:var(--font-ui);
+    font-weight:700;font-size:12.5px;padding:8px 13px;cursor:pointer;transition:border-color .15s,color .15s}
+  .replay-indicators-btn:hover{color:var(--text);border-color:var(--teal)}
+  .replay-indicators-btn.has-active{color:var(--teal);border-color:var(--teal)}
+  .replay-indicators-menu{position:absolute;top:calc(100% + 6px);right:0;display:none;z-index:9;
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;
+    min-width:230px;box-shadow:0 12px 28px rgba(0,0,0,0.45)}
+  .replay-indicators-menu.show{display:block}
+  .replay-indicators-group-label{font-size:10.5px;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.04em;color:var(--text-2);padding:8px 10px 4px}
+  .replay-indicator-item{width:100%;display:flex;align-items:center;gap:9px;background:none;border:none;
+    color:var(--text);font-family:var(--font-ui);font-size:13px;text-align:left;padding:8px 10px;
+    border-radius:8px;cursor:pointer}
+  .replay-indicator-item:hover{background:var(--surface-2)}
+  .replay-indicator-item-check{flex:none;width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border);
+    display:flex;align-items:center;justify-content:center}
+  .replay-indicator-item.active .replay-indicator-item-check{background:var(--teal);border-color:var(--teal)}
+  .replay-indicator-item.active .replay-indicator-item-check::after{content:'✓';font-size:10px;font-weight:800;color:#04201C}
+  .replay-indicator-item.active{color:var(--teal)}
+
   /* Área del gráfico: toolbar de dibujo a la izquierda + canvas */
   .replay-chart-area{display:flex;gap:8px}
   .replay-draw-toolbar{flex:none;width:42px;display:flex;flex-direction:column;gap:4px;
@@ -2155,6 +2178,21 @@
             <button type="button" class="replay-tf-btn" data-tf="H1">1h</button>
             <button type="button" class="replay-tf-btn" data-tf="H4">4h</button>
             <button type="button" class="replay-tf-btn" data-tf="D1">1D</button>
+          </div>
+          <div class="replay-indicators-wrap">
+            <button type="button" class="replay-indicators-btn" id="replayIndicatorsBtn">📈 Indicadores</button>
+            <div class="replay-indicators-menu" id="replayIndicatorsMenu">
+              <div class="replay-indicators-group-label">Sobre el precio</div>
+              <button type="button" class="replay-indicator-item" data-indicator="MA"><span class="replay-indicator-item-check"></span>Media móvil (MA)</button>
+              <button type="button" class="replay-indicator-item" data-indicator="EMA"><span class="replay-indicator-item-check"></span>Media exponencial (EMA)</button>
+              <button type="button" class="replay-indicator-item" data-indicator="BOLL"><span class="replay-indicator-item-check"></span>Bandas de Bollinger</button>
+              <button type="button" class="replay-indicator-item" data-indicator="SAR"><span class="replay-indicator-item-check"></span>Parabolic SAR</button>
+              <div class="replay-indicators-group-label">En panel aparte</div>
+              <button type="button" class="replay-indicator-item" data-indicator="VOL"><span class="replay-indicator-item-check"></span>Volumen</button>
+              <button type="button" class="replay-indicator-item" data-indicator="MACD"><span class="replay-indicator-item-check"></span>MACD</button>
+              <button type="button" class="replay-indicator-item" data-indicator="RSI"><span class="replay-indicator-item-check"></span>RSI</button>
+              <button type="button" class="replay-indicator-item" data-indicator="KDJ"><span class="replay-indicator-item-check"></span>KDJ</button>
+            </div>
           </div>
         </div>
         <div class="replay-chart-area">
@@ -7654,6 +7692,8 @@
   const replayChartEl = document.getElementById('replayChart');
   const replayTimeframeRow = document.getElementById('replayTimeframeRow');
   const replayDrawToolbar = document.getElementById('replayDrawToolbar');
+  const replayIndicatorsBtn = document.getElementById('replayIndicatorsBtn');
+  const replayIndicatorsMenu = document.getElementById('replayIndicatorsMenu');
   const replayClearDrawingsBtn = document.getElementById('replayClearDrawingsBtn');
   const replaySellPriceEl = document.getElementById('replaySellPrice');
   const replayBuyPriceEl = document.getElementById('replayBuyPrice');
@@ -8305,6 +8345,52 @@
   });
   replayClearDrawingsBtn.addEventListener('click', () => {
     if (replayChart) replayChart.removeOverlay();
+  });
+
+  // Menú "Indicadores": MA/EMA/BOLL/SAR se dibujan arriba de las velas (en
+  // el panel "candle_pane"); MACD/RSI/KDJ/Volumen abren su propio panel
+  // aparte, debajo del gráfico principal — klinecharts arma ese panel solo.
+  // Se guarda el paneId que devuelve createIndicator para poder sacarlo con
+  // removeIndicator más adelante (klinecharts lo pide como parámetro).
+  const REPLAY_OVERLAY_INDICATORS = ['MA', 'EMA', 'BOLL', 'SAR'];
+  let replayActiveIndicators = {}; // nombre -> paneId devuelto por createIndicator
+
+  function toggleReplayIndicator(name){
+    if (!replayChart) return;
+    if (replayActiveIndicators[name]){
+      replayChart.removeIndicator(replayActiveIndicators[name], name);
+      delete replayActiveIndicators[name];
+    } else {
+      const isOverlay = REPLAY_OVERLAY_INDICATORS.includes(name);
+      const paneId = replayChart.createIndicator(name, false, isOverlay ? {id: 'candle_pane'} : {});
+      if (paneId) replayActiveIndicators[name] = paneId;
+    }
+    updateIndicatorsMenuUI();
+  }
+
+  function updateIndicatorsMenuUI(){
+    const activeCount = Object.keys(replayActiveIndicators).length;
+    replayIndicatorsBtn.classList.toggle('has-active', activeCount > 0);
+    replayIndicatorsBtn.textContent = activeCount ? ('📈 Indicadores (' + activeCount + ')') : '📈 Indicadores';
+    replayIndicatorsMenu.querySelectorAll('.replay-indicator-item').forEach((btn) => {
+      btn.classList.toggle('active', !!replayActiveIndicators[btn.dataset.indicator]);
+    });
+  }
+
+  replayIndicatorsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    replayIndicatorsMenu.classList.toggle('show');
+  });
+  replayIndicatorsMenu.querySelectorAll('.replay-indicator-item').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleReplayIndicator(btn.dataset.indicator);
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!replayIndicatorsMenu.contains(e.target) && e.target !== replayIndicatorsBtn){
+      replayIndicatorsMenu.classList.remove('show');
+    }
   });
 
   enhanceNumberInputs();
