@@ -2,14 +2,11 @@ const { app, BrowserWindow, session, desktopCapturer, systemPreferences, shell, 
 const path = require('path');
 
 // Proveedores de almacenamiento en la nube con conexión real implementada.
-// Los que todavía no están acá (onedrive) responden "not_implemented" y la
-// interfaz lo avisa en vez de fallar en silencio.
 const cloudProviders = {
   gdrive: require('./cloud/google-drive'),
   dropbox: require('./cloud/dropbox'),
   r2: require('./cloud/r2'),
-  b2: require('./cloud/b2'),
-  firebase: require('./cloud/firebase')
+  b2: require('./cloud/b2')
 };
 
 ipcMain.handle('cloud:connect', async (event, provider) => {

@@ -35,9 +35,9 @@ genera el workflow también las lleven adentro.
 6. Copiá `cloud/credentials.local.json.example` a `cloud/credentials.local.json` (este archivo NO se sube a git) y completá ahí `clientId` y `clientSecret` con esos valores.
 7. Para que los instaladores automáticos (GitHub Actions) también los lleven: en el repo, "Settings" → "Secrets and variables" → "Actions" → "New repository secret". Nombre: `CLOUD_CREDENTIALS_JSON`. Valor: el contenido completo de tu `cloud/credentials.local.json` (el JSON entero, tal cual).
 
-El único proveedor que todavía no tiene la conexión real implementada es
-OneDrive — el botón "Conectar" avisa que falta esa integración hasta que
-se sume, siguiendo el mismo patrón que `cloud/google-drive.js`.
+CamTrader soporta cuatro proveedores de nube con conexión real: Google
+Drive, Dropbox, Cloudflare R2 y Backblaze B2 (OneDrive y Firebase Storage
+se evaluaron pero se descartaron por ahora).
 
 Los tokens se guardan cifrados en el disco (con `safeStorage` de
 Electron, que usa el llavero del sistema operativo), nunca en texto
@@ -113,39 +113,6 @@ API key fija.
 Mismo tope de seguridad configurable que R2 (`safetyCapGB` dentro de
 `"b2"`, 9.5 GB por defecto) y la misma limitación de 5 GB por archivo
 (sin subida multipart todavía).
-
-## Conectar Firebase Storage (almacenamiento en la nube)
-
-Firebase Storage es, por debajo, un bucket de Google Cloud Storage. No se
-conecta con un login por navegador como Google Drive, sino con una "cuenta
-de servicio": un archivo JSON que generás una sola vez y que CamTrader usa
-para autenticarse solo, sin que vos tengas que iniciar sesión cada vez.
-Igual que los demás proveedores, esa credencial nunca se sube a git — vive
-en `cloud/credentials.local.json` (gitignoreado) y en el secret de GitHub
-Actions.
-
-1. Entrá a [console.firebase.google.com](https://console.firebase.google.com) y creá un proyecto (o usá uno que ya tengas), por ejemplo "CamTrader".
-2. En el menú de la izquierda, **"Build"** → **"Storage"** → **"Get started"** (aceptá las reglas por defecto; se pueden ajustar después). Esto crea tu bucket, con un nombre tipo `tu-proyecto.appspot.com` — anotalo, lo vas a necesitar.
-3. Andá al ícono de **engranaje** (arriba a la izquierda) → **"Project settings"** → pestaña **"Service accounts"**.
-4. Hacé clic en **"Generate new private key"** → confirmá en **"Generate key"**. Se descarga un archivo `.json` a tu computadora — **guardalo en un lugar seguro, es la llave completa de acceso**.
-5. Abrí ese archivo descargado con un editor de texto (Notas, Bloc de notas, VS Code, lo que tengas) y copiá su contenido completo.
-6. Copiá `cloud/credentials.local.json.example` a `cloud/credentials.local.json` si todavía no existe, y dentro de `"firebase"` → `"serviceAccountJson"` pegá el contenido completo de ese archivo (tal cual lo copiaste, con todas sus claves). Completá además `"bucketName"` con el nombre de tu bucket (el `tu-proyecto.appspot.com` del paso 2).
-7. Actualizá el secret `CLOUD_CREDENTIALS_JSON` en GitHub con el JSON completo (los cinco proveedores juntos).
-
-**Tope de seguridad:** el plan gratis ("Spark") de Firebase incluye 5 GB de
-almacenamiento. Igual que con R2 y B2, CamTrader calcula cuánto ocupan ya
-las grabaciones subidas y, si la próxima subida haría que el total supere
-el `safetyCapGB` configurado (4.5 GB por defecto, dejando un margen), no
-sube a Firebase y prueba automáticamente con el siguiente proveedor
-conectado en la lista de prioridad. Para cambiarlo, agregá
-`"safetyCapGB": <número>` dentro de `"firebase"` en
-`credentials.local.json`.
-
-Las grabaciones quedan dentro de una carpeta lógica `CamTrader/` en el
-bucket. Misma limitación que R2 y B2: un archivo de más de 5 GB no se
-puede subir todavía (haría falta "subida reanudable", que no está
-implementada) — en ese caso la app avisa con un error claro y el video
-queda solo en tu computadora.
 
 ## Desarrollo local
 
