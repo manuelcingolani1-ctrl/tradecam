@@ -717,7 +717,11 @@
   .hist-date{font-family:var(--font-mono);font-size:12px;color:var(--text-2);margin-bottom:4px}
   .hist-asset{font-size:16px;font-weight:700;font-family:var(--font-display)}
   .hist-asset .acct{color:var(--text-2);font-weight:600;font-size:13px;font-family:var(--font-ui)}
-  .hist-actions{display:flex;gap:8px;flex:none}
+  .hist-actions{display:flex;gap:8px;flex:none;align-items:center}
+  .hist-delete-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;
+    border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);
+    cursor:pointer;flex:none}
+  .hist-delete-btn:hover{color:var(--danger);border-color:var(--danger)}
   .hist-group-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
     margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
   .hist-group-header:first-child{margin-top:0}
@@ -5662,8 +5666,28 @@
     editBtn.addEventListener('click', () => openEditModal(entry));
     actions.appendChild(editBtn);
 
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'hist-delete-btn'; deleteBtn.type = 'button'; deleteBtn.title = 'Borrar entrada de journal';
+    deleteBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+    deleteBtn.addEventListener('click', () => deleteJournalEntry(entry));
+    actions.appendChild(deleteBtn);
+
     card.appendChild(actions);
     return card;
+  }
+
+  // Borra una entrada de journal directo desde su tarjeta, sin pasar por el
+  // modal de "Editar" (mismo aviso que el borrado de ahí: no toca el video
+  // ni la foto en la carpeta, solo el registro en la app).
+  function deleteJournalEntry(entry){
+    if (!entry) return;
+    const label = entry.date || 'esta sesión';
+    const ok = confirm('¿Borrar la entrada de journal de ' + label + '? Esto NO borra el video ni la foto de tu carpeta, solo el registro en la app.');
+    if (!ok) return;
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    const filtered = journal.filter(e => e.createdAt !== entry.createdAt);
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(filtered));
+    refreshJournalViews();
   }
 
   // =======================================================================
