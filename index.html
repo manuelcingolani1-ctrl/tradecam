@@ -1937,6 +1937,7 @@
           <select id="replaySource">
             <option value="mt5">MetaTrader 5 (NAS100, forex, etc.)</option>
             <option value="binance">Binance (Bitcoin y otras cripto)</option>
+            <option value="yahoo">Yahoo Finance (acciones, índices, oro/plata)</option>
           </select>
         </div>
         <div>
@@ -7227,6 +7228,11 @@
       replaySourceHint.textContent = 'Necesita Python instalado en esta computadora (pip install MetaTrader5) y la terminal de MetaTrader 5 abierta y logueada en tu cuenta. El símbolo tiene que ser el nombre exacto que usa tu bróker en el Market Watch (ej. NAS100, NAS100.cash, US100 — puede variar).';
       replaySymbolPresets.innerHTML = '<option value="NAS100"><option value="US100"><option value="XAUUSD">';
       if (!replaySymbolInput.value) replaySymbolInput.value = 'NAS100';
+    } else if (source === 'yahoo'){
+      replayPythonRow.style.display = 'none';
+      replaySourceHint.textContent = 'Datos públicos de Yahoo Finance, sin cuenta ni API key. Acciones: símbolo tal cual (AAPL, MSFT, SPY). Índices: ^GSPC (S&P 500), ^NDX (Nasdaq 100), ^DJI (Dow Jones). Metales (futuro continuo): GC=F (oro), SI=F (plata). En M1/M5/M15/M30/H1/H4 el historial real está limitado a los últimos ~7-60 días (límite de Yahoo, no de la app); para historial de años usá D1.';
+      replaySymbolPresets.innerHTML = '<option value="AAPL"><option value="SPY"><option value="^GSPC"><option value="^NDX"><option value="GC=F"><option value="SI=F">';
+      if (!replaySymbolInput.value || replaySymbolInput.value === 'NAS100' || replaySymbolInput.value === 'BTCUSDT') replaySymbolInput.value = 'AAPL';
     } else {
       replayPythonRow.style.display = 'none';
       replaySourceHint.textContent = 'Datos públicos de Binance, de solo lectura, sin cuenta ni API key. Usá el símbolo tal como lo escribe Binance (ej. BTCUSDT, ETHUSDT).';
@@ -7457,7 +7463,8 @@
     }
 
     replayLoadBtn.disabled = true; replayLoadBtn.textContent = 'Cargando...';
-    replayStatus.textContent = 'Pidiendo velas' + (source === 'mt5' ? ' a MetaTrader 5...' : ' a Binance...');
+    const sourceLabel = source === 'mt5' ? ' a MetaTrader 5...' : (source === 'yahoo' ? ' a Yahoo Finance...' : ' a Binance...');
+    replayStatus.textContent = 'Pidiendo velas' + sourceLabel;
     try {
       const res = await window.replayAPI.getCandles({
         source, symbol, timeframe, fromTs, toTs,
