@@ -13,11 +13,13 @@
      principal como hacía la vieja documentPictureInPicture; se copian las
      piezas que realmente usa este panel. */
   :root{
-    --bg:#0A0D12; --surface:#12161D; --surface-2:#171C25; --surface-3:#1C2330; --border:#242C3B;
-    --text:#F2F4F7; --text-2:#8B93A7; --accent:#22C55E; --accent-soft:rgba(34,197,94,0.14);
-    --teal:#2DD4BF; --teal-soft:rgba(45,212,191,0.14);
+    /* Paleta "Aston Green" — derivada de la paleta de colores provista */
+    --bg:#071E15; --surface:#12271C; --surface-2:#1D3024; --surface-3:#384838; --border:#505F4C;
+    --text:#ADB499; --text-2:#808B74; --accent:#4CA96E; --accent-soft:rgba(76,169,110,0.16);
+    --teal:#59C59D; --teal-soft:rgba(89,197,157,0.14);
     --danger:#F04438; --danger-soft:rgba(240,68,56,0.14);
     --info:#60A5FA; --info-soft:rgba(96,165,250,0.14);
+    --on-accent:#071E15;
     --font-ui:'Manrope',system-ui,sans-serif; --font-display:'Space Grotesk','Manrope',system-ui,sans-serif;
     --font-mono:'IBM Plex Mono',ui-monospace,monospace;
   }
@@ -26,14 +28,14 @@
   body{background:var(--bg);color:var(--text);font-family:var(--font-ui);overflow:hidden}
 
   .cam-placeholder{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
-    background:linear-gradient(135deg,#1b2530,#222c38);font-family:var(--font-display);font-weight:800;
+    background:linear-gradient(135deg,#0E2319,#1B2E22);font-family:var(--font-display);font-weight:800;
     color:var(--teal);z-index:1;user-select:none}
   .cam-placeholder.show{display:flex}
 
   .pip-body{margin:0;padding:12px;display:flex;flex-direction:column;gap:10px;height:100%;
     box-sizing:border-box;background:var(--bg)}
   .pip-cam{position:relative;flex:none;width:100%;aspect-ratio:4/3;max-height:45vh;border-radius:12px;
-    overflow:hidden;border:2px solid var(--teal);background:#1a2029}
+    overflow:hidden;border:2px solid var(--teal);background:#0E2319}
   .pip-cam video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
   .pip-cam .cam-placeholder{font-size:30px}
   .pip-notes{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface);
@@ -86,8 +88,8 @@
     border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;font-family:var(--font-ui);outline:none}
   .notes-input:focus{border-color:var(--teal)}
   .notes-send-btn{flex:none;width:32px;height:32px;border-radius:8px;background:var(--teal);
-    border:none;color:#08110f;display:flex;align-items:center;justify-content:center;cursor:pointer}
-  .notes-send-btn:hover{background:#3fe0c8}
+    border:none;color:var(--on-accent);display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .notes-send-btn:hover{background:#77CFAF}
 </style>
 </head>
 <body>
